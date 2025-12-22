@@ -144,31 +144,38 @@ export const useWalletStore = create<WalletState>()(
 
           const aggregateData = await response.json()
 
-          set({
-            aggregateData,
-            isLoading: false,
+          set({ aggregateData })
+
+          // Update each wallet with raw data in parallel using Promise.allSettled
+          // This ensures all requests run concurrently and we track completion properly
+          const cacheParam = skipCache ? '?cache=false' : ''
+          const walletUpdatePromises = wallets.map(async (wallet) => {
+            const walletResponse = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
+            if (!walletResponse.ok) {
+              throw new Error(`Failed to fetch wallet ${wallet.address}`)
+            }
+            const data = await walletResponse.json()
+            get().setWalletData(wallet.address, data)
+            
+            if (data.composition) {
+              get().updateWallet(wallet.id, {
+                composition: data.composition,
+                lastUpdated: Date.now(),
+              })
+            }
+            return { address: wallet.address, success: true }
           })
 
-          // Update each wallet with raw data
-          const cacheParam = skipCache ? '?cache=false' : ''
-          wallets.forEach(async (wallet) => {
-            try {
-              const walletResponse = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
-              if (walletResponse.ok) {
-                const data = await walletResponse.json()
-                get().setWalletData(wallet.address, data)
-                
-                if (data.composition) {
-                  get().updateWallet(wallet.id, {
-                    composition: data.composition,
-                    lastUpdated: Date.now(),
-                  })
-                }
-              }
-            } catch (error) {
-              console.error(`Error updating wallet ${wallet.id}:`, error)
+          const results = await Promise.allSettled(walletUpdatePromises)
+          
+          // Log any failures but don't throw - we still have aggregate data
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              console.error(`Error updating wallet ${wallets[index].id}:`, result.reason)
             }
           })
+
+          set({ isLoading: false })
         } catch (error) {
           console.error('Error syncing all wallets:', error)
           set({
