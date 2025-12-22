@@ -487,6 +487,16 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 )}
               </button>
               
+              {/* Arrow indicator when no wallets */}
+              {wallets.length === 0 && (
+                <div className="absolute top-full right-0 mt-3 flex flex-col items-center text-[#708090] animate-bounce">
+                  <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                  <span className="font-mono text-[10px] mt-1 whitespace-nowrap">Add your wallet</span>
+                </div>
+              )}
+              
               {/* Dropdown Menu */}
               {isWalletDropdownOpen && (
                 <>

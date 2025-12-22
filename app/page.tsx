@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { Wallet, ChevronDown, Check, Plus, Trash2, ArrowRightLeft } from "lucide-react"
 import { AddWalletDialog } from "@/components/add-wallet-dialog"
+import { WelcomeModal } from "@/components/welcome-modal"
 import { PortfolioHero } from "@/components/portfolio-hero"
 import { SectionNav } from "@/components/section-nav"
 import { TokensSection } from "@/components/sections/tokens-section"
@@ -133,6 +134,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#0a0f0f]">
+      {/* Welcome Modal - Shows on first visit */}
+      <WelcomeModal />
+
       {/* Floating Swap Button - Mobile: always visible in content section, Desktop: visible except on tokens section */}
       {wallets.length > 0 && (
         <FloatingSwapButton 
