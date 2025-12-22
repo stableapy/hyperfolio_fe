@@ -31,9 +31,9 @@ export function useSwapConfig() {
     boxShadow: "none",
   }), [])
 
-  // Fee configuration (0.1% = 10 bps)
+  // Fee configuration (0.15% = 15 bps)
   const feeSetting: FeeSetting = useMemo(() => ({
-    feeAmount: 10,
+    feeAmount: 15,
     feeReceiver: "0x8A4a9A0B03E01AbE12e39e40fB14BbE625a0CF7A",
     chargeFeeBy: "currency_in" as const,
     isInBps: true,
