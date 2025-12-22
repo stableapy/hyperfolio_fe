@@ -464,14 +464,27 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
+                onClick={() => {
+                  // If no wallets, open add dialog directly
+                  if (wallets.length === 0) {
+                    setIsAddWalletOpen(true)
+                  } else {
+                    setIsWalletDropdownOpen(!isWalletDropdownOpen)
+                  }
+                }}
                 className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#00ff41]/30 bg-[#0a0f0f]/80 backdrop-blur-sm hover:border-[#00ff41]/60 transition-all"
               >
                 <Wallet className="w-4 h-4 text-[#00ff41]" />
                 <span className="font-mono text-sm text-white">
-                  {selectedWallet ? selectedWallet.name : 'All Wallets'}
+                  {wallets.length === 0 
+                    ? '+ Add Wallet' 
+                    : selectedWallet 
+                      ? selectedWallet.name 
+                      : 'All Wallets'}
                 </span>
-                <ChevronDown className={`w-4 h-4 text-[#708090] transition-transform ${isWalletDropdownOpen ? 'rotate-180' : ''}`} />
+                {wallets.length > 0 && (
+                  <ChevronDown className={`w-4 h-4 text-[#708090] transition-transform ${isWalletDropdownOpen ? 'rotate-180' : ''}`} />
+                )}
               </button>
               
               {/* Dropdown Menu */}
