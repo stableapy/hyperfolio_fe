@@ -35,6 +35,48 @@ export interface WalletComposition {
   total_value: number
 }
 
+// Token information in decoded transaction
+export interface DecodedToken {
+  address: string
+  amountRaw: string
+  priceUSD: number
+  symbol: string
+  decimals: number
+  valueUSD: number
+  amount: string
+}
+
+// Protocol information in decoded transaction
+export interface DecodedProtocol {
+  id: string
+  name: string
+  logo: string
+}
+
+// Decoded transaction details
+export interface DecodedTransaction {
+  method: string
+  action: string
+  direction: 'in' | 'out' | 'neutral'
+  confidence?: 'high' | 'medium' | 'low'
+  protocol?: DecodedProtocol
+  tokens?: DecodedToken[]
+  amounts?: {
+    amountInRaw?: string
+    amountOutRaw?: string
+  }
+  addresses?: {
+    from?: string
+    to?: string
+    spender?: string
+  }
+  metadata?: {
+    referralCode?: string
+    protocolFamily?: string
+    referrerId?: string
+  }
+}
+
 export interface Transaction {
   blockNumber: string
   blockHash: string
@@ -57,15 +99,16 @@ export interface Transaction {
   confirmations: string
   isError: string
   type: string
-  decoded: {
-    method: string
-    action: string
-    direction: string
-  }
+  decoded?: DecodedTransaction
 }
 
 export interface TransactionsResponse {
   transactions: Transaction[]
+  page?: number
+  offset?: number
+  total?: number
+  hasMore?: boolean
+  filters?: Record<string, unknown>
 }
 
 export interface NFT {

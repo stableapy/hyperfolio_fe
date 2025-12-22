@@ -20,6 +20,35 @@ export function formatTimestamp(timestamp: string): string {
  * Format USD value for display
  */
 export function formatUsdValue(value: number): string {
-  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(2)}M`
+  } else if (value >= 1000) {
+    return `$${(value / 1000).toFixed(2)}K`
+  } else if (value < 0.01 && value > 0) {
+    return '<$0.01'
+  }
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+/**
+ * Shorten an Ethereum address for display (e.g., "0x742d...5e3a")
+ */
+export function shortenAddress(address: string, chars = 4): string {
+  if (!address) return ''
+  if (address.length <= chars * 2 + 2) return address
+  return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`
+}
+
+/**
+ * Format gas used to a readable format
+ */
+export function formatGas(gasUsed: string, gasPrice: string): string {
+  const gas = parseFloat(gasUsed)
+  const price = parseFloat(gasPrice) / 1e9 // Convert to Gwei
+  const cost = (gas * price) / 1e9 // Convert to ETH
+  
+  if (cost >= 0.01) {
+    return `${cost.toFixed(4)} HYPE`
+  }
+  return `${(cost * 1000).toFixed(4)} mHYPE`
+}

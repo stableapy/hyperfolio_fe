@@ -100,10 +100,10 @@ export async function getWalletComposition(address: string): Promise<WalletCompo
 
 export async function getWalletTransactions(
   address: string,
-  limit = 50,
-  offset = 0
+  page = 1,
+  offset = 25
 ): Promise<Transaction[]> {
-  const response = await fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&limit=${limit}&offset=${offset}`)
+  const response = await fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&page=${page}&offset=${offset}`)
   return response.transactions || []
 }
 
@@ -155,9 +155,10 @@ export async function getSwapStats(address: string): Promise<SwapStats> {
 
 export async function getWalletData(address: string, skipCache = false) {
   try {
-    const [compositionRaw, transactions, nfts, positions, userData, history] = await Promise.all([
+    // NOTE: Transactions are NOT fetched here to preserve Etherscan API rate limits
+    // Transactions are lazy-loaded via /api/wallet/transactions when the History section is viewed
+    const [compositionRaw, nfts, positions, userData, history] = await Promise.all([
       fetchAPI<WalletCompositionResponse>(`/wallet/composition?address=${address}`, { skipCache }).catch(() => null),
-      fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&limit=50&offset=0`, { skipCache }).then(r => r.transactions || []).catch(() => []),
       fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(`/nfts?address=${address}`, { skipCache }).catch(() => ({ data: { nfts: [], totalNftValue: 0 }, cache: {} })),
       fetchAPI<PositionsResponse>(`/positions?address=${address}`, { skipCache }).catch(() => ({ data: { protocols: [] } })),
       fetchAPI<UserData>(`/hypercore/user/${address}`, { skipCache }).catch(() => null),
@@ -177,7 +178,7 @@ export async function getWalletData(address: string, skipCache = false) {
     return {
       compositionRaw, // Keep raw data for tokens extraction
       composition,
-      transactions,
+      transactions: [], // Empty - lazy loaded via dedicated endpoint
       nfts,
       positions,
       userData,
@@ -274,20 +275,8 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
     const baseValue = aggregateComposition.spot + aggregateComposition.perp + aggregateComposition.staking + aggregateComposition.vaults
     const totalValueWithAllAssets = baseValue + nftValue + defiValue + hypercoreValue
 
-    // Aggregate transactions (deduplicated by hash)
-    const transactionMap = new Map<string, Transaction>()
-    data.forEach((d) => {
-      if (d.data?.transactions && Array.isArray(d.data.transactions)) {
-        d.data.transactions.forEach((tx) => {
-          if (!transactionMap.has(tx.hash)) {
-            transactionMap.set(tx.hash, tx)
-          }
-        })
-      }
-    })
-    const aggregatedTransactions = Array.from(transactionMap.values()).sort(
-      (a, b) => parseInt(b.timeStamp) - parseInt(a.timeStamp)
-    )
+    // NOTE: Transactions are NOT aggregated here to preserve Etherscan API rate limits
+    // Transactions are lazy-loaded via /api/wallet/transactions when the History section is viewed
 
     // Aggregate NFTs
     const aggregatedNFTs = data.flatMap((d) => {
@@ -432,7 +421,7 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
       tokens: aggregatedSpotPositions,
       nfts: aggregatedNFTs,
       positions: aggregatedPositions,
-      transactions: aggregatedTransactions,
+      transactions: [], // Empty - lazy loaded via dedicated endpoint
       history: aggregatedHistory,
     }
   } catch (error) {
