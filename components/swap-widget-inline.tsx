@@ -2,10 +2,13 @@
 
 import React, { useState, useMemo, useEffect } from "react"
 import dynamic from "next/dynamic"
-import { useAccount, useConnect, useDisconnect, useConnectors } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useConnectors, useSwitchChain } from "wagmi"
 import { useEthersProvider, useEthersSigner } from "@/lib/wagmi/config"
 import { useKyberSwapTokenList } from "@/hooks/use-hyperevm-tokens"
 import { TerminalCard } from "./terminal-card"
+
+// HyperEVM chain ID
+const HYPEREVM_CHAIN_ID = 999
 
 // Dynamically import the KyberSwap widget to avoid SSR issues
 const KyberSwapWidget = dynamic(
@@ -60,9 +63,19 @@ export function SwapWidgetInline({
   const connectors = useConnectors()
   const { connect, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
-  const ethersProvider = useEthersProvider({ chainId: 999 })
-  const ethersSigner = useEthersSigner({ chainId: 999 })
+  const { switchChain, isPending: isSwitching } = useSwitchChain()
+  
+  // Get provider/signer for current chain (not filtered by chainId)
+  const ethersProvider = useEthersProvider()
+  const ethersSigner = useEthersSigner()
   const [isProviderReady, setIsProviderReady] = useState(false)
+  
+  // Prevent StrictMode double-render from causing AbortController issues
+  // Only render widget after component has fully mounted
+  const [hasMounted, setHasMounted] = useState(false)
+  
+  // Check if user is on the correct chain (HyperEVM)
+  const isCorrectChain = chainId === HYPEREVM_CHAIN_ID
   
   // Get HyperEVM token list with caching
   const { tokenList } = useKyberSwapTokenList()
@@ -79,6 +92,16 @@ export function SwapWidgetInline({
     }
   }
 
+  // Wait for component to fully mount before rendering widget
+  // This prevents React 18 StrictMode double-render from causing AbortController issues
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasMounted(true)
+    }, 100) // Small delay to skip StrictMode's double-invoke cycle
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
   // Check if provider and signer are ready
   useEffect(() => {
     const checkProvider = async () => {
@@ -259,13 +282,29 @@ export function SwapWidgetInline({
           </div>
         )}
         
-        {isConnected && !isProviderReady && (
+        {isConnected && !isCorrectChain && (
+          <div className="flex flex-col items-center justify-center py-4 space-y-2">
+            <div className="font-mono text-[#ffaa00] text-[10px] text-center">
+              ⚠️ Switch to HyperEVM
+            </div>
+            <button
+              type="button"
+              onClick={() => switchChain({ chainId: HYPEREVM_CHAIN_ID })}
+              disabled={isSwitching}
+              className="px-3 py-1 text-[10px] font-mono text-[#00ff41] border border-[#00ff41]/30 rounded hover:bg-[#00ff41]/10 transition-colors disabled:opacity-50"
+            >
+              {isSwitching ? "Switching..." : "Switch Network"}
+            </button>
+          </div>
+        )}
+        
+        {isConnected && isCorrectChain && (!isProviderReady || !hasMounted) && (
           <div className="flex items-center justify-center py-4">
             <div className="font-mono text-[#708090] text-[10px]">Initializing...</div>
           </div>
         )}
         
-        {isConnected && isProviderReady && ethersProvider && ethersSigner && address && (
+        {isConnected && isCorrectChain && isProviderReady && hasMounted && ethersProvider && ethersSigner && address && (
           <div className="kyberswap-widget-inline">
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {React.createElement(KyberSwapWidget as any, {

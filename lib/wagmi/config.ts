@@ -85,8 +85,11 @@ export function clientToSigner(client: Client<Transport, Chain, Account>) {
 }
 
 // Hook to get Ethers provider from Wagmi
+// Note: Don't pass chainId to useWalletClient - it returns undefined if wallet isn't on that chain
+// Instead, we get the current wallet client and the widget handles chain switching
 export function useEthersProvider({ chainId }: { chainId?: number } = {}) {
-  const { data: walletClient } = useWalletClient({ chainId })
+  // Get wallet client for current chain (not filtered by chainId)
+  const { data: walletClient } = useWalletClient()
   return useMemo(
     () => (walletClient ? clientToProvider(walletClient) : undefined),
     [walletClient]
@@ -94,8 +97,10 @@ export function useEthersProvider({ chainId }: { chainId?: number } = {}) {
 }
 
 // Hook to get Ethers signer from Wagmi
+// Note: Don't pass chainId to useWalletClient - it returns undefined if wallet isn't on that chain
 export function useEthersSigner({ chainId }: { chainId?: number } = {}) {
-  const { data: walletClient } = useWalletClient({ chainId })
+  // Get wallet client for current chain (not filtered by chainId)
+  const { data: walletClient } = useWalletClient()
   return useMemo(
     () => (walletClient ? clientToSigner(walletClient) : undefined),
     [walletClient]
