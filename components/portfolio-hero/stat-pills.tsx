@@ -58,7 +58,7 @@ export function StatPills({
           <Tooltip>
             <TooltipTrigger asChild>
               <div 
-                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border cursor-help transition-all duration-300 shrink-0 bg-[#a855f7]/10 border-[#a855f7]/20 hover:border-[#a855f7]/40"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border  transition-all duration-300 shrink-0 bg-[#a855f7]/10 border-[#a855f7]/20 hover:border-[#a855f7]/40"
               >
                 <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#a855f7]" />
                 <span className="font-mono text-[10px] sm:text-xs font-semibold text-[#a855f7]">

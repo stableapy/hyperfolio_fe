@@ -8,7 +8,7 @@ import { TerminalCard } from "@/components/ui/terminal-card"
 // Module imports
 import { useSwapConfig, useSwapWallet } from "./hooks"
 import { getWalletIcon } from "./utils"
-import { DEFAULT_TO_TOKEN } from "./constants"
+import { DEFAULT_FROM_TOKEN, DEFAULT_TO_TOKEN } from "./constants"
 import type { SwapWidgetInlineProps } from "./types"
 
 // Dynamically import the KyberSwap widget to avoid SSR issues
@@ -210,8 +210,12 @@ export function SwapWidgetInline({
               feeSetting,
               provider: ethersSigner,
               width: "100%",
-              defaultTokenIn: fromToken?.address || undefined,
-              defaultTokenOut: toToken?.address || DEFAULT_TO_TOKEN.address,
+              defaultTokenIn: fromToken?.address && fromToken.address !== '' 
+                ? fromToken.address 
+                : DEFAULT_FROM_TOKEN.address,
+              defaultTokenOut: toToken?.address && toToken.address !== ''
+                ? toToken.address
+                : DEFAULT_TO_TOKEN.address,
               chainId: chainId || 999,
               connectedAccount: {
                 address: address,

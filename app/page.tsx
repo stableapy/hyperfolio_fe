@@ -34,6 +34,14 @@ export default function Home() {
   const dataSectionRef = useRef<HTMLDivElement>(null)
   const [isDataVisible, setIsDataVisible] = useState(false)
   
+  // Handle scroll to content section
+  const handleScrollToContent = () => {
+    dataSectionRef.current?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    })
+  }
+  
   // Track if we're past the hero section (for floating swap button)
   const [isInContentSection, setIsInContentSection] = useState(false)
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false)
@@ -110,6 +118,7 @@ export default function Home() {
         isLoading={isLoading} 
         onRefresh={handleRefresh}
         onAddWallet={() => setIsAddWalletOpen(true)}
+        onScrollToContent={handleScrollToContent}
       />
 
       {/* Error display */}

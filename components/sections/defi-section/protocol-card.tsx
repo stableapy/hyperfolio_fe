@@ -21,7 +21,7 @@ export function ProtocolCard({
       {/* Protocol Header */}
       <button 
         type="button"
-        className="w-full p-2.5 sm:p-3 cursor-pointer hover:bg-[#111618] transition-colors text-left" 
+        className="w-full p-2.5 sm:p-3  hover:bg-[#111618] transition-colors text-left" 
         onClick={onToggle}
       >
         <div className="flex items-center justify-between gap-2 sm:gap-4">

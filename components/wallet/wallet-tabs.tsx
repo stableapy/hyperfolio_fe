@@ -46,7 +46,7 @@ export function WalletTabs({ wallets, onWalletChange, onAddWallet, onRemoveWalle
           onClick={() => handleWalletClick(wallet.id)}
           onMouseEnter={() => setHoveredWallet(wallet.id)}
           onMouseLeave={() => setHoveredWallet(null)}
-          className={`px-4 py-2 rounded-lg font-mono text-sm border transition-all flex items-center gap-2 relative group cursor-pointer ${
+          className={`px-4 py-2 rounded-lg font-mono text-sm border transition-all flex items-center gap-2 relative group  ${
             selectedWalletId === wallet.id
               ? "bg-[#111618] border-2"
               : "bg-[#111618] border-[#1a2225] hover:border-opacity-50"

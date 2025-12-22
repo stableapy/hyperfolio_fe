@@ -11,7 +11,7 @@ export function PositionItem({ position, showWalletIndicator }: PositionItemProp
   const isLiquidityPool = position.type === 'liquidity'
 
   return (
-    <div className="py-1.5 sm:py-2 ml-1 sm:ml-2 px-1.5 sm:px-2 -mx-1 rounded-sm border-l-2 border-transparent hover:border-[#00ff41]/50 hover:bg-[#0a0e0f]/50 transition-colors cursor-pointer">
+    <div className="py-1.5 sm:py-2 ml-1 sm:ml-2 px-1.5 sm:px-2 -mx-1 rounded-sm border-l-2 border-transparent hover:border-[#00ff41]/50 hover:bg-[#0a0e0f]/50 transition-colors ">
       {/* Horizontal layout on all screens */}
       <div className="flex items-center justify-between gap-2">
         {/* Left: Token Details */}

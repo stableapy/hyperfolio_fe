@@ -8,7 +8,7 @@ import { useKyberSwapTokenList } from "@/hooks/use-hyperevm-tokens"
 // Module imports
 import { useSwapConfig, useSwapWallet } from "./hooks"
 import { getWalletIcon } from "./utils"
-import { DEFAULT_TO_TOKEN } from "./constants"
+import { DEFAULT_FROM_TOKEN, DEFAULT_TO_TOKEN } from "./constants"
 import type { SwapWidgetModalProps } from "./types"
 
 // Dynamically import the KyberSwap widget to avoid SSR issues
@@ -52,7 +52,11 @@ export function SwapWidgetModal({
   // Debug: Log when fromToken changes
   useEffect(() => {
     console.log('SwapWidgetModal - fromToken prop:', fromToken)
-    console.log('SwapWidgetModal - defaultTokenIn will be:', fromToken?.address || undefined)
+    console.log('SwapWidgetModal - defaultTokenIn will be:', 
+      fromToken?.address && fromToken.address !== '' 
+        ? fromToken.address 
+        : DEFAULT_FROM_TOKEN.address
+    )
   }, [fromToken])
 
   return (
@@ -194,8 +198,12 @@ export function SwapWidgetModal({
                 feeSetting,
                 provider: ethersSigner,
                 width: "100%",
-                defaultTokenIn: fromToken?.address || undefined,
-                defaultTokenOut: toToken?.address || DEFAULT_TO_TOKEN.address,
+                defaultTokenIn: fromToken?.address && fromToken.address !== '' 
+                  ? fromToken.address 
+                  : DEFAULT_FROM_TOKEN.address,
+                defaultTokenOut: toToken?.address && toToken.address !== ''
+                  ? toToken.address
+                  : DEFAULT_TO_TOKEN.address,
                 chainId: chainId || 999,
                 connectedAccount: {
                   address: address,

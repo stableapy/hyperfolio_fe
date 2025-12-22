@@ -15,7 +15,7 @@ export function NFTListItem({ nft }: NFTListItemProps) {
   }
 
   return (
-    <div className="p-2.5 sm:p-4 hover:bg-[#111618] transition-colors cursor-pointer group">
+    <div className="p-2.5 sm:p-4 hover:bg-[#111618] transition-colors  group">
       {/* Main Row */}
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Info */}

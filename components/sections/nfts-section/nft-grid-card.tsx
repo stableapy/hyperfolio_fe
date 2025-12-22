@@ -16,7 +16,7 @@ export function NFTGridCard({ nft }: NFTGridCardProps) {
   }
 
   return (
-    <TerminalCard className="group cursor-pointer hover:border-[#00ff41] transition-all">
+    <TerminalCard className="group  hover:border-[#00ff41] transition-all">
       <div className="relative aspect-square overflow-hidden bg-[#0a0e0f]">
         <img
           src={nft.image || "/placeholder.svg"}

@@ -6,6 +6,7 @@ export interface PortfolioHeroProps {
   isLoading?: boolean
   onRefresh?: () => void
   onAddWallet?: () => void
+  onScrollToContent?: () => void
 }
 
 export interface HistorySnapshot {

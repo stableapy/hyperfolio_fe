@@ -32,7 +32,7 @@ export function TokenRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0a0e0f] cursor-help"
+                    className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0a0e0f] "
                     style={{ backgroundColor: token.walletColor }}
                   />
                 </TooltipTrigger>

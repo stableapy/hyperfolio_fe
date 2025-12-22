@@ -79,7 +79,7 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
             {filteredTokens.map((token) => (
               <div
                 key={token.id}
-                className="p-3 sm:p-4 hover:bg-[#111618] transition-colors cursor-pointer group"
+                className="p-3 sm:p-4 hover:bg-[#111618] transition-colors  group"
               >
                 {/* Mobile Layout */}
                 <TokenRowMobile 

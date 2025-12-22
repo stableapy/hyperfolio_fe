@@ -17,7 +17,7 @@ import { usePortfolioHistory, usePortfolioBreakdown, useApyData } from "./hooks"
 import { formatValue, calculateWalletTotalValue } from "./utils"
 import type { PortfolioHeroProps } from "./types"
 
-export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefresh, onAddWallet }: PortfolioHeroProps) {
+export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefresh, onAddWallet, onScrollToContent }: PortfolioHeroProps) {
   const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet } = useWalletStore()
   
   // Local state
@@ -29,7 +29,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
   const [hasScrolled, setHasScrolled] = useState(false)
   
   // Custom hooks
-  const { portfolioHistory, isLoadingHistory, chartData, getModalChartData } = usePortfolioHistory({
+  const { isLoadingHistory, chartData, getModalChartData } = usePortfolioHistory({
     selectedWalletId,
     wallets,
   })
@@ -57,16 +57,15 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
   
-  // Delay chart display for smoother experience
+  // Show chart as soon as chart data is available (no artificial delay)
   useEffect(() => {
-    if (!isLoading && !isLoadingHistory && portfolioHistory.length > 0) {
-      const timer = setTimeout(() => setShowChart(true), 300)
-      return () => clearTimeout(timer)
-    }
-    if (isLoading) {
+    // Chart only depends on history data, not main portfolio loading state
+    if (!isLoadingHistory && chartData.length > 0) {
+      setShowChart(true)
+    } else if (isLoadingHistory) {
       setShowChart(false)
     }
-  }, [isLoading, isLoadingHistory, portfolioHistory.length])
+  }, [isLoadingHistory, chartData.length])
 
   // Get display data from selected wallet or aggregate
   const displayData = useMemo(() => {
@@ -196,16 +195,21 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
             />
           </div>
         </div>
-        
-        {/* Scroll indicator - Visible on all screens, fades out when scrolling */}
-        <div className={`relative z-40 flex pb-3 sm:pb-6 md:pb-8 justify-center transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex flex-col items-center gap-1.5 text-[#708090] animate-bounce">
-            <span className="font-mono text-[10px] sm:hidden uppercase tracking-wider">Scroll</span>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        </div>
+      </div>
+      
+      {/* Scroll indicator - Positioned absolutely to avoid chart overlap */}
+      <div className={`absolute bottom-3 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <button
+          type="button"
+          onClick={onScrollToContent}
+          className="relative flex flex-col items-center gap-1.5 text-[#708090] animate-bounce hover:text-[#00ff41] transition-colors p-8 -m-8"
+          aria-label="Scroll to content"
+        >
+          <span className="font-mono text-[10px] sm:hidden uppercase tracking-wider">Scroll</span>
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </button>
       </div>
       
       {/* Expand Chart Button - positioned above the chart */}

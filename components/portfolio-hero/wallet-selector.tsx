@@ -86,9 +86,9 @@ export function WalletSelector({
         )}
       </button>
       
-      {/* Arrow indicator when no wallets */}
+      {/* Arrow indicator when no wallets - left on mobile, right on desktop */}
       {wallets.length === 0 && (
-        <div className="absolute top-full right-0 mt-3 flex flex-col items-center text-[#708090] animate-bounce">
+        <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-3 flex flex-col items-center text-[#708090] animate-bounce">
           <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
