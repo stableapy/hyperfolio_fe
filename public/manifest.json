@@ -1,0 +1,26 @@
+{
+  "name": "Hyperfolio - DeFi Portfolio Tracker",
+  "short_name": "Hyperfolio",
+  "description": "Track your HyperEVM portfolio across multiple wallets",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e0f",
+  "theme_color": "#00ff41",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "en"
+}
+
