@@ -467,7 +467,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 onClick={() => {
                   // If no wallets, open add dialog directly
                   if (wallets.length === 0) {
-                    setIsAddWalletOpen(true)
+                    onAddWallet?.()
                   } else {
                     setIsWalletDropdownOpen(!isWalletDropdownOpen)
                   }
