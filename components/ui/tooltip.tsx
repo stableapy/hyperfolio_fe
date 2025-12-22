@@ -18,12 +18,78 @@ function TooltipProvider({
   )
 }
 
+/**
+ * Touch-friendly Tooltip that supports both hover (desktop) and tap (mobile)
+ * - On desktop: works with hover as normal
+ * - On mobile: opens on tap, closes on tap outside or tap again
+ */
 function Tooltip({
+  children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  const [open, setOpen] = React.useState(false)
+  const triggerRef = React.useRef<HTMLElement>(null)
+  
+  // Close tooltip when clicking/touching outside on mobile
+  React.useEffect(() => {
+    if (!open) return
+    
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      // Check if it's a touch device
+      if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return
+      
+      // Don't close if clicking the trigger itself
+      if (triggerRef.current?.contains(event.target as Node)) return
+      
+      setOpen(false)
+    }
+    
+    // Use a small delay to avoid immediate close on the same tap
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('touchstart', handleClickOutside)
+      document.addEventListener('click', handleClickOutside)
+    }, 100)
+    
+    return () => {
+      clearTimeout(timeoutId)
+      document.removeEventListener('touchstart', handleClickOutside)
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [open])
+  
   return (
     <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+      <TooltipPrimitive.Root 
+        data-slot="tooltip" 
+        open={open}
+        onOpenChange={setOpen}
+        {...props}
+      >
+        {React.Children.map(children, (child) => {
+          // Add touch handler to TooltipTrigger
+          if (React.isValidElement(child) && child.type === TooltipTrigger) {
+            return React.cloneElement(child as React.ReactElement<{ 
+              onClick?: (e: React.MouseEvent) => void
+              ref?: React.Ref<HTMLElement>
+            }>, {
+              ref: triggerRef,
+              onClick: (e: React.MouseEvent) => {
+                // Toggle on touch/click (for mobile)
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                  e.preventDefault()
+                  setOpen(!open)
+                }
+                // Call original onClick if present
+                const originalOnClick = (child as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>).props?.onClick
+                if (typeof originalOnClick === 'function') {
+                  originalOnClick(e)
+                }
+              },
+            })
+          }
+          return child
+        })}
+      </TooltipPrimitive.Root>
     </TooltipProvider>
   )
 }

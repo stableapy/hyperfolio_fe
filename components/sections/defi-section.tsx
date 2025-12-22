@@ -422,7 +422,7 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
                                     <TooltipProvider>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <span className="px-1 py-0.5 bg-[#00d9ff]/10 border border-[#00d9ff]/20 rounded">
+                                          <span className="px-1 py-0.5 bg-[#00d9ff]/10 border border-[#00d9ff]/20 rounded flex items-center">
                                             <span className="font-mono text-[10px] text-[#00d9ff]">
                                               +${position.rewards >= 100 ? `${(position.rewards).toFixed(0)}` : position.rewards.toFixed(2)}
                                             </span>
