@@ -12,7 +12,7 @@ COPY package.json package-lock.json* pnpm-lock.yaml* ./
 # Install dependencies based on the preferred package manager
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm i --frozen-lockfile; \
+    corepack enable pnpm && pnpm i; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   else \
