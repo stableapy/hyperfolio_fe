@@ -16,9 +16,9 @@ const SOCIAL_LINKS = [
 
 // Quick links
 const QUICK_LINKS = [
-  { name: "API Docs", href: "https://api.hyperfolio.xyz/docs" },
-  { name: "Hyperliquid", href: "https://hyperliquid.xyz" },
-  { name: "Explorer", href: "https://hyperevmscan.io" },
+  { name: "API Docs", href: "/api-docs", external: false },
+  { name: "Hyperliquid", href: "https://hyperliquid.xyz", external: true },
+  { name: "Explorer", href: "https://hyperevmscan.io", external: true },
 ]
 
 /**
@@ -49,12 +49,13 @@ export function SeoFooter() {
               <span key={link.name} className="flex items-center gap-4">
                 <a
                   href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   className="text-[#708090] hover:text-[#00ff41] font-mono text-xs transition-colors inline-flex items-center gap-1 group"
                 >
                   {link.name}
-                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {link.external && (
+                    <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </a>
                 {index < QUICK_LINKS.length - 1 && (
                   <span className="text-[#1a2225]">·</span>
