@@ -1,0 +1,96 @@
+"use client"
+
+import { useMemo } from "react"
+import { useWalletStore } from "@/lib/store/wallet-store"
+import { transformTokens, groupTokensBySymbol } from "@/lib/utils/data-transformers"
+import { filterTokens, sortTokens, calculateTotals } from "../utils"
+import type { Token } from "../types"
+import type { Wallet } from "@/lib/types/api"
+
+interface UseTokensDataOptions {
+  searchQuery: string
+  isGrouped: boolean
+}
+
+interface UseTokensDataReturn {
+  /** Filtered and sorted tokens ready for display */
+  filteredTokens: Token[]
+  /** Total value and count of filtered tokens */
+  totals: { totalValue: number; tokenCount: number }
+  /** Whether we have any token data loaded */
+  hasData: boolean
+  /** List of wallets from the store */
+  wallets: Wallet[]
+  /** Currently selected wallet ID */
+  selectedWalletId: string | null
+}
+
+/**
+ * Hook to manage token data fetching, transformation, filtering and sorting
+ * Centralizes all token data logic for the TokensSection component
+ */
+export function useTokensData({ 
+  searchQuery, 
+  isGrouped 
+}: UseTokensDataOptions): UseTokensDataReturn {
+  const { wallets, walletData, selectedWalletId } = useWalletStore()
+
+  // Get tokens from selected wallet or all wallets
+  const rawTokens = useMemo(() => {
+    if (wallets.length === 0) return []
+    
+    if (selectedWalletId) {
+      const wallet = wallets.find(w => w.id === selectedWalletId)
+      if (wallet && walletData[wallet.address]?.composition?.data?.tokens) {
+        return transformTokens(
+          walletData[wallet.address].composition.data.tokens,
+          { address: wallet.address, name: wallet.name, color: wallet.color }
+        )
+      }
+      return []
+    } else {
+      // Aggregate tokens from all wallets with wallet info
+      const allTokens: Token[] = []
+      wallets.forEach(wallet => {
+        if (walletData[wallet.address]?.composition?.data?.tokens) {
+          allTokens.push(...transformTokens(
+            walletData[wallet.address].composition.data.tokens,
+            { address: wallet.address, name: wallet.name, color: wallet.color }
+          ))
+        }
+      })
+      return allTokens
+    }
+  }, [wallets, walletData, selectedWalletId])
+  
+  // Check if we have any data loaded
+  const hasData = rawTokens.length > 0
+
+  // Apply grouping if enabled and in multi-wallet view
+  const groupedTokens = useMemo(() => {
+    if (!selectedWalletId && isGrouped && rawTokens.length > 0) {
+      return groupTokensBySymbol(rawTokens)
+    }
+    return rawTokens
+  }, [rawTokens, isGrouped, selectedWalletId])
+
+  // Filter and sort tokens
+  const filteredTokens = useMemo(() => {
+    const filtered = filterTokens(groupedTokens, searchQuery)
+    return sortTokens(filtered)
+  }, [groupedTokens, searchQuery])
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    return calculateTotals(filteredTokens)
+  }, [filteredTokens])
+
+  return {
+    filteredTokens,
+    totals,
+    hasData,
+    wallets,
+    selectedWalletId,
+  }
+}
+
