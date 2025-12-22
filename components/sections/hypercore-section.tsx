@@ -5,6 +5,28 @@ import { DollarSign, TrendingUp, Lock, Vault } from "lucide-react"
 import { TerminalCard, TerminalContent } from "../terminal-card"
 import { useWalletStore } from "@/lib/store/wallet-store"
 
+// Token image component with fallback for broken/missing images
+function TokenImage({ src, symbol, className }: { src?: string | null; symbol: string; className?: string }) {
+  const [hasError, setHasError] = useState(false)
+  
+  if (!src || hasError) {
+    return (
+      <div className={`bg-[#1a2225] flex items-center justify-center ${className || "w-7 h-7 rounded-full flex-shrink-0"}`}>
+        <span className="font-mono text-xs text-[#708090]">{symbol?.charAt(0) || "?"}</span>
+      </div>
+    )
+  }
+  
+  return (
+    <img 
+      src={src} 
+      alt={symbol} 
+      className={className || "w-7 h-7 rounded-full flex-shrink-0"} 
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
 interface SpotBalance {
   coin: string
   token: number
@@ -319,9 +341,7 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
                       <div className="flex items-center justify-between gap-4 text-xs">
                         {/* Left: Token Info */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {balance.image_url && (
-                            <img src={balance.image_url} alt={balance.symbol} className="w-7 h-7 rounded-full flex-shrink-0" />
-                          )}
+                          <TokenImage src={balance.image_url} symbol={balance.symbol} className="w-7 h-7 rounded-full flex-shrink-0" />
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <span className="font-mono text-sm text-[#708090]">&gt;</span>
                             <div className="flex flex-col min-w-0">

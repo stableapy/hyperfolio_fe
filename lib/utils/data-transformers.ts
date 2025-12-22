@@ -97,7 +97,7 @@ export function transformTokens(
     value: parseFloat(token.usdValue || '0'),
     price: parseFloat(token.usdPrice || '0'),
     change24h: 0, // API doesn't provide this yet
-    logo: token.image_url || '/placeholder.svg',
+    logo: token.image_url || '',
     walletAddress: walletInfo?.address,
     walletName: walletInfo?.name,
     walletColor: walletInfo?.color,
@@ -220,7 +220,7 @@ export function transformDeFiPositions(
           current: positionValue,
           apy,
           rewards,
-          logo: protocol.logo || '/placeholder.svg',
+          logo: protocol.logo || '',
           positionDetails: position.details, // Keep full details for display
           protocolUrl: protocol.url,
           estimatedYield,
@@ -315,7 +315,7 @@ export function transformNFTs(nftsData: any): NFTDisplay[] {
     id: `${nft.address}-${nft.token_id}`,
     name: nft.name,
     collection: nft.collection_name,
-    image: nft.image_url || '/placeholder.svg',
+    image: nft.image_url || '',
     floorPrice: nft.floor_price || 0,
     usdPrice: parseFloat(nft.usdPrice || nft.usdValue || '0'),
     tokenId: nft.token_id,
