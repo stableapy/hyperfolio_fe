@@ -66,3 +66,38 @@ WALLET_SUPPORTED_CHAINS=1,8453,42161
 - Use different API keys for development and production
 - Rotate keys regularly
 
+## Coolify Deployment Notes
+
+### After Frontend Redeploy
+
+1. **Remove orphan containers** - Old containers with deployment IDs may persist:
+   ```bash
+   docker ps -a | grep eww8w8wgsw8wsgsg8gg8c840 | grep -v "Up" | awk '{print $1}' | xargs -r docker rm
+   ```
+
+2. **Reconnect RPC nodes to coolify network** (if disconnected):
+   ```bash
+   docker network connect coolify hyperliquid-node
+   docker network connect coolify hyperliquid-archive
+   ```
+
+3. **Restart Traefik** if routing issues persist:
+   ```bash
+   docker restart coolify-proxy
+   ```
+
+### SSL/Cloudflare Configuration
+
+For LetsEncrypt certificate renewal:
+- In Cloudflare, set `api.hyperfolio.xyz` to **DNS Only** (gray cloud) temporarily
+- This allows LetsEncrypt to validate the certificate directly
+- After renewal, you can re-enable the orange cloud (Proxied)
+
+### Container Naming
+
+Enable "Consistent Container Names" in Coolify for both frontend and backend:
+- Frontend: `eww8w8wgsw8wsgsg8gg8c840` (project UUID)
+- Backend: `hyperfolio-api-s8ck4kwg0ksg848gs4cwog48`
+
+This prevents duplicate router conflicts in Traefik when redeploying
+
