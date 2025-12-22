@@ -3,8 +3,9 @@
 import React, { useState, useMemo, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useAccount, useConnect } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useConnectors } from "wagmi"
 import { useEthersProvider, useEthersSigner } from "@/lib/wagmi/config"
+import { useKyberSwapTokenList } from "@/hooks/use-hyperevm-tokens"
 
 // Dynamically import the KyberSwap widget to avoid SSR issues
 const KyberSwapWidget = dynamic(
@@ -18,6 +19,25 @@ const KyberSwapWidget = dynamic(
     ssr: false,
   }
 )
+
+// Default destination token: USDC on HyperEVM
+const DEFAULT_TO_TOKEN = {
+  address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+  symbol: "USDC",
+  chainId: 999,
+}
+
+// Get wallet icon based on connector name
+function getWalletIcon(name: string): string {
+  const lowerName = name.toLowerCase()
+  if (lowerName.includes("rabby")) return "🐰"
+  if (lowerName.includes("metamask")) return "🦊"
+  if (lowerName.includes("coinbase")) return "🔵"
+  if (lowerName.includes("walletconnect")) return "🔗"
+  if (lowerName.includes("trust")) return "🛡️"
+  if (lowerName.includes("rainbow")) return "🌈"
+  return "💼"
+}
 
 interface SwapWidgetModalProps {
   open: boolean
@@ -40,12 +60,28 @@ export function SwapWidgetModal({
   fromToken,
   toToken,
 }: SwapWidgetModalProps) {
-  const { address, isConnected, chainId } = useAccount()
-  const { connectors, connect } = useConnect()
-  // Use chainId from account or default to 999 (HyperEVM)
+  const { address, isConnected, chainId, connector: activeConnector } = useAccount()
+  const connectors = useConnectors()
+  const { connect, isPending: isConnecting } = useConnect()
+  const { disconnect } = useDisconnect()
   const ethersProvider = useEthersProvider({ chainId: 999 })
   const ethersSigner = useEthersSigner({ chainId: 999 })
   const [isProviderReady, setIsProviderReady] = useState(false)
+  
+  // Get HyperEVM token list with caching
+  const { tokenList } = useKyberSwapTokenList()
+
+  // Get the injected connector (Rabby, MetaMask, etc.)
+  const injectedConnector = useMemo(() => {
+    return connectors.find((c) => c.type === 'injected' || c.id === 'injected')
+  }, [connectors])
+
+  // Handle connect - directly use injected wallet
+  const handleConnect = () => {
+    if (injectedConnector) {
+      connect({ connector: injectedConnector })
+    }
+  }
 
   // Debug: Log when fromToken changes
   useEffect(() => {
@@ -53,25 +89,12 @@ export function SwapWidgetModal({
     console.log('SwapWidgetModal - defaultTokenIn will be:', fromToken?.address || undefined)
   }, [fromToken])
 
-  // Handle wallet connection when modal opens
-  useEffect(() => {
-    if (open && !isConnected && connectors.length > 0) {
-      // Try to connect with the first available connector (usually injected/MetaMask)
-      const injectedConnector = connectors.find((c) => c.name === "MetaMask" || c.name === "Injected")
-      if (injectedConnector) {
-        connect({ connector: injectedConnector })
-      }
-    }
-  }, [open, isConnected, connectors, connect])
-
   // Check if provider and signer are ready
   useEffect(() => {
     const checkProvider = async () => {
       if (ethersProvider && ethersSigner) {
         try {
-          // Ensure provider is initialized by checking network
           await ethersProvider.getNetwork()
-          // Ensure signer can get address
           await ethersSigner.getAddress()
           setIsProviderReady(true)
         } catch (error) {
@@ -86,29 +109,29 @@ export function SwapWidgetModal({
     checkProvider()
   }, [ethersProvider, ethersSigner])
 
-  // KyberSwap Widget theme configuration to match portfolio design
+  // KyberSwap Widget theme - matching Hyperfolio design system
   const theme = useMemo(() => ({
+    // Background colors - matching terminal-card
     primary: "#0a0e0f",
     secondary: "#111618",
     dialog: "#0a0e0f",
-    borderRadius: "12px",
+    // Rounded corners
+    borderRadius: "8px",
     buttonRadius: "8px",
+    // Borders - matching terminal-card
     stroke: "#1a2225",
     interactive: "#1a2225",
+    // Accent color - Hyperfolio green
     accent: "#00ff41",
     success: "#00ff41",
     warning: "#ffaa00",
     error: "#ff4444",
+    // Text colors
     text: "#ffffff",
     subText: "#708090",
-    fontFamily: "monospace",
-    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-    // Make fonts smaller
-    fontSize: {
-      large: "14px",
-      medium: "12px",
-      small: "11px",
-    },
+    // Typography - Geist Mono
+    fontFamily: "'Geist Mono', 'SF Mono', 'Fira Code', monospace",
+    boxShadow: "none",
   }), [])
 
   // Fee configuration (0.1% = 10 bps)
@@ -121,69 +144,103 @@ export function SwapWidgetModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[700px] overflow-hidden p-0 bg-[#0a0e0f] border-[#1a2225]">
-        <DialogHeader className="px-6 pt-4 pb-3 border-b border-[#1a2225]">
-          <DialogTitle className="font-mono text-[#00ff41] text-base">
-            SWAP TOKENS
-            {fromToken && (
-              <span className="ml-2 text-xs text-[#708090]">
-                (from {fromToken.symbol})
-              </span>
-            )}
-          </DialogTitle>
+      <DialogContent className="w-[95vw] max-w-md lg:max-w-lg h-[90vh] sm:h-[750px] lg:h-[800px] p-0 bg-[#0a0e0f] border-[#1a2225] flex flex-col">
+        <DialogHeader className="px-4 sm:px-6 pt-3 sm:pt-4 pb-2 sm:pb-3 border-b border-[#1a2225] flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="font-mono text-[#00ff41] text-sm sm:text-base">
+              SWAP TOKENS
+              {fromToken && (
+                <span className="ml-2 text-[10px] sm:text-xs text-[#708090]">
+                  (from {fromToken.symbol})
+                </span>
+              )}
+            </DialogTitle>
+          </div>
+          
+          {/* Connected wallet info with disconnect button */}
           {isConnected && address && (
-            <div className="mt-1 font-mono text-xs text-[#708090]">
-              Connected: {address.slice(0, 6)}...{address.slice(-4)}
+            <div className="mt-2 flex items-center justify-between gap-2 sm:gap-3 p-1.5 sm:p-2 bg-[#111618] rounded-lg border border-[#1a2225]">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-sm sm:text-base">{activeConnector ? getWalletIcon(activeConnector.name) : "💼"}</span>
+                <div className="font-mono text-[10px] sm:text-xs">
+                  <span className="text-[#00ff41]">{address.slice(0, 6)}...{address.slice(-4)}</span>
+                  {activeConnector && (
+                    <span className="text-[#708090] ml-1 sm:ml-2 hidden sm:inline">via {activeConnector.name}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => disconnect()}
+                className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-mono text-[#ff4444] hover:bg-[#ff4444]/10 rounded transition-colors border border-transparent hover:border-[#ff4444]/30"
+              >
+                Disconnect
+              </button>
             </div>
           )}
         </DialogHeader>
         
-        <div className="h-[calc(700px-65px)] px-4 py-3 overflow-hidden">
+        <div className="flex-1 px-3 sm:px-4 py-2 sm:py-3 pb-6 overflow-y-auto min-h-0">
           <style jsx global>{`
             .kyberswap-widget-container {
-              height: 100%;
+              min-height: 600px;
+              padding-bottom: 16px;
             }
             .kyberswap-widget-container * {
-              scrollbar-width: none !important;
-              -ms-overflow-style: none !important;
+              scrollbar-width: thin !important;
+              scrollbar-color: #1a2225 transparent !important;
             }
             .kyberswap-widget-container *::-webkit-scrollbar {
-              display: none !important;
+              width: 4px !important;
+            }
+            .kyberswap-widget-container *::-webkit-scrollbar-track {
+              background: transparent !important;
+            }
+            .kyberswap-widget-container *::-webkit-scrollbar-thumb {
+              background: #1a2225 !important;
+              border-radius: 2px !important;
             }
           `}</style>
+          
           {!isConnected && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="flex flex-col items-center justify-center py-12 space-y-6">
               <div className="font-mono text-[#708090] text-sm text-center max-w-md">
-                {connectors.length === 0 ? (
+                {!injectedConnector ? (
                   <>
-                    No wallet extension detected. Please install MetaMask or another Web3 wallet.
-                    <br />
-                    <a
-                      href="https://metamask.io/download/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#00ff41] hover:underline mt-2 inline-block"
-                    >
-                      Install MetaMask →
-                    </a>
+                    No wallet extension detected. Please install a Web3 wallet.
+                    <div className="flex flex-col gap-2 mt-4">
+                      <a
+                        href="https://rabby.io/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#00ff41] hover:underline flex items-center justify-center gap-2"
+                      >
+                        🐰 Install Rabby Wallet →
+                      </a>
+                      <a
+                        href="https://metamask.io/download/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#00ff41] hover:underline flex items-center justify-center gap-2"
+                      >
+                        🦊 Install MetaMask →
+                      </a>
+                    </div>
                   </>
                 ) : (
-                  "Please connect your wallet to use the swap widget"
+                  "Connect your wallet to swap tokens"
                 )}
               </div>
-              {connectors.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {connectors.map((connector) => (
-                    <button
-                      key={connector.uid}
-                      type="button"
-                      onClick={() => connect({ connector })}
-                      className="px-4 py-2 bg-[#111618] border border-[#1a2225] rounded-lg font-mono text-sm text-[#00ff41] hover:border-[#00ff41] transition-colors"
-                    >
-                      Connect {connector.name}
-                    </button>
-                  ))}
-                </div>
+              
+              {injectedConnector && (
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  disabled={isConnecting}
+                  className="px-6 py-3 bg-[#00ff41] text-[#0a0e0f] font-mono text-sm font-medium rounded-lg hover:bg-[#00ff41]/90 transition-colors disabled:opacity-50"
+                >
+                  {isConnecting ? "Connecting..." : "Connect Wallet"}
+                </button>
               )}
             </div>
           )}
@@ -193,21 +250,22 @@ export function SwapWidgetModal({
             </div>
           )}
           {isConnected && isProviderReady && ethersProvider && ethersSigner && address && (
-            <div className="kyberswap-widget-container flex justify-center h-full">
+            <div className="kyberswap-widget-container flex justify-center">
               {/* KyberSwap widget type definitions are incomplete, using createElement with any cast */}
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {React.createElement(KyberSwapWidget as any, {
                 key: `swap-widget-${fromToken?.address || 'default'}-${open}`, // Force re-render when token changes
                 client: "Hyperfolio",
                 theme,
-                tokenList: [],
+                title: <></>, // Hide the default "Swap" title
+                tokenList: tokenList, // HyperEVM tokens from HyperSwap Labs
                 enableRoute: true,
                 enableDexes: "kyberswap-elastic,uniswapv3,uniswap",
                 feeSetting,
                 provider: ethersSigner,
-                width: 700,
+                width: "100%",
                 defaultTokenIn: fromToken?.address || undefined,
-                defaultTokenOut: toToken?.address || undefined,
+                defaultTokenOut: toToken?.address || DEFAULT_TO_TOKEN.address,
                 chainId: chainId || 999,
                 connectedAccount: {
                   address: address,

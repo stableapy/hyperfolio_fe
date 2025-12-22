@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Search, Layers, Grid3x3, ArrowRightLeft } from "lucide-react"
-import { TerminalCard } from "../terminal-card"
+import { TerminalCard, TerminalContent } from "../terminal-card"
 import { SwapWidgetInline } from "../swap-widget-inline"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformTokens, groupTokensBySymbol } from "@/lib/utils/data-transformers"
@@ -147,11 +147,52 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
   // Show skeleton when loading and no data yet
   const showSkeleton = isLoading && !hasData
 
+  // Calculate totals
+  const totals = useMemo(() => {
+    const totalValue = filteredTokens.reduce((sum, t) => sum + t.value, 0)
+    const tokenCount = filteredTokens.length
+    return { totalValue, tokenCount }
+  }, [filteredTokens])
+
   return (
-    <div className="flex gap-6">
-      {/* Left: Token List */}
-      <div className="flex-1 min-w-0 space-y-4">
-        <div className="flex items-center gap-4 mb-6">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        {/* Left: Token List */}
+        <div className="flex-1 min-w-0 space-y-3 sm:space-y-4 pb-20 lg:pb-0">
+        
+        {/* Summary Card */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <TerminalCard>
+            <TerminalContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="font-mono text-[10px] sm:text-xs text-[#708090]">VALUE</div>
+              </div>
+              {showSkeleton ? (
+                <div className="h-5 sm:h-7 w-20 sm:w-28 bg-[#1a2225] rounded animate-pulse" />
+              ) : (
+                <div className="font-mono text-base sm:text-xl text-[#00ff41] font-semibold">
+                  ${totals.totalValue >= 1000 ? `${(totals.totalValue / 1000).toFixed(1)}K` : totals.totalValue.toFixed(2)}
+                </div>
+              )}
+            </TerminalContent>
+          </TerminalCard>
+          
+          <TerminalCard>
+            <TerminalContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="font-mono text-[10px] sm:text-xs text-[#708090]">COUNT</div>
+              </div>
+              {showSkeleton ? (
+                <div className="h-5 sm:h-7 w-10 sm:w-16 bg-[#1a2225] rounded animate-pulse" />
+              ) : (
+                <div className="font-mono text-base sm:text-xl text-white font-semibold">
+                  {totals.tokenCount}
+                </div>
+              )}
+            </TerminalContent>
+          </TerminalCard>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#708090]" />
             <input
@@ -159,7 +200,7 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
               placeholder="Search tokens..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#111618] border border-[#1a2225] rounded-lg font-mono text-sm text-[#00ff41] placeholder:text-[#708090] focus:outline-none focus:border-[#00ff41] transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 sm:py-2 bg-[#111618] border border-[#1a2225] rounded-lg font-mono text-sm text-[#00ff41] placeholder:text-[#708090] focus:outline-none focus:border-[#00ff41] transition-colors"
             />
           </div>
 
@@ -171,14 +212,14 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
                   <button
                     type="button"
                     onClick={() => setIsGrouped(!isGrouped)}
-                    className={`px-4 py-2 bg-[#111618] border rounded-lg font-mono text-sm transition-colors flex items-center gap-2 ${
+                    className={`px-3 sm:px-4 py-2.5 sm:py-2 bg-[#111618] border rounded-lg font-mono text-sm transition-colors flex items-center justify-center gap-2 ${
                       isGrouped 
                         ? "border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41]/10" 
                         : "border-[#1a2225] text-[#708090] hover:border-[#708090]"
                     }`}
                   >
                     {isGrouped ? <Layers className="w-4 h-4" /> : <Grid3x3 className="w-4 h-4" />}
-                    {isGrouped ? "Grouped" : "Ungrouped"}
+                    <span className="sm:inline">{isGrouped ? "Grouped" : "Ungrouped"}</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-[#0a0e0f] border border-[#1a2225] p-2">
@@ -197,19 +238,38 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
             {showSkeleton && (
               <>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="p-4 animate-pulse">
-                    <div className="flex items-center justify-between gap-4">
+                  <div key={i} className="p-3 sm:p-4 animate-pulse">
+                    {/* Mobile skeleton */}
+                    <div className="flex sm:hidden items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#1a2225]" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-14 bg-[#1a2225] rounded" />
+                          <div className="h-4 w-10 bg-[#1a2225] rounded" />
+                        </div>
+                        <div className="h-3 w-24 bg-[#1a2225] rounded" />
+                        <div className="h-2.5 w-20 bg-[#1a2225] rounded" />
+                      </div>
+                      <div className="h-5 w-16 bg-[#1a2225] rounded" />
+                    </div>
+                    {/* Desktop skeleton */}
+                    <div className="hidden sm:flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-7 h-7 rounded-full bg-[#1a2225]" />
-                        <div className="flex flex-col gap-1">
-                          <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                        <div className="w-10 h-10 rounded-full bg-[#1a2225]" />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-14 bg-[#1a2225] rounded" />
+                            <div className="h-5 w-16 bg-[#1a2225] rounded" />
+                          </div>
                           <div className="h-3 w-24 bg-[#1a2225] rounded" />
                         </div>
                       </div>
+                      <div className="hidden md:block">
+                        <div className="h-3 w-28 bg-[#1a2225] rounded" />
+                      </div>
                       <div className="flex items-center gap-4">
-                        <div className="h-4 w-20 bg-[#1a2225] rounded" />
-                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
-                        <div className="h-4 w-20 bg-[#1a2225] rounded" />
+                        <div className="h-5 w-20 bg-[#1a2225] rounded" />
+                        <div className="hidden lg:block h-8 w-20 bg-[#1a2225] rounded-lg" />
                       </div>
                     </div>
                   </div>
@@ -221,25 +281,58 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
             {filteredTokens.map((token) => (
               <div
                 key={token.id}
-                className="p-4 hover:bg-[#111618] transition-colors cursor-pointer group"
+                className="p-3 sm:p-4 hover:bg-[#111618] transition-colors cursor-pointer group"
               >
-                {/* Main Row */}
-                <div className="flex items-center justify-between gap-4 text-xs">
-                  {/* Left: Token Info */}
+                {/* Mobile Layout (< sm) - Compact horizontal with value on right */}
+                <div className="flex sm:hidden items-center gap-3">
+                  {/* Token Icon */}
+                  <div className="relative">
+                    <TokenImage src={token.logo} symbol={token.symbol} className="w-10 h-10 rounded-full flex-shrink-0" />
+                    {/* Wallet indicator dot */}
+                    {!selectedWalletId && !isGrouped && token.walletColor && (
+                      <div
+                        className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0a0e0f]"
+                        style={{ backgroundColor: token.walletColor }}
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Token Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-sm text-[#00ff41] font-bold truncate">{token.symbol}</span>
+                      <span className="font-mono text-[10px] text-[#708090] bg-[#1a2225] px-1.5 py-0.5 rounded">
+                        ${token.price < 0.01 ? token.price.toFixed(4) : token.price.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[11px] text-[#708090] truncate">{token.name}</div>
+                    <div className="font-mono text-[10px] text-[#556070] mt-0.5">
+                      {token.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {token.symbol}
+                    </div>
+                  </div>
+                  
+                  {/* Value - Right aligned */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-mono text-sm text-[#00ff41] font-bold">
+                      ${token.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop Layout (>= sm) - Clean horizontal with badges */}
+                <div className="hidden sm:flex items-center justify-between gap-4">
+                  {/* Left: Token Info with icon */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <TokenImage src={token.logo} symbol={token.symbol} className="w-7 h-7 rounded-full flex-shrink-0" />
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {/* Wallet Indicator - Only show in ungrouped multi-wallet view */}
+                    <div className="relative">
+                      <TokenImage src={token.logo} symbol={token.symbol} className="w-10 h-10 rounded-full flex-shrink-0" />
+                      {/* Wallet indicator dot */}
                       {!selectedWalletId && !isGrouped && token.walletColor && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ 
-                                  backgroundColor: token.walletColor, 
-                                  boxShadow: `0 0 6px ${token.walletColor}` 
-                                }}
+                                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0a0e0f] cursor-help"
+                                style={{ backgroundColor: token.walletColor }}
                               />
                             </TooltipTrigger>
                             <TooltipContent className="bg-[#0a0e0f] border border-[#1a2225] p-2">
@@ -251,44 +344,45 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      <span className="font-mono text-sm text-[#708090]">&gt;</span>
-                      <div className="flex flex-col min-w-0">
-                        <div className="font-mono text-sm text-[#00ff41] font-semibold truncate">{token.symbol}</div>
-                        <div className="font-mono text-xs text-[#708090] truncate">{token.name}</div>
+                    </div>
+                    
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm text-[#00ff41] font-bold truncate">{token.symbol}</span>
+                        <span className="font-mono text-[11px] text-[#708090] bg-[#1a2225] px-2 py-0.5 rounded">
+                          ${token.price < 0.01 ? token.price.toFixed(4) : token.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
                       </div>
+                      <div className="font-mono text-xs text-[#708090] truncate">{token.name}</div>
                     </div>
                   </div>
 
-                  {/* Right: Stats */}
+                  {/* Center: Balance */}
+                  <div className="hidden md:block text-center min-w-[140px]">
+                    <div className="font-mono text-xs text-[#556070]">
+                      {token.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-[#708090]">{token.symbol}</span>
+                    </div>
+                  </div>
+
+                  {/* Right: Value + Swap */}
                   <div className="flex items-center gap-4 flex-shrink-0">
-                    {/* Balance */}
-                    <div className="text-right">
-                      <div className="font-mono text-xs text-[#708090]">BALANCE</div>
-                      <div className="font-mono text-sm text-white">{token.balance.toLocaleString()}</div>
+                    <div className="text-right min-w-[100px]">
+                      <div className="font-mono text-base text-[#00ff41] font-bold">
+                        ${token.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
                     </div>
 
-                    {/* Price */}
-                    <div className="text-right">
-                      <div className="font-mono text-xs text-[#708090]">PRICE</div>
-                      <div className="font-mono text-sm text-white">${token.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
-                    </div>
-
-                    {/* Value */}
-                    <div className="text-right">
-                      <div className="font-mono text-xs text-[#708090]">VALUE</div>
-                      <div className="font-mono text-sm text-[#00ff41]">${token.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
-                    </div>
-
-                    {/* Swap Button */}
+                    {/* Swap Button - Hidden on tablet, shown on lg+ */}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
                             type="button"
                             onClick={(e) => handleSwapClick(token, e)}
-                            className="p-2 border border-[#1a2225] rounded hover:border-[#00ff41]/30 hover:bg-[#00ff41]/5 transition-colors"
+                            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-[#00ff41]/10 border border-[#00ff41]/20 rounded-lg hover:bg-[#00ff41]/20 hover:border-[#00ff41]/40 transition-colors"
                           >
                             <ArrowRightLeft className="w-3.5 h-3.5 text-[#00ff41]" />
+                            <span className="font-mono text-xs text-[#00ff41]">Swap</span>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-[#0a0e0f] border border-[#1a2225] p-2">
@@ -306,19 +400,19 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
         </TerminalCard>
 
         {filteredTokens.length === 0 && !showSkeleton && (
-          <div className="text-center py-12">
-            <div className="font-mono text-[#708090] mb-2">
+          <div className="text-center py-8 sm:py-12">
+            <div className="font-mono text-sm sm:text-base text-[#708090] mb-2">
               {searchQuery ? "NO TOKENS FOUND" : "NO TOKENS"}
             </div>
-            <div className="font-mono text-sm text-[#708090]">
+            <div className="font-mono text-xs sm:text-sm text-[#708090]">
               {searchQuery ? "Try adjusting your search query" : "Add a wallet to view tokens"}
             </div>
           </div>
         )}
       </div>
 
-      {/* Right: Sticky Swap Widget */}
-      <div className="w-[380px] flex-shrink-0">
+      {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
+      <div className="hidden lg:block w-[380px] flex-shrink-0">
         <div className="sticky top-20">
           <SwapWidgetInline fromToken={selectedSwapToken} />
         </div>

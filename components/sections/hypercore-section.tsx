@@ -202,84 +202,84 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
   // Show "no data" message when not loading and no data
   if (!hasData && !isLoading) {
     return (
-      <div className="text-center py-12">
-        <div className="font-mono text-[#708090] mb-2">NO HYPERCORE DATA</div>
-        <div className="font-mono text-sm text-[#708090]">Add a wallet to view Hypercore data</div>
+      <div className="text-center py-8 sm:py-12">
+        <div className="font-mono text-xs sm:text-sm text-[#708090] mb-1 sm:mb-2">NO HYPERCORE DATA</div>
+        <div className="font-mono text-[10px] sm:text-sm text-[#556070]">Add a wallet to view Hypercore data</div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Summary Cards - 2 cols on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <TerminalCard>
-          <TerminalContent>
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-4 h-4 text-[#00ff41]" />
-              <div className="font-mono text-xs text-[#708090]">SPOT VALUE</div>
+          <TerminalContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00ff41]" />
+              <div className="font-mono text-[10px] sm:text-xs text-[#708090]">SPOT</div>
             </div>
             {showSkeleton ? (
-              <div className="h-7 w-28 bg-[#1a2225] rounded animate-pulse" />
+              <div className="h-5 sm:h-7 w-16 sm:w-28 bg-[#1a2225] rounded animate-pulse" />
             ) : (
-              <div className="font-mono text-xl text-white font-semibold">
-                ${parseFloat(hypercoreData?.portfolioSummary?.spotValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              <div className="font-mono text-base sm:text-xl text-white font-semibold">
+                ${(() => { const v = parseFloat(hypercoreData?.portfolioSummary?.spotValue || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
               </div>
             )}
           </TerminalContent>
         </TerminalCard>
 
         <TerminalCard>
-          <TerminalContent>
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-[#00d9ff]" />
-              <div className="font-mono text-xs text-[#708090]">PERP VALUE</div>
+          <TerminalContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00d9ff]" />
+              <div className="font-mono text-[10px] sm:text-xs text-[#708090]">PERP</div>
             </div>
             {showSkeleton ? (
-              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+              <div className="h-5 sm:h-7 w-14 sm:w-24 bg-[#1a2225] rounded animate-pulse" />
             ) : (
-              <div className="font-mono text-xl text-white font-semibold">
-                ${parseFloat(hypercoreData?.portfolioSummary?.perpValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              <div className="font-mono text-base sm:text-xl text-white font-semibold">
+                ${(() => { const v = parseFloat(hypercoreData?.portfolioSummary?.perpValue || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
               </div>
             )}
           </TerminalContent>
         </TerminalCard>
 
         <TerminalCard>
-          <TerminalContent>
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4 text-[#ff00ff]" />
-              <div className="font-mono text-xs text-[#708090]">STAKED VALUE</div>
+          <TerminalContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff00ff]" />
+              <div className="font-mono text-[10px] sm:text-xs text-[#708090]">STAKED</div>
             </div>
             {showSkeleton ? (
-              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+              <div className="h-5 sm:h-7 w-14 sm:w-24 bg-[#1a2225] rounded animate-pulse" />
             ) : (
-              <div className="font-mono text-xl text-white font-semibold">
-                ${parseFloat(hypercoreData?.portfolioSummary?.stakedValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              <div className="font-mono text-base sm:text-xl text-white font-semibold">
+                ${(() => { const v = parseFloat(hypercoreData?.portfolioSummary?.stakedValue || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
               </div>
             )}
           </TerminalContent>
         </TerminalCard>
 
         <TerminalCard>
-          <TerminalContent>
-            <div className="flex items-center gap-2 mb-2">
-              <Vault className="w-4 h-4 text-[#ffaa00]" />
-              <div className="font-mono text-xs text-[#708090]">VAULT VALUE</div>
+          <TerminalContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <Vault className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffaa00]" />
+              <div className="font-mono text-[10px] sm:text-xs text-[#708090]">VAULTS</div>
             </div>
             {showSkeleton ? (
-              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+              <div className="h-5 sm:h-7 w-14 sm:w-24 bg-[#1a2225] rounded animate-pulse" />
             ) : (
-              <div className="font-mono text-xl text-white font-semibold">
-                ${parseFloat(hypercoreData?.portfolioSummary?.vaultValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              <div className="font-mono text-base sm:text-xl text-white font-semibold">
+                ${(() => { const v = parseFloat(hypercoreData?.portfolioSummary?.vaultValue || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
               </div>
             )}
           </TerminalContent>
         </TerminalCard>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 bg-[#111618] border border-[#1a2225] rounded-lg p-1">
+      {/* Tabs - icons only on mobile, icons + labels on desktop */}
+      <div className="flex gap-1 sm:gap-2 bg-[#111618] border border-[#1a2225] rounded-lg p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
@@ -287,7 +287,7 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-4 py-2 rounded transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 py-2 rounded transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
                 activeTab === tab.id
                   ? "bg-[#1a2225] text-white"
                   : "text-[#708090] hover:text-white"
@@ -296,8 +296,8 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
                 color: activeTab === tab.id ? tab.color : undefined,
               }}
             >
-              <Icon className="w-4 h-4" />
-              <span className="font-mono text-sm">{tab.label}</span>
+              <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline font-mono text-sm">{tab.label}</span>
             </button>
           )
         })}
@@ -310,20 +310,16 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
           {showSkeleton && (
             <div className="divide-y divide-[#1a2225]">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="p-4 animate-pulse">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="w-7 h-7 rounded-full bg-[#1a2225]" />
-                      <div className="flex flex-col gap-1">
-                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
-                        <div className="h-3 w-24 bg-[#1a2225] rounded" />
+                <div key={i} className="p-2.5 sm:p-4 animate-pulse">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#1a2225]" />
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-3 sm:h-4 w-12 sm:w-16 bg-[#1a2225] rounded" />
+                        <div className="h-4 sm:h-5 w-10 sm:w-14 bg-[#1a2225] rounded" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="h-4 w-16 bg-[#1a2225] rounded" />
-                      <div className="h-4 w-16 bg-[#1a2225] rounded" />
-                      <div className="h-4 w-20 bg-[#1a2225] rounded" />
-                    </div>
+                    <div className="h-4 w-14 sm:w-16 bg-[#1a2225] rounded" />
                   </div>
                 </div>
               ))}
@@ -335,83 +331,79 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               {hypercoreData && hypercoreData.spotBalances.length > 0 ? (
                 hypercoreData.spotBalances
                   .filter((b: SpotBalance) => parseFloat(b.total) > 0)
-                  .map((balance: SpotBalance) => (
-                    <div key={balance.coin} className="p-4 hover:bg-[#111618] transition-colors">
-                      {/* Main Row */}
-                      <div className="flex items-center justify-between gap-4 text-xs">
-                        {/* Left: Token Info */}
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <TokenImage src={balance.image_url} symbol={balance.symbol} className="w-7 h-7 rounded-full flex-shrink-0" />
+                  .map((balance: SpotBalance) => {
+                    const total = parseFloat(balance.total)
+                    const usdValue = parseFloat(balance.usdValue)
+                    return (
+                      <div key={balance.coin} className="p-2.5 sm:p-4 hover:bg-[#111618] transition-colors">
+                        {/* Horizontal layout */}
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Left: Token Info */}
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="font-mono text-sm text-[#708090]">&gt;</span>
-                            <div className="flex flex-col min-w-0">
-                              <div className="font-mono text-sm text-[#00ff41] font-semibold truncate">{balance.symbol}</div>
-                              <div className="font-mono text-xs text-[#708090] truncate">{balance.name}</div>
+                            <TokenImage src={balance.image_url} symbol={balance.symbol} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex-shrink-0" />
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="font-mono text-xs sm:text-sm text-[#00ff41] font-semibold truncate">{balance.symbol}</span>
+                              <span className="font-mono text-[10px] sm:text-xs text-[#708090] bg-[#1a2225] px-1.5 py-0.5 rounded">
+                                {total >= 1000 ? `${(total/1000).toFixed(1)}K` : total.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Right: Value */}
+                          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                            {/* Hold - hidden on mobile */}
+                            <div className="hidden sm:block text-right">
+                              <div className="font-mono text-[10px] text-[#556070]">HOLD</div>
+                              <div className="font-mono text-xs text-[#708090]">{parseFloat(balance.hold).toLocaleString()}</div>
+                            </div>
+
+                            {/* Entry - hidden on mobile */}
+                            <div className="hidden md:block text-right">
+                              <div className="font-mono text-[10px] text-[#556070]">ENTRY</div>
+                              <div className="font-mono text-xs text-[#708090]">{parseFloat(balance.entryNtl).toLocaleString()}</div>
+                            </div>
+
+                            {/* USD Value */}
+                            <div className="font-mono text-xs sm:text-sm text-[#00ff41] font-bold min-w-[50px] text-right">
+                              ${usdValue >= 1000 ? `${(usdValue/1000).toFixed(1)}K` : usdValue.toFixed(2)}
                             </div>
                           </div>
                         </div>
-
-                        {/* Right: Stats */}
-                        <div className="flex items-center gap-4 flex-shrink-0">
-                          {/* Total */}
-                          <div className="text-right">
-                            <div className="font-mono text-xs text-[#708090]">TOTAL</div>
-                            <div className="font-mono text-sm text-white">{parseFloat(balance.total).toLocaleString()}</div>
-                          </div>
-
-                          {/* Hold */}
-                          <div className="text-right">
-                            <div className="font-mono text-xs text-[#708090]">HOLD</div>
-                            <div className="font-mono text-sm text-white">{parseFloat(balance.hold).toLocaleString()}</div>
-                          </div>
-
-                          {/* Entry */}
-                          <div className="text-right">
-                            <div className="font-mono text-xs text-[#708090]">ENTRY</div>
-                            <div className="font-mono text-sm text-white">{parseFloat(balance.entryNtl).toLocaleString()}</div>
-                          </div>
-
-                          {/* USD Value */}
-                          <div className="text-right">
-                            <div className="font-mono text-xs text-[#708090]">VALUE</div>
-                            <div className="font-mono text-sm text-[#00d9ff]">${parseFloat(balance.usdValue).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
               ) : (
-                <div className="text-center py-8">
-                  <div className="font-mono text-[#708090]">NO SPOT BALANCES</div>
+                <div className="text-center py-6 sm:py-8">
+                  <div className="font-mono text-xs sm:text-sm text-[#708090]">NO SPOT BALANCES</div>
                 </div>
               )}
             </div>
           )}
 
           {activeTab === "perp" && hasData && (
-            <div className="text-center py-8">
-              <div className="font-mono text-[#708090]">NO PERP POSITIONS</div>
-              <div className="font-mono text-xs text-[#708090] mt-2">
-                Margin Balance: ${parseFloat(hypercoreData?.perpPositions?.margin?.usdcBalance || "0").toFixed(2)}
+            <div className="text-center py-6 sm:py-8">
+              <div className="font-mono text-xs sm:text-sm text-[#708090]">NO PERP POSITIONS</div>
+              <div className="font-mono text-[10px] sm:text-xs text-[#556070] mt-1 sm:mt-2">
+                Margin: ${parseFloat(hypercoreData?.perpPositions?.margin?.usdcBalance || "0").toFixed(2)}
               </div>
             </div>
           )}
 
           {activeTab === "staking" && hasData && hypercoreData && (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {/* Summary */}
-              <div className="p-3 border border-[#1a2225] rounded-lg bg-[#0a0e0f]">
-                <div className="flex items-center justify-between">
+              <div className="p-2.5 sm:p-3 border border-[#1a2225] rounded-lg bg-[#0a0e0f]">
+                <div className="flex items-center justify-between gap-2">
                   <div>
-                    <div className="font-mono text-xs text-[#708090] mb-1">TOTAL HYPE</div>
-                    <div className="font-mono text-sm text-white font-semibold">
-                      {parseFloat(hypercoreData.stakingInfo?.totalHype || "0").toLocaleString()}
+                    <div className="font-mono text-[10px] sm:text-xs text-[#708090] mb-0.5 sm:mb-1">TOTAL HYPE</div>
+                    <div className="font-mono text-xs sm:text-sm text-white font-semibold">
+                      {(() => { const v = parseFloat(hypercoreData.stakingInfo?.totalHype || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono text-xs text-[#708090] mb-1">STAKED VALUE</div>
-                    <div className="font-mono text-sm text-[#ff00ff] font-semibold">
-                      ${parseFloat(hypercoreData.stakingInfo?.delegatorSummary?.totalStakedUsd || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    <div className="font-mono text-[10px] sm:text-xs text-[#708090] mb-0.5 sm:mb-1">STAKED VALUE</div>
+                    <div className="font-mono text-xs sm:text-sm text-[#ff00ff] font-semibold">
+                      ${(() => { const v = parseFloat(hypercoreData.stakingInfo?.delegatorSummary?.totalStakedUsd || "0"); return v >= 1000 ? `${(v/1000).toFixed(1)}K` : v.toFixed(2) })()}
                     </div>
                   </div>
                 </div>
@@ -421,25 +413,21 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               {hypercoreData.stakingInfo?.delegations && hypercoreData.stakingInfo.delegations.length > 0 ? (
                 <div className="divide-y divide-[#1a2225]">
                   {hypercoreData.stakingInfo.delegations.map((delegation: any, index: number) => (
-                    <div key={index} className="p-4 hover:bg-[#111618] transition-colors">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="font-mono text-sm text-[#708090]">&gt;</span>
-                          <div className="font-mono text-sm text-[#00ff41] truncate">
-                            {delegation.address || "Unknown"}
-                          </div>
+                    <div key={index} className="p-2.5 sm:p-4 hover:bg-[#111618] transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-mono text-xs sm:text-sm text-[#00ff41] truncate flex-1 min-w-0">
+                          {delegation.address ? `${delegation.address.slice(0, 8)}...${delegation.address.slice(-6)}` : "Unknown"}
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="font-mono text-xs text-[#708090]">DELEGATED</div>
-                          <div className="font-mono text-sm text-white">{delegation.amount || "0"}</div>
+                        <div className="font-mono text-xs sm:text-sm text-white font-medium flex-shrink-0">
+                          {delegation.amount || "0"}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="font-mono text-sm text-[#708090]">NO DELEGATIONS</div>
+                <div className="text-center py-6 sm:py-8">
+                  <div className="font-mono text-xs sm:text-sm text-[#708090]">NO DELEGATIONS</div>
                 </div>
               )}
             </div>
@@ -450,75 +438,61 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               {hypercoreData.vaultInfo?.vaults && hypercoreData.vaultInfo.vaults.length > 0 ? (
                 hypercoreData.vaultInfo.vaults.map((vault: VaultDetail, index: number) => {
                   const isLocked = vault.lockedUntilTimestamp > Date.now()
+                  const equity = parseFloat(vault.equity)
+                  const pnl = parseFloat(vault.pnl)
                   
                   return (
-                    <div key={index} className="p-4 hover:bg-[#111618] transition-colors">
-                      {/* Main Row */}
-                      <div className="flex items-center justify-between gap-4 text-xs mb-2">
-                        {/* Left: Vault Info */}
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="font-mono text-sm text-[#708090]">&gt;</span>
-                          <div className="flex flex-col min-w-0">
-                            <div className="font-mono text-sm text-[#00ff41] font-semibold truncate">{vault.name}</div>
-                            <div className="font-mono text-xs text-[#708090] truncate">{vault.description}</div>
-                          </div>
-                        </div>
-
-                        {/* Right: Status */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                    <div key={index} className="p-2.5 sm:p-4 hover:bg-[#111618] transition-colors">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        {/* Left: Vault Name */}
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <div className="font-mono text-xs sm:text-sm text-[#00ff41] font-semibold truncate">{vault.name}</div>
                           {isLocked && (
-                            <span className="px-2 py-0.5 rounded text-xs font-mono bg-[#ffaa00]/20 text-[#ffaa00]">
-                              LOCKED
+                            <span className="px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-mono bg-[#ffaa00]/20 text-[#ffaa00]">
+                              LOCK
                             </span>
                           )}
                           {vault.isClosed && (
-                            <span className="px-2 py-0.5 rounded text-xs font-mono bg-red-500/20 text-red-400">
+                            <span className="px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-mono bg-red-500/20 text-red-400">
                               CLOSED
                             </span>
                           )}
                         </div>
+
+                        {/* Right: Equity */}
+                        <div className="font-mono text-xs sm:text-sm text-white font-bold flex-shrink-0">
+                          ${equity >= 1000 ? `${(equity/1000).toFixed(1)}K` : equity.toFixed(2)}
+                        </div>
                       </div>
 
                       {/* Stats Row */}
-                      <div className="flex items-center gap-4 ml-5 mt-2">
-                        {/* Equity */}
-                        <div className="text-right">
-                          <div className="font-mono text-xs text-[#708090]">EQUITY</div>
-                          <div className="font-mono text-sm text-white">
-                            ${parseFloat(vault.equity).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </div>
-                        </div>
-
+                      <div className="flex items-center gap-2 sm:gap-3">
                         {/* APR */}
-                        <div className="text-right">
-                          <div className="font-mono text-xs text-[#708090]">APR</div>
-                          <div className="font-mono text-sm text-[#00d9ff]">
-                            {vault.apr.toFixed(2)}%
-                          </div>
-                        </div>
+                        <span className="px-1.5 py-0.5 bg-[#00d9ff]/10 border border-[#00d9ff]/20 rounded flex items-center gap-1">
+                          <span className="font-mono text-[10px] text-[#00d9ff]">
+                            {vault.apr.toFixed(1)}% APR
+                          </span>
+                        </span>
 
                         {/* P&L */}
-                        <div className="text-right">
-                          <div className="font-mono text-xs text-[#708090]">P&L</div>
-                          <div className={`font-mono text-sm font-semibold ${parseFloat(vault.pnl) >= 0 ? "text-[#00ff41]" : "text-[#ff4444]"}`}>
-                            {parseFloat(vault.pnl) >= 0 ? "+" : ""}${parseFloat(vault.pnl).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </div>
-                        </div>
+                        <span className={`px-1.5 py-0.5 rounded flex items-center gap-1 ${pnl >= 0 ? 'bg-[#00ff41]/10 border border-[#00ff41]/20' : 'bg-[#ff4444]/10 border border-[#ff4444]/20'}`}>
+                          <span className={`font-mono text-[10px] ${pnl >= 0 ? 'text-[#00ff41]' : 'text-[#ff4444]'}`}>
+                            {pnl >= 0 ? '+' : ''}${Math.abs(pnl) >= 1000 ? `${(pnl/1000).toFixed(1)}K` : pnl.toFixed(2)}
+                          </span>
+                        </span>
 
-                        {/* Max Withdrawable */}
-                        <div className="text-right">
-                          <div className="font-mono text-xs text-[#708090]">MAX WD</div>
-                          <div className="font-mono text-sm text-white">
-                            ${parseFloat(vault.maxWithdrawable).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </div>
-                        </div>
+                        {/* Max WD - hidden on mobile */}
+                        <span className="hidden sm:inline font-mono text-[10px] text-[#708090]">
+                          Max: ${parseFloat(vault.maxWithdrawable) >= 1000 ? `${(parseFloat(vault.maxWithdrawable)/1000).toFixed(1)}K` : parseFloat(vault.maxWithdrawable).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   )
                 })
               ) : (
-                <div className="text-center py-8">
-                  <div className="font-mono text-[#708090]">NO VAULTS</div>
+                <div className="text-center py-6 sm:py-8">
+                  <div className="font-mono text-xs sm:text-sm text-[#708090]">NO VAULTS</div>
                 </div>
               )}
             </div>

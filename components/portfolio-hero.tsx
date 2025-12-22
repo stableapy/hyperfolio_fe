@@ -410,13 +410,13 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
     ? wallets.find(w => w.id === selectedWalletId) 
     : null
 
-  // Custom tooltip for chart
+  // Custom tooltip for chart - responsive sizing
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { date: string }; value: number }> }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0a0f0f]/95 border border-[#00ff41]/30 rounded-lg px-4 py-3 shadow-2xl backdrop-blur-md">
-          <p className="font-mono text-xs text-[#708090] mb-1">{payload[0].payload.date}</p>
-          <p className="font-mono text-lg text-[#00ff41] font-bold">
+        <div className="bg-[#0a0f0f]/95 border border-[#00ff41]/30 rounded-lg px-2 py-1.5 sm:px-4 sm:py-3 shadow-2xl backdrop-blur-md">
+          <p className="font-mono text-[10px] sm:text-xs text-[#708090] mb-0.5 sm:mb-1">{payload[0].payload.date}</p>
+          <p className="font-mono text-sm sm:text-lg text-[#00ff41] font-bold">
             ${payload[0].value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
@@ -426,11 +426,11 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
   }
 
   return (
-    <section className="relative h-screen min-h-[700px] overflow-hidden flex flex-col">
+    <section className="relative min-h-[100svh] overflow-hidden flex flex-col">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0f0f] via-[#0a0f0f] to-[#0d1214]/30" />
       
-      {/* Subtle grid pattern */}
+      {/* Subtle grid pattern - smaller on mobile */}
       <div 
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -438,25 +438,25 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
             linear-gradient(#00ff41 1px, transparent 1px),
             linear-gradient(90deg, #00ff41 1px, transparent 1px)
           `,
-          backgroundSize: '60px 60px'
+          backgroundSize: '40px 40px'
         }}
       />
       
       {/* Content Layer */}
-      <div className="relative z-10 flex-1 flex flex-col container mx-auto px-6 md:px-10 lg:px-16">
+      <div className="relative z-10 flex-1 flex flex-col container mx-auto px-4 sm:px-6 md:px-10 lg:px-16">
         {/* Header with wallet selector */}
-        <header className="pt-8 pb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <header className="pt-3 sm:pt-6 md:pt-8 pb-2 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-[#00ff41] text-2xl font-mono font-bold">&gt;</span>
-                <h1 className="text-3xl md:text-4xl font-mono font-bold tracking-tight">
+              <div className="flex items-center gap-2 sm:gap-3 mb-0.5 sm:mb-2">
+                <span className="text-[#00ff41] text-lg sm:text-2xl font-mono font-bold">&gt;</span>
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-mono font-bold tracking-tight">
                   <span className="text-[#00ff41] text-glow-green">HYPER</span>
                   <span className="text-white">FOLIO_</span>
                 </h1>
               </div>
-              <p className="text-[#708090] font-mono text-sm tracking-wide">
-                Multi-wallet DeFi portfolio tracker
+              <p className="text-[#708090] font-mono text-[10px] sm:text-sm tracking-wide hidden sm:block">
+                Multi-wallet DeFi portfolio tracker for HyperEVM
               </p>
             </div>
             
@@ -472,18 +472,18 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                     setIsWalletDropdownOpen(!isWalletDropdownOpen)
                   }
                 }}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#00ff41]/30 bg-[#0a0f0f]/80 backdrop-blur-sm hover:border-[#00ff41]/60 transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 sm:py-2.5 rounded-lg border border-[#00ff41]/30 bg-[#0a0f0f]/80 backdrop-blur-sm hover:border-[#00ff41]/60 transition-all"
               >
-                <Wallet className="w-4 h-4 text-[#00ff41]" />
-                <span className="font-mono text-sm text-white">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00ff41]" />
+                <span className="font-mono text-[11px] sm:text-sm text-white truncate max-w-[120px] sm:max-w-none">
                   {wallets.length === 0 
-                    ? '+ Add Wallet' 
+                    ? '+ Add' 
                     : selectedWallet 
                       ? selectedWallet.name 
                       : 'All Wallets'}
                 </span>
                 {wallets.length > 0 && (
-                  <ChevronDown className={`w-4 h-4 text-[#708090] transition-transform ${isWalletDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#708090] transition-transform shrink-0 ${isWalletDropdownOpen ? 'rotate-180' : ''}`} />
                 )}
               </button>
               
@@ -498,8 +498,8 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                     aria-label="Close dropdown"
                   />
                   
-                  {/* Menu */}
-                  <div className="absolute right-0 mt-2 w-64 py-2 rounded-xl border border-[#1a2225] bg-[#0d1214]/95 backdrop-blur-md shadow-2xl z-50">
+                  {/* Menu - Full width on mobile, fixed width on larger screens */}
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-64 py-2 rounded-xl border border-[#1a2225] bg-[#0d1214]/95 backdrop-blur-md shadow-2xl z-50">
                     {/* All Wallets Option */}
                     <button
                       type="button"
@@ -586,35 +586,35 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
         </header>
         
         {/* Main Content - Portfolio Value & Stats - Centered vertically */}
-        <div className="flex-1 flex flex-col justify-center pb-80">
+        <div className="flex-1 flex flex-col justify-center pb-24 sm:pb-48 md:pb-64 lg:pb-80">
           {/* Content with granular loading states - show UI immediately, skeleton only data */}
-          <div className="max-w-4xl space-y-8">
+          <div className="max-w-4xl space-y-3 sm:space-y-6 md:space-y-8">
             {/* Label with controls - Always visible immediately */}
-            <div className="flex items-center gap-4">
-              <span className="font-mono text-sm uppercase tracking-widest text-[#708090]">Portfolio Value</span>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="font-mono text-[10px] sm:text-sm uppercase tracking-widest text-[#708090]">Portfolio Value</span>
              
               <button
                 type="button"
                 onClick={handleRefresh}
-                className="p-2 rounded-lg hover:bg-white/5 transition-all text-[#708090] hover:text-[#00d9ff]"
+                className="p-1 sm:p-2 rounded-lg hover:bg-white/5 transition-all text-[#708090] hover:text-[#00d9ff]"
                 aria-label="Refresh data"
                 disabled={isRefreshing || isLoading}
               >
-                <RefreshCw className={`w-5 h-5 ${isRefreshing || isLoading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${isRefreshing || isLoading ? "animate-spin" : ""}`} />
               </button>
             </div>
             
             {/* Portfolio Value - Inline skeleton when loading */}
-            <div className="font-mono tracking-tight leading-none min-h-[6rem] md:min-h-[8rem]">
+            <div className="font-mono tracking-tight leading-none min-h-[3rem] sm:min-h-[5rem] md:min-h-[6rem] lg:min-h-[8rem]">
               {isLoading && displayData.value === 0 ? (
-                <div className="h-24 md:h-32 w-[70%] max-w-lg bg-[#1a2225] rounded-xl animate-pulse" />
+                <div className="h-16 sm:h-20 md:h-24 lg:h-32 w-[80%] sm:w-[70%] max-w-lg bg-[#1a2225] rounded-xl animate-pulse" />
               ) : (
                 <>
-                  <span className="text-7xl md:text-8xl lg:text-9xl font-bold text-white transition-all duration-300">
+                  <span className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white transition-all duration-300">
                     {privacyMode ? "••••••" : `$${formattedValue.intPart}`}
                   </span>
                   {!privacyMode && (
-                    <span className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#708090] transition-all duration-300">
+                    <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-[#708090] transition-all duration-300">
                       {formattedValue.decPart}
                     </span>
                   )}
@@ -624,27 +624,27 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
             
             {/* Stats Pills - Granular loading for each section */}
             <TooltipProvider>
-              <div className="flex items-center gap-2 pt-4 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 pt-2 sm:pt-4 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
                 {/* 24h Change - Inline skeleton */}
                 {isLoading && displayData.value === 0 ? (
-                  <div className="h-8 w-28 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
+                  <div className="h-7 sm:h-8 w-24 sm:w-28 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
                 ) : (
                   <div 
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shrink-0 ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border transition-all duration-300 shrink-0 ${
                       isPositive 
                         ? "bg-[#00ff41]/10 border-[#00ff41]/20" 
                         : "bg-[#ff4444]/10 border-[#ff4444]/20"
                     }`}
                   >
                     {isPositive ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-[#00ff41]" />
+                      <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#00ff41]" />
                     ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-[#ff4444]" />
+                      <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#ff4444]" />
                     )}
-                    <span className={`font-mono text-xs font-semibold ${isPositive ? "text-[#00ff41]" : "text-[#ff4444]"}`}>
+                    <span className={`font-mono text-[10px] sm:text-xs font-semibold ${isPositive ? "text-[#00ff41]" : "text-[#ff4444]"}`}>
                       {privacyMode ? "•••" : `${isPositive ? "+" : ""}${displayData.change24h.toFixed(2)}%`}
                     </span>
-                    <span className="font-mono text-[10px] text-[#708090]">24h</span>
+                    <span className="font-mono text-[8px] sm:text-[10px] text-[#708090]">24h</span>
                   </div>
                 )}
                 
@@ -653,39 +653,39 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div 
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-help transition-all duration-300 shrink-0 bg-[#a855f7]/10 border-[#a855f7]/20 hover:border-[#a855f7]/40"
+                        className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border cursor-help transition-all duration-300 shrink-0 bg-[#a855f7]/10 border-[#a855f7]/20 hover:border-[#a855f7]/40"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-[#a855f7]" />
-                        <span className="font-mono text-xs font-semibold text-[#a855f7]">
+                        <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#a855f7]" />
+                        <span className="font-mono text-[10px] sm:text-xs font-semibold text-[#a855f7]">
                           {privacyMode ? "•••" : `${apyData.weightedApy.toFixed(1)}%`}
                         </span>
-                        <span className="font-mono text-[10px] text-[#708090]">APY</span>
+                        <span className="font-mono text-[8px] sm:text-[10px] text-[#708090]">APY</span>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-[#0d1214] border-[#1a2225] p-3 max-w-xs">
-                      <div className="space-y-2">
-                        <div className="font-mono text-[10px] text-[#708090] uppercase tracking-wider">Estimated Yield</div>
-                        <div className="grid grid-cols-3 gap-3">
+                    <TooltipContent side="bottom" className="bg-[#0d1214] border-[#1a2225] p-2 sm:p-3 max-w-[280px] sm:max-w-xs">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <div className="font-mono text-[9px] sm:text-[10px] text-[#708090] uppercase tracking-wider">Estimated Yield</div>
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
                           <div>
-                            <div className="font-mono text-[10px] text-[#708090]">Daily</div>
-                            <div className="font-mono text-xs text-[#00ff41] font-semibold">
+                            <div className="font-mono text-[9px] sm:text-[10px] text-[#708090]">Daily</div>
+                            <div className="font-mono text-[10px] sm:text-xs text-[#00ff41] font-semibold">
                               {privacyMode ? "•••" : `$${apyData.estimatedYield.daily.toFixed(2)}`}
                             </div>
                           </div>
                           <div>
-                            <div className="font-mono text-[10px] text-[#708090]">Weekly</div>
-                            <div className="font-mono text-xs text-[#00ff41] font-semibold">
+                            <div className="font-mono text-[9px] sm:text-[10px] text-[#708090]">Weekly</div>
+                            <div className="font-mono text-[10px] sm:text-xs text-[#00ff41] font-semibold">
                               {privacyMode ? "•••" : `$${apyData.estimatedYield.weekly.toFixed(2)}`}
                             </div>
                           </div>
                           <div>
-                            <div className="font-mono text-[10px] text-[#708090]">Monthly</div>
-                            <div className="font-mono text-xs text-[#00ff41] font-semibold">
+                            <div className="font-mono text-[9px] sm:text-[10px] text-[#708090]">Monthly</div>
+                            <div className="font-mono text-[10px] sm:text-xs text-[#00ff41] font-semibold">
                               {privacyMode ? "•••" : `$${apyData.estimatedYield.monthly.toFixed(2)}`}
                             </div>
                           </div>
                         </div>
-                        <div className="text-[10px] text-[#708090] pt-2 border-t border-[#1a2225]">
+                        <div className="text-[9px] sm:text-[10px] text-[#708090] pt-1.5 sm:pt-2 border-t border-[#1a2225]">
                           Based on current DeFi positions APY
                         </div>
                       </div>
@@ -697,25 +697,25 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 {isLoading && breakdown.length === 0 ? (
                   // Show skeleton placeholders for breakdown
                   <>
-                    <div className="h-8 w-24 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
-                    <div className="h-8 w-28 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
-                    <div className="h-8 w-24 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
+                    <div className="h-7 sm:h-8 w-20 sm:w-24 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
+                    <div className="h-7 sm:h-8 w-24 sm:w-28 bg-[#1a2225] rounded-full animate-pulse shrink-0" />
+                    <div className="h-7 sm:h-8 w-20 sm:w-24 bg-[#1a2225] rounded-full animate-pulse shrink-0 hidden sm:block" />
                   </>
                 ) : (
                   breakdown.map((item) => (
                     <div
                       key={item.category}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1a2225]/60 border border-[#1a2225] hover:border-[#2a3235] transition-all duration-300 shrink-0"
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#1a2225]/60 border border-[#1a2225] hover:border-[#2a3235] transition-all duration-300 shrink-0"
                     >
                       <div
-                        className="w-2 h-2 rounded-full"
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="font-mono text-[10px] text-[#708090]">{item.category}</span>
-                      <span className="font-mono text-xs text-white font-medium">
+                      <span className="font-mono text-[8px] sm:text-[10px] text-[#708090]">{item.category}</span>
+                      <span className="font-mono text-[10px] sm:text-xs text-white font-medium">
                         {formatCompactValue(item.value)}
                       </span>
-                      <span className="font-mono text-[10px] text-[#708090]">
+                      <span className="font-mono text-[8px] sm:text-[10px] text-[#708090] hidden min-[400px]:inline">
                         {privacyMode ? "•" : `${item.percentage.toFixed(0)}%`}
                       </span>
                     </div>
@@ -726,10 +726,11 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
           </div>
         </div>
         
-        {/* Scroll indicator - Fades out when scrolling */}
-        <div className={`pb-8 flex justify-center transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex flex-col items-center gap-2 text-[#708090] animate-bounce">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        {/* Scroll indicator - Visible on all screens, fades out when scrolling */}
+        <div className={`flex pb-3 sm:pb-6 md:pb-8 justify-center transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="flex flex-col items-center gap-1.5 text-[#708090] animate-bounce">
+            <span className="font-mono text-[10px] sm:hidden uppercase tracking-wider">Scroll</span>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </div>
@@ -738,7 +739,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
       
       {/* Interactive Chart Layer - positioned at bottom, above content for interactivity */}
       <div 
-        className={`absolute bottom-0 left-0 right-0 h-[45%] z-20 transition-opacity duration-1000 ease-out ${
+        className={`absolute bottom-0 left-0 right-0 h-[35%] sm:h-[38%] md:h-[42%] lg:h-[45%] z-20 transition-opacity duration-1000 ease-out ${
           showChart && !privacyMode ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
@@ -756,10 +757,10 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 type="monotone"
                 dataKey="value"
                 stroke={isPositive ? "#00ff41" : "#ff4444"}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 fill="url(#heroChartGradient)"
                 animationDuration={1500}
-                activeDot={{ r: 6, fill: isPositive ? "#00ff41" : "#ff4444", stroke: "#0a0f0f", strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: isPositive ? "#00ff41" : "#ff4444", stroke: "#0a0f0f", strokeWidth: 2 }}
               />
               <RechartsTooltip 
                 content={<CustomTooltip />} 
@@ -771,7 +772,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
       </div>
       
       {/* Bottom fade for smooth transition */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#0a0f0f] to-transparent pointer-events-none z-30" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-28 md:h-32 lg:h-40 bg-gradient-to-t from-[#0a0f0f] to-transparent pointer-events-none z-30" />
     </section>
   )
 }

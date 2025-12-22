@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Wallet, ChevronDown, Check, Plus, Trash2 } from "lucide-react"
+import { createPortal } from "react-dom"
+import { Wallet, ChevronDown, Check, Plus, Trash2, ArrowRightLeft } from "lucide-react"
 import { AddWalletDialog } from "@/components/add-wallet-dialog"
 import { PortfolioHero } from "@/components/portfolio-hero"
 import { SectionNav } from "@/components/section-nav"
@@ -10,7 +11,51 @@ import { NFTsSection } from "@/components/sections/nfts-section"
 import { DeFiSection } from "@/components/sections/defi-section"
 import { HypercoreSection } from "@/components/sections/hypercore-section"
 import { TransactionsSection } from "@/components/sections/transactions-section"
+import { SwapWidgetModal } from "@/components/swap-widget-modal"
 import { useWalletStore } from "@/lib/store/wallet-store"
+
+// Floating Swap Button component using Portal
+// Visible on mobile always (when in content section), on desktop only when NOT on tokens section
+function FloatingSwapButton({ 
+  onClick, 
+  isVisible, 
+  activeSection 
+}: { 
+  onClick: () => void
+  isVisible: boolean
+  activeSection: string 
+}) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted || !isVisible) return null
+
+  // On desktop (lg+), hide when on tokens section (which has inline swap widget)
+  // On mobile, always show when in content section
+  const hideOnDesktop = activeSection === "tokens"
+
+  return createPortal(
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${hideOnDesktop ? 'lg:hidden' : ''} flex items-center gap-2 px-5 py-3.5 bg-[#00ff41] text-[#0a0e0f] font-mono text-sm font-bold rounded-full shadow-xl hover:bg-[#00ff41]/90 hover:scale-105 active:scale-95 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300`}
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 99999,
+        boxShadow: '0 4px 20px rgba(0, 255, 65, 0.4)',
+      }}
+    >
+      <ArrowRightLeft className="w-5 h-5" />
+      <span>Swap</span>
+    </button>,
+    document.body
+  )
+}
 
 export default function Home() {
   const {
@@ -30,13 +75,19 @@ export default function Home() {
   const [isDataVisible, setIsDataVisible] = useState(false)
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false)
   
-  // Intersection observer for reveal animation
+  // Track if we're past the hero section (for floating swap button)
+  const [isInContentSection, setIsInContentSection] = useState(false)
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false)
+  
+  // Intersection observer for reveal animation and swap button visibility
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsDataVisible(true)
         }
+        // Show swap button when content section is visible
+        setIsInContentSection(entry.isIntersecting)
       },
       { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
     )
@@ -82,6 +133,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#0a0f0f]">
+      {/* Floating Swap Button - Mobile: always visible in content section, Desktop: visible except on tokens section */}
+      {wallets.length > 0 && (
+        <FloatingSwapButton 
+          onClick={() => setIsSwapModalOpen(true)} 
+          isVisible={isInContentSection}
+          activeSection={activeSection}
+        />
+      )}
+
+      {/* Swap Modal for Mobile */}
+      <SwapWidgetModal
+        open={isSwapModalOpen}
+        onOpenChange={setIsSwapModalOpen}
+      />
+
       {/* Hero Section - Full width, no padding */}
       <PortfolioHero 
         totalValue={totalValue} 

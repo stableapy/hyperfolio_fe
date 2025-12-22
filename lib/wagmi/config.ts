@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { createConfig, http, cookieStorage, createStorage, useWalletClient } from "wagmi"
 import { mainnet, sepolia, arbitrum, optimism } from "wagmi/chains"
-import { injected, metaMask, walletConnect } from "wagmi/connectors"
+import { injected, walletConnect } from "wagmi/connectors"
 import { BrowserProvider, JsonRpcSigner } from "ethers"
 import type { Account, Chain, Client, Transport } from "viem"
 
@@ -38,15 +38,9 @@ const getHyperEVMChain = () => {
 export const config = createConfig({
   chains: [mainnet, sepolia, arbitrum, optimism, getHyperEVMChain()],
   connectors: [
-    metaMask({
-      dappMetadata: {
-        name: "Hyperfolio",
-        url: typeof window !== "undefined" ? window.location.origin : "",
-      },
-    }),
-    injected({
-      target: "metaMask",
-    }),
+    // Generic injected connector - detects any injected wallet (Rabby, MetaMask, Coinbase, etc.)
+    injected(),
+    // WalletConnect for mobile wallets and QR code scanning
     ...(projectId ? [walletConnect({ projectId })] : []),
   ],
   ssr: true,
