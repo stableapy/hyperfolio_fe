@@ -25,7 +25,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build arguments for environment variables
+# Build arguments for environment variables (NEXT_PUBLIC_ are baked in at build time)
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_CHAIN_ID
 ARG NEXT_PUBLIC_NETWORK_NAME
@@ -42,6 +42,9 @@ ENV NEXT_PUBLIC_GLUEX_INTEGRATOR=$NEXT_PUBLIC_GLUEX_INTEGRATOR
 ENV NEXT_PUBLIC_GLUEX_API_KEY=$NEXT_PUBLIC_GLUEX_API_KEY
 ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=$NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 ENV NEXT_PUBLIC_ANALYTICS_ID=$NEXT_PUBLIC_ANALYTICS_ID
+
+# Runtime server-only variables (set in Coolify, not baked into image)
+# API_INTERNAL_URL=http://hyperfolio-api:3000 (set at runtime for Docker internal networking)
 
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1

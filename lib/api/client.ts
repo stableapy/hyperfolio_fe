@@ -20,18 +20,23 @@ import type {
   Token,
 } from '@/lib/types/api'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
+// Use internal Docker URL for server-side calls (faster), fallback to public URL
+const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
 const API_KEY = process.env.HYPEREVM_API_KEY || ''
+
+// Debug: Log API URL on server startup
+console.log('[API Client] Using API_BASE_URL:', API_BASE_URL, '(internal:', !!process.env.API_INTERNAL_URL, ')')
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: unknown
   cache?: RequestCache
   next?: { revalidate?: number }
+  skipCache?: boolean // Add cache=false to the request URL
 }
 
 async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { method = 'GET', body, cache = 'no-store', next } = options
+  const { method = 'GET', body, cache = 'no-store', next, skipCache = false } = options
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -49,7 +54,13 @@ async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promis
     config.body = JSON.stringify(body)
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
+  // Add cache=false query param if skipCache is true
+  const separator = endpoint.includes('?') ? '&' : '?'
+  const url = skipCache 
+    ? `${API_BASE_URL}${endpoint}${separator}cache=false`
+    : `${API_BASE_URL}${endpoint}`
+
+  const response = await fetch(url, config)
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status} ${response.statusText}`)
@@ -142,14 +153,14 @@ export async function getSwapStats(address: string): Promise<SwapStats> {
 
 // Aggregated Data Functions
 
-export async function getWalletData(address: string) {
+export async function getWalletData(address: string, skipCache = false) {
   try {
     const [compositionRaw, transactions, nfts, positions, userData, history] = await Promise.all([
-      fetchAPI<WalletCompositionResponse>(`/wallet/composition?address=${address}`).catch(() => null),
-      getWalletTransactions(address, 50, 0).catch(() => []),
-      getWalletNFTs(address).catch(() => ({ data: { nfts: [], totalNftValue: 0 }, cache: {} })),
-      getPositions(address).catch(() => ({ data: { protocols: [] } })),
-      getUserData(address).catch(() => null),
+      fetchAPI<WalletCompositionResponse>(`/wallet/composition?address=${address}`, { skipCache }).catch(() => null),
+      fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&limit=50&offset=0`, { skipCache }).then(r => r.transactions || []).catch(() => []),
+      fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(`/nfts?address=${address}`, { skipCache }).catch(() => ({ data: { nfts: [], totalNftValue: 0 }, cache: {} })),
+      fetchAPI<PositionsResponse>(`/positions?address=${address}`, { skipCache }).catch(() => ({ data: { protocols: [] } })),
+      fetchAPI<UserData>(`/hypercore/user/${address}`, { skipCache }).catch(() => null),
       getPortfolioHistory(address, 30).catch(() => []),
     ])
 
@@ -180,9 +191,9 @@ export async function getWalletData(address: string) {
 
 // Multi-wallet aggregate functions
 
-export async function getMultiWalletData(addresses: string[]): Promise<AggregateData> {
+export async function getMultiWalletData(addresses: string[], skipCache = false): Promise<AggregateData> {
   try {
-    const walletDataPromises = addresses.map((address) => getWalletData(address))
+    const walletDataPromises = addresses.map((address) => getWalletData(address, skipCache))
     const results = await Promise.allSettled(walletDataPromises)
 
     const data = results.map((result, index) => ({

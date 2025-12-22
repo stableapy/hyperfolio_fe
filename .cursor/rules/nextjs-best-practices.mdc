@@ -1,0 +1,513 @@
+---
+description: Comprehensive Next.js 15 App Router best practices for HyperEVM wallet tracker frontend. Enforces DRY principles, TypeScript strict mode, Server Components first approach, and optimized request patterns.
+globs:
+  - "**/*.tsx"
+  - "**/*.ts"
+  - "app/**/*"
+  - "src/**/*"
+alwaysApply: true
+---
+
+# Next.js 15 App Router Best Practices
+
+## Core Principles
+
+- **DRY (Don't Repeat Yourself)**: Extract reusable logic into utilities, hooks, and components
+- **Server Components First**: Default to Server Components, only use Client Components when necessary
+- **Type Safety**: Use TypeScript strict mode with explicit types
+- **Performance**: Optimize requests with caching, parallel fetching, and streaming
+- **Error Handling**: Implement comprehensive error boundaries and fallbacks
+
+## Project Structure
+
+```
+app/
+├── (auth)/                 # Route groups for auth pages
+├── (dashboard)/            # Route groups for dashboard
+├── api/                    # API routes
+├── components/             # Reusable Server Components
+├── lib/                    # Utilities and helpers
+├── hooks/                  # Custom React hooks (Client Components)
+├── types/                  # TypeScript type definitions
+├── styles/                 # Global styles
+└── ui/                     # UI components library
+
+src/
+├── app/                    # App Router pages and layouts
+├── components/            # Shared components
+└── lib/                    # Shared utilities
+```
+
+## TypeScript Configuration
+
+- Use strict mode with `strict: true` in tsconfig.json
+- Define explicit types for all props, functions, and return values
+- Use interfaces over types for object shapes
+- Use `Promise<T>` type for async functions
+- Always type function parameters and return values
+
+```typescript
+// ✅ Good: Explicit types
+interface WalletBalanceProps {
+  address: string;
+  chainId: number;
+}
+
+export async function getWalletBalance(
+  address: string,
+  chainId: number
+): Promise<{ balance: string; symbol: string }> {
+  // Implementation
+}
+
+// ❌ Bad: Implicit any
+export async function getWalletBalance(address, chainId) {
+  // Implementation
+}
+```
+
+## Server Components (Default)
+
+- **Always default to Server Components** unless interactivity is required
+- Fetch data directly in Server Components using async/await
+- Never use hooks (useState, useEffect, etc.) in Server Components
+- Pass serializable data as props to Client Components
+
+```typescript
+// ✅ Good: Server Component fetching data
+import { cookies } from 'next/headers';
+
+export default async function WalletPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+  
+  const wallets = await fetchWallets(token);
+  
+  return (
+    <div>
+      {wallets.map(wallet => (
+        <WalletCard key={wallet.id} wallet={wallet} />
+      ))}
+    </div>
+  );
+}
+
+// ❌ Bad: Using hooks in Server Component
+export default function WalletPage() {
+  const [wallets, setWallets] = useState([]);
+  useEffect(() => {
+    // ...
+  }, []);
+}
+```
+
+## Client Components (When Needed)
+
+- Only use Client Components for:
+  - Event handlers (onClick, onChange, etc.)
+  - Browser APIs (localStorage, window, etc.)
+  - State management (useState, useReducer)
+  - Lifecycle effects (useEffect)
+  - Custom hooks with state
+
+- Add `'use client'` directive at the top of the file
+- Keep Client Components as small as possible
+
+```typescript
+// ✅ Good: Minimal Client Component
+'use client';
+
+import { useState } from 'react';
+
+interface ConnectWalletButtonProps {
+  onConnect: (address: string) => void;
+}
+
+export function ConnectWalletButton({ onConnect }: ConnectWalletButtonProps) {
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const address = await connectMetaMask();
+      onConnect(address);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+  
+  return (
+    <button onClick={handleConnect} disabled={isConnecting}>
+      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+    </button>
+  );
+}
+```
+
+## Data Fetching Patterns
+
+### Parallel Data Fetching
+
+- Start all fetches simultaneously, then await with Promise.all
+- Use this pattern to avoid sequential waterfalls
+
+```typescript
+// ✅ Good: Parallel fetching
+export default async function DashboardPage() {
+  const [walletData, priceData, txHistory] = await Promise.all([
+    getWalletData(),
+    getPriceData(),
+    getTransactionHistory(),
+  ]);
+  
+  return <Dashboard wallet={walletData} prices={priceData} txs={txHistory} />;
+}
+
+// ❌ Bad: Sequential fetching
+export default async function DashboardPage() {
+  const walletData = await getWalletData();
+  const priceData = await getPriceData();
+  const txHistory = await getTransactionHistory();
+  
+  return <Dashboard wallet={walletData} prices={priceData} txs={txHistory} />;
+}
+```
+
+### Caching and Revalidation
+
+- Use `cache: 'force-cache'` for static data that rarely changes
+- Use `cache: 'no-store'` for dynamic data
+- Use `revalidate` option for time-based revalidation
+- Use `revalidateTag` and `revalidatePath` for on-demand revalidation
+
+```typescript
+// ✅ Good: Cached fetch with revalidation
+export async function getTokenPrices() {
+  const res = await fetch('https://api.hyperevm.com/prices', {
+    next: { revalidate: 60 }, // Revalidate every 60 seconds
+  });
+  
+  return res.json();
+}
+
+// ✅ Good: On-demand revalidation
+import { revalidateTag } from 'next/cache';
+
+export async function updateWalletTag(walletId: string) {
+  revalidateTag(`wallet-${walletId}`);
+}
+```
+
+### Streaming with Suspense
+
+- Use loading.tsx for route-level loading states
+- Use Suspense boundaries for component-level streaming
+- Provide meaningful loading states (skeletons, not spinners)
+
+```typescript
+// ✅ Good: Streaming with Suspense
+import { Suspense } from 'react';
+
+export default function WalletPage() {
+  return (
+    <div>
+      <h1>Wallet Overview</h1>
+      <Suspense fallback={<WalletBalanceSkeleton />}>
+        <WalletBalance />
+      </Suspense>
+      <Suspense fallback={<TransactionListSkeleton />}>
+        <TransactionList />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+## Error Handling
+
+- Create error.tsx files for route error boundaries
+- Use try-catch blocks for critical operations
+- Provide user-friendly error messages
+- Log errors appropriately
+
+```typescript
+// ✅ Good: Error handling
+export default async function WalletPage() {
+  try {
+    const wallet = await getWallet();
+    return <WalletDetails wallet={wallet} />;
+  } catch (error) {
+    console.error('Failed to fetch wallet:', error);
+    throw new Error('Unable to load wallet data');
+  }
+}
+
+// error.tsx
+'use client';
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <button onClick={reset}>Try again</button>
+    </div>
+  );
+}
+```
+
+## Component Patterns
+
+### Props Interface Pattern
+
+- Always define interfaces for component props
+- Use descriptive prop names
+- Make props optional with `?` when appropriate
+
+```typescript
+// ✅ Good: Clear props interface
+interface TokenCardProps {
+  token: Token;
+  showBalance?: boolean;
+  onSelect?: (token: Token) => void;
+}
+
+export function TokenCard({ token, showBalance = true, onSelect }: TokenCardProps) {
+  return (
+    <div onClick={() => onSelect?.(token)}>
+      <h3>{token.symbol}</h3>
+      {showBalance && <p>{token.balance}</p>}
+    </div>
+  );
+}
+```
+
+### Composition Pattern
+
+- Use children prop for flexible composition
+- Prefer composition over configuration
+
+```typescript
+// ✅ Good: Composition pattern
+interface WalletLayoutProps {
+  children: React.ReactNode;
+  sidebar?: React.ReactNode;
+}
+
+export function WalletLayout({ children, sidebar }: WalletLayoutProps) {
+  return (
+    <div className="flex">
+      {sidebar && <aside>{sidebar}</aside>}
+      <main>{children}</main>
+    </div>
+  );
+}
+```
+
+## Imports and Path Aliases
+
+- Use absolute imports with `@/` alias
+- Organize imports: external → internal → relative
+- Use `import type` for type-only imports
+
+```typescript
+// ✅ Good: Organized imports
+import { cookies } from 'next/headers';
+import type { Metadata } from 'next';
+
+import { WalletCard } from '@/components/wallet-card';
+import { getWalletData } from '@/lib/api';
+import styles from './page.module.css';
+```
+
+## API Routes
+
+- Place API routes in `app/api/` directory
+- Export HTTP method functions (GET, POST, etc.)
+- Use NextRequest and NextResponse
+- Validate request data
+- Return appropriate status codes
+
+```typescript
+// ✅ Good: API route
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const createWalletSchema = z.object({
+  address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  chainId: z.number(),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const data = createWalletSchema.parse(body);
+    
+    // Process request
+    const wallet = await createWallet(data);
+    
+    return NextResponse.json(wallet, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Performance Optimization
+
+### Dynamic Imports
+
+- Use dynamic imports for heavy components
+- Use `ssr: false` for client-only components
+
+```typescript
+// ✅ Good: Dynamic import
+import dynamic from 'next/dynamic';
+
+const WalletChart = dynamic(() => import('@/components/wallet-chart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+});
+```
+
+### Image Optimization
+
+- Always use next/image for images
+- Provide width, height, and alt attributes
+- Use priority for above-the-fold images
+
+```typescript
+// ✅ Good: Optimized image
+import Image from 'next/image';
+
+<Image
+  src="/token-icon.png"
+  alt="Token icon"
+  width={64}
+  height={64}
+  priority
+/>
+```
+
+## Environment Variables
+
+- Use `.env.local` for local development
+- Prefix public variables with `NEXT_PUBLIC_`
+- Never expose secrets to the client
+- Use `server-only` package to enforce server-only code
+
+```typescript
+// ✅ Good: Environment variables
+import 'server-only';
+
+const apiKey = process.env.HYPEREVM_API_KEY; // Server-only
+const publicApiUrl = process.env.NEXT_PUBLIC_API_URL; // Available on client
+```
+
+## Async Patterns (Next.js 15+)
+
+- All dynamic APIs are now async: cookies(), headers(), draftMode()
+- Always await these APIs
+
+```typescript
+// ✅ Good: Async APIs in Next.js 15+
+import { cookies, headers } from 'next/headers';
+
+export default async function Page() {
+  const cookieStore = await cookies();
+  const headersList = await headers();
+  
+  const token = cookieStore.get('token')?.value;
+  const userAgent = headersList.get('user-agent');
+  
+  return <div>...</div>;
+}
+```
+
+## Testing
+
+- Write tests for critical business logic
+- Use vitest for unit tests
+- Use Playwright for E2E tests
+- Test components in isolation
+
+```typescript
+// ✅ Good: Component test
+import { render, screen } from '@testing-library/react';
+import { WalletCard } from './wallet-card';
+
+describe('WalletCard', () => {
+  it('displays wallet address', () => {
+    const wallet = { address: '0x123...', balance: '100' };
+    render(<WalletCard wallet={wallet} />);
+    
+    expect(screen.getByText('0x123...')).toBeInTheDocument();
+  });
+});
+```
+
+## Common Patterns
+
+### Loading States
+
+```typescript
+// Loading skeleton component
+export function WalletSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  );
+}
+```
+
+### Not Found Handling
+
+```typescript
+// app/wallet/[id]/not-found.tsx
+export default function NotFound() {
+  return (
+    <div>
+      <h2>Wallet Not Found</h2>
+      <p>The wallet you're looking for doesn't exist.</p>
+    </div>
+  );
+}
+```
+
+## Best Practices Summary
+
+1. **Start with Server Components** - Only add 'use client' when needed
+2. **Fetch data in parallel** - Use Promise.all to avoid waterfalls
+3. **Cache strategically** - Use revalidate options appropriately
+4. **Stream content** - Use Suspense for better UX
+5. **Handle errors gracefully** - Create error boundaries
+6. **Type everything** - Use explicit TypeScript types
+7. **Optimize images** - Always use next/image
+8. **Follow DRY** - Extract reusable logic
+9. **Test critical paths** - Write tests for important features
+10. **Monitor performance** - Use Core Web Vitals
+
+## Additional Resources
+
+- [Next.js 15 Documentation](https://nextjs.org/docs)
+- [Next.js App Router Guide](https://nextjs.org/docs/app)
+- [Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
+- [Data Fetching](https://nextjs.org/docs/app/building-your-application/data-fetching)
+- [TypeScript with Next.js](https://nextjs.org/docs/app/building-your-application/configuring/typescript)

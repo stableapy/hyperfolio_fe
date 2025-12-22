@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import { Grid3x3, List, Search, ExternalLink } from "lucide-react"
 import { TerminalCard } from "../terminal-card"
-import { LoadingSpinner } from "../loading-spinner"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformNFTs } from "@/lib/utils/data-transformers"
 
@@ -17,63 +16,6 @@ interface NFT {
   tokenId: string
 }
 
-const MOCK_NFTS: NFT[] = [
-  {
-    id: "1",
-    name: "Cyber Punk #1234",
-    collection: "Cyber Punks",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 2.5,
-    usdPrice: 120.0,
-    tokenId: "#1234",
-  },
-  {
-    id: "2",
-    name: "Matrix Ape #5678",
-    collection: "Matrix Apes",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 1.8,
-    usdPrice: 86.3,
-    tokenId: "#5678",
-  },
-  {
-    id: "3",
-    name: "Neon Cat #9012",
-    collection: "Neon Cats",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 0.5,
-    usdPrice: 24.0,
-    tokenId: "#9012",
-  },
-  {
-    id: "4",
-    name: "Glitch Art #3456",
-    collection: "Glitch Collection",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 4.2,
-    usdPrice: 201.3,
-    tokenId: "#3456",
-  },
-  {
-    id: "5",
-    name: "Digital Dreams #7890",
-    collection: "Digital Dreams",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 1.2,
-    usdPrice: 57.5,
-    tokenId: "#7890",
-  },
-  {
-    id: "6",
-    name: "Crypto Warrior #2345",
-    collection: "Crypto Warriors",
-    image: "/placeholder.svg?height=300&width=300",
-    floorPrice: 3.8,
-    usdPrice: 182.2,
-    tokenId: "#2345",
-  },
-]
-
 type ViewMode = "grid" | "list"
 
 export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
@@ -81,7 +23,7 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>("list")
 
-  // Get NFTs from selected wallet or all wallets
+  // Get NFTs from selected wallet or all wallets - no mock data
   const nfts = useMemo(() => {
     if (wallets.length === 0) return []
     
@@ -90,6 +32,7 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
       if (wallet && walletData[wallet.address]?.nfts) {
         return transformNFTs(walletData[wallet.address].nfts)
       }
+      return [] // No data yet
     } else {
       // Aggregate NFTs from all wallets
       const allNFTs: NFT[] = []
@@ -100,9 +43,10 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
       })
       return allNFTs
     }
-    
-    return MOCK_NFTS
   }, [wallets, walletData, selectedWalletId])
+  
+  // Check if we have any data loaded
+  const hasData = nfts.length > 0
 
   const filteredNFTs = nfts.filter(
     (nft) =>
@@ -110,13 +54,8 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
       nft.collection.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
+  // Show skeleton when loading and no data yet
+  const showSkeleton = isLoading && !hasData
 
   return (
     <div className="space-y-4">
@@ -133,6 +72,7 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
         </div>
         <div className="flex gap-2 bg-[#111618] border border-[#1a2225] rounded-lg p-1">
           <button
+            type="button"
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded transition-colors ${
               viewMode === "grid" ? "bg-[#1a2225] text-[#00ff41]" : "text-[#708090] hover:text-[#00ff41]"
@@ -141,6 +81,7 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
             <Grid3x3 className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={() => setViewMode("list")}
             className={`p-2 rounded transition-colors ${
               viewMode === "list" ? "bg-[#1a2225] text-[#00ff41]" : "text-[#708090] hover:text-[#00ff41]"
@@ -153,6 +94,27 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
 
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Show skeletons when loading and no data */}
+          {showSkeleton && (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <TerminalCard key={i}>
+                  <div className="animate-pulse">
+                    <div className="aspect-square bg-[#1a2225]" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-4 w-3/4 bg-[#1a2225] rounded" />
+                      <div className="h-3 w-1/2 bg-[#1a2225] rounded" />
+                      <div className="flex justify-between pt-2 border-t border-[#1a2225]">
+                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                      </div>
+                    </div>
+                  </div>
+                </TerminalCard>
+              ))}
+            </>
+          )}
+          
           {filteredNFTs.map((nft) => (
             <TerminalCard key={nft.id} className="group cursor-pointer hover:border-[#00ff41] transition-all">
               <div className="relative aspect-square overflow-hidden bg-[#0a0e0f]">
@@ -194,6 +156,29 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
       ) : (
         <TerminalCard>
           <div className="divide-y divide-[#1a2225]">
+            {/* Show skeletons when loading and no data */}
+            {showSkeleton && (
+              <>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="p-4 animate-pulse">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-9 h-9 rounded bg-[#1a2225]" />
+                        <div className="flex flex-col gap-1">
+                          <div className="h-4 w-32 bg-[#1a2225] rounded" />
+                          <div className="h-3 w-24 bg-[#1a2225] rounded" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="h-4 w-20 bg-[#1a2225] rounded" />
+                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            
             {filteredNFTs.map((nft) => (
               <div
                 key={nft.id}
@@ -249,10 +234,14 @@ export function NFTsSection({ isLoading = false }: { isLoading?: boolean }) {
         </TerminalCard>
       )}
 
-      {filteredNFTs.length === 0 && (
+      {filteredNFTs.length === 0 && !showSkeleton && (
         <div className="text-center py-12">
-          <div className="font-mono text-[#708090] mb-2">NO NFTs FOUND</div>
-          <div className="font-mono text-sm text-[#708090]">Try adjusting your search query</div>
+          <div className="font-mono text-[#708090] mb-2">
+            {searchQuery ? "NO NFTs FOUND" : "NO NFTs"}
+          </div>
+          <div className="font-mono text-sm text-[#708090]">
+            {searchQuery ? "Try adjusting your search query" : "No NFTs in this wallet"}
+          </div>
         </div>
       )}
     </div>

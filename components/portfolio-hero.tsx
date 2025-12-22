@@ -48,6 +48,19 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
   // Track chart display for smooth fade-in
   const [showChart, setShowChart] = useState(false)
   
+  // Track scroll to hide scroll indicator
+  const [hasScrolled, setHasScrolled] = useState(false)
+  
+  // Hide scroll indicator when user scrolls, show when back at top
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 50)
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+  
   // Delay chart display for smoother experience
   useEffect(() => {
     if (!isLoading && !isLoadingHistory && portfolioHistory.length > 0) {
@@ -560,7 +573,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
         </header>
         
         {/* Main Content - Portfolio Value & Stats - Centered vertically */}
-        <div className="flex-1 flex flex-col justify-center pb-128">
+        <div className="flex-1 flex flex-col justify-center pb-80">
           {/* Content with granular loading states - show UI immediately, skeleton only data */}
           <div className="max-w-4xl space-y-8">
             {/* Label with controls - Always visible immediately */}
@@ -700,10 +713,9 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
           </div>
         </div>
         
-        {/* Scroll indicator - Show immediately */}
-        <div className="pb-8 flex justify-center">
+        {/* Scroll indicator - Fades out when scrolling */}
+        <div className={`pb-8 flex justify-center transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center gap-2 text-[#708090] animate-bounce">
-            <span className="font-mono text-xs uppercase tracking-widest">Scroll</span>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>

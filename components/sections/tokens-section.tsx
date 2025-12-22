@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import { Search, Layers, Grid3x3, ArrowRightLeft } from "lucide-react"
 import { TerminalCard } from "../terminal-card"
-import { LoadingSpinner } from "../loading-spinner"
 import { SwapWidgetInline } from "../swap-widget-inline"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformTokens, groupTokensBySymbol } from "@/lib/utils/data-transformers"
@@ -24,53 +23,6 @@ interface Token {
   walletColor?: string
 }
 
-const MOCK_TOKENS: Token[] = [
-  {
-    id: "1",
-    address: "0x0000000000000000000000000000000000000000", // Native HYPE token (will be converted to KyberSwap format)
-    symbol: "HYPE",
-    name: "HyperEVM",
-    balance: 1250.5,
-    value: 15630.25,
-    price: 12.5,
-    change24h: 5.2,
-    logo: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: "2",
-    address: "0x0000000000000000000000000000000000000001", // Mock ETH address
-    symbol: "ETH",
-    name: "Ethereum",
-    balance: 8.75,
-    value: 28350.0,
-    price: 3240.0,
-    change24h: -2.1,
-    logo: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: "3",
-    address: "0x0000000000000000000000000000000000000002", // Mock USDC address
-    symbol: "USDC",
-    name: "USD Coin",
-    balance: 5420.0,
-    value: 5420.0,
-    price: 1.0,
-    change24h: 0.01,
-    logo: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: "4",
-    address: "0x0000000000000000000000000000000000000003", // Mock LINK address
-    symbol: "LINK",
-    name: "Chainlink",
-    balance: 450.25,
-    value: 6753.75,
-    price: 15.0,
-    change24h: 8.5,
-    logo: "/placeholder.svg?height=32&width=32",
-  },
-]
-
 type SortField = "symbol" | "balance" | "value" | "change24h"
 type SortOrder = "asc" | "desc"
 
@@ -88,7 +40,7 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
     chainId: number
   } | undefined>(undefined)
 
-  // Get tokens from selected wallet or all wallets
+  // Get tokens from selected wallet or all wallets - no mock data, show what we have
   const rawTokens = useMemo(() => {
     if (wallets.length === 0) return []
     
@@ -100,6 +52,7 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
           { address: wallet.address, name: wallet.name, color: wallet.color }
         )
       }
+      return [] // No data yet for this wallet
     } else {
       // Aggregate tokens from all wallets with wallet info
       const allTokens: Token[] = []
@@ -113,9 +66,10 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
       })
       return allTokens
     }
-    
-    return MOCK_TOKENS
   }, [wallets, walletData, selectedWalletId])
+  
+  // Check if we have any data loaded
+  const hasData = rawTokens.length > 0
 
   // Apply grouping if enabled and in multi-wallet view
   const tokens = useMemo(() => {
@@ -168,13 +122,8 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
     return diff * multiplier
   })
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
+  // Show skeleton when loading and no data yet
+  const showSkeleton = isLoading && !hasData
 
   return (
     <div className="flex gap-6">
@@ -222,6 +171,31 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
 
         <TerminalCard>
           <div className="divide-y divide-[#1a2225]">
+            {/* Show skeletons when loading and no data */}
+            {showSkeleton && (
+              <>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="p-4 animate-pulse">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-7 h-7 rounded-full bg-[#1a2225]" />
+                        <div className="flex flex-col gap-1">
+                          <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                          <div className="h-3 w-24 bg-[#1a2225] rounded" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="h-4 w-20 bg-[#1a2225] rounded" />
+                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                        <div className="h-4 w-20 bg-[#1a2225] rounded" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            
+            {/* Show real data */}
             {filteredTokens.map((token) => (
               <div
                 key={token.id}
@@ -309,17 +283,21 @@ export function TokensSection({ isLoading = false }: { isLoading?: boolean }) {
           </div>
         </TerminalCard>
 
-        {filteredTokens.length === 0 && (
+        {filteredTokens.length === 0 && !showSkeleton && (
           <div className="text-center py-12">
-            <div className="font-mono text-[#708090] mb-2">NO TOKENS FOUND</div>
-            <div className="font-mono text-sm text-[#708090]">Try adjusting your search query</div>
+            <div className="font-mono text-[#708090] mb-2">
+              {searchQuery ? "NO TOKENS FOUND" : "NO TOKENS"}
+            </div>
+            <div className="font-mono text-sm text-[#708090]">
+              {searchQuery ? "Try adjusting your search query" : "Add a wallet to view tokens"}
+            </div>
           </div>
         )}
       </div>
 
       {/* Right: Sticky Swap Widget */}
       <div className="w-[380px] flex-shrink-0">
-        <div className="sticky top-4">
+        <div className="sticky top-20">
           <SwapWidgetInline fromToken={selectedSwapToken} />
         </div>
       </div>

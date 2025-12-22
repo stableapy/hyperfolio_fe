@@ -33,8 +33,8 @@ interface WalletState {
   setError: (error: string | null) => void
   setAggregateData: (data: AggregateData | null) => void
   setWalletData: (address: string, data: WalletData) => void
-  syncWalletData: (walletId: string) => Promise<void>
-  syncAllWallets: () => Promise<void>
+  syncWalletData: (walletId: string, skipCache?: boolean) => Promise<void>
+  syncAllWallets: (skipCache?: boolean) => Promise<void>
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -95,15 +95,16 @@ export const useWalletStore = create<WalletState>()(
         }))
       },
 
-      syncWalletData: async (walletId) => {
+      syncWalletData: async (walletId, skipCache = false) => {
         const wallet = get().wallets.find((w) => w.id === walletId)
         if (!wallet) return
 
         set({ isLoading: true, error: null })
 
         try {
-          // Fetch data from API
-          const response = await fetch(`/api/wallet/${wallet.address}`)
+          // Fetch data from API with optional cache bypass
+          const cacheParam = skipCache ? '?cache=false' : ''
+          const response = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
           if (!response.ok) throw new Error('Failed to fetch wallet data')
 
           const data = await response.json()
@@ -121,7 +122,7 @@ export const useWalletStore = create<WalletState>()(
         }
       },
 
-      syncAllWallets: async () => {
+      syncAllWallets: async (skipCache = false) => {
         const { wallets } = get()
         if (wallets.length === 0) return
 
@@ -129,10 +130,11 @@ export const useWalletStore = create<WalletState>()(
 
         try {
           const addresses = wallets.map((w) => w.address)
+          // Add cache=false to body when skipping cache
           const response = await fetch('/api/wallet/aggregate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ addresses }),
+            body: JSON.stringify({ addresses, cache: skipCache ? false : undefined }),
           })
 
           if (!response.ok) {
@@ -148,9 +150,10 @@ export const useWalletStore = create<WalletState>()(
           })
 
           // Update each wallet with raw data
+          const cacheParam = skipCache ? '?cache=false' : ''
           wallets.forEach(async (wallet) => {
             try {
-              const walletResponse = await fetch(`/api/wallet/${wallet.address}`)
+              const walletResponse = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
               if (walletResponse.ok) {
                 const data = await walletResponse.json()
                 get().setWalletData(wallet.address, data)

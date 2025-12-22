@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import { DollarSign, TrendingUp, Lock, Vault } from "lucide-react"
 import { TerminalCard, TerminalContent } from "../terminal-card"
-import { LoadingSpinner } from "../loading-spinner"
 import { useWalletStore } from "@/lib/store/wallet-store"
 
 interface SpotBalance {
@@ -167,22 +166,9 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
     return null
   }, [wallets, walletData, selectedWalletId])
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
-
-  if (!hypercoreData) {
-    return (
-      <div className="text-center py-12">
-        <div className="font-mono text-[#708090] mb-2">NO HYPERCORE DATA</div>
-        <div className="font-mono text-sm text-[#708090]">Add a wallet to view Hypercore data</div>
-      </div>
-    )
-  }
+  // Show skeleton when loading and no data yet
+  const showSkeleton = isLoading && !hypercoreData
+  const hasData = !!hypercoreData
 
   const tabs = [
     { id: "spot" as const, label: "Spot", icon: DollarSign, color: "#00ff41" },
@@ -190,6 +176,16 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
     { id: "staking" as const, label: "Staking", icon: Lock, color: "#ff00ff" },
     { id: "vaults" as const, label: "Vaults", icon: Vault, color: "#ffaa00" },
   ]
+
+  // Show "no data" message when not loading and no data
+  if (!hasData && !isLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="font-mono text-[#708090] mb-2">NO HYPERCORE DATA</div>
+        <div className="font-mono text-sm text-[#708090]">Add a wallet to view Hypercore data</div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -201,9 +197,13 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               <DollarSign className="w-4 h-4 text-[#00ff41]" />
               <div className="font-mono text-xs text-[#708090]">SPOT VALUE</div>
             </div>
-            <div className="font-mono text-xl text-white font-semibold">
-              ${parseFloat(hypercoreData.portfolioSummary.spotValue).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-28 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-white font-semibold">
+                ${parseFloat(hypercoreData?.portfolioSummary?.spotValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
 
@@ -213,9 +213,13 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               <TrendingUp className="w-4 h-4 text-[#00d9ff]" />
               <div className="font-mono text-xs text-[#708090]">PERP VALUE</div>
             </div>
-            <div className="font-mono text-xl text-white font-semibold">
-              ${parseFloat(hypercoreData.portfolioSummary.perpValue).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-white font-semibold">
+                ${parseFloat(hypercoreData?.portfolioSummary?.perpValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
 
@@ -225,9 +229,13 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               <Lock className="w-4 h-4 text-[#ff00ff]" />
               <div className="font-mono text-xs text-[#708090]">STAKED VALUE</div>
             </div>
-            <div className="font-mono text-xl text-white font-semibold">
-              ${parseFloat(hypercoreData.portfolioSummary.stakedValue).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-white font-semibold">
+                ${parseFloat(hypercoreData?.portfolioSummary?.stakedValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
 
@@ -237,9 +245,13 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
               <Vault className="w-4 h-4 text-[#ffaa00]" />
               <div className="font-mono text-xs text-[#708090]">VAULT VALUE</div>
             </div>
-            <div className="font-mono text-xl text-white font-semibold">
-              ${parseFloat(hypercoreData.portfolioSummary.vaultValue).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-white font-semibold">
+                ${parseFloat(hypercoreData?.portfolioSummary?.vaultValue || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
       </div>
@@ -250,6 +262,7 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
           const Icon = tab.icon
           return (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2 rounded transition-all flex items-center justify-center gap-2 ${
@@ -271,9 +284,33 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
       {/* Content */}
       <TerminalCard>
         <TerminalContent>
-          {activeTab === "spot" && (
+          {/* Show skeletons when loading */}
+          {showSkeleton && (
             <div className="divide-y divide-[#1a2225]">
-              {hypercoreData.spotBalances.length > 0 ? (
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 animate-pulse">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-7 h-7 rounded-full bg-[#1a2225]" />
+                      <div className="flex flex-col gap-1">
+                        <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                        <div className="h-3 w-24 bg-[#1a2225] rounded" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                      <div className="h-4 w-16 bg-[#1a2225] rounded" />
+                      <div className="h-4 w-20 bg-[#1a2225] rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {activeTab === "spot" && hasData && (
+            <div className="divide-y divide-[#1a2225]">
+              {hypercoreData && hypercoreData.spotBalances.length > 0 ? (
                 hypercoreData.spotBalances
                   .filter((b: SpotBalance) => parseFloat(b.total) > 0)
                   .map((balance: SpotBalance) => (
@@ -331,16 +368,16 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
             </div>
           )}
 
-          {activeTab === "perp" && (
+          {activeTab === "perp" && hasData && (
             <div className="text-center py-8">
               <div className="font-mono text-[#708090]">NO PERP POSITIONS</div>
               <div className="font-mono text-xs text-[#708090] mt-2">
-                Margin Balance: ${parseFloat(hypercoreData.perpPositions.margin.usdcBalance).toFixed(2)}
+                Margin Balance: ${parseFloat(hypercoreData?.perpPositions?.margin?.usdcBalance || "0").toFixed(2)}
               </div>
             </div>
           )}
 
-          {activeTab === "staking" && (
+          {activeTab === "staking" && hasData && hypercoreData && (
             <div className="space-y-3">
               {/* Summary */}
               <div className="p-3 border border-[#1a2225] rounded-lg bg-[#0a0e0f]">
@@ -348,20 +385,20 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
                   <div>
                     <div className="font-mono text-xs text-[#708090] mb-1">TOTAL HYPE</div>
                     <div className="font-mono text-sm text-white font-semibold">
-                      {parseFloat(hypercoreData.stakingInfo.totalHype).toLocaleString()}
+                      {parseFloat(hypercoreData.stakingInfo?.totalHype || "0").toLocaleString()}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-mono text-xs text-[#708090] mb-1">STAKED VALUE</div>
                     <div className="font-mono text-sm text-[#ff00ff] font-semibold">
-                      ${parseFloat(hypercoreData.stakingInfo.delegatorSummary?.totalStakedUsd || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      ${parseFloat(hypercoreData.stakingInfo?.delegatorSummary?.totalStakedUsd || "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Delegations */}
-              {hypercoreData.stakingInfo.delegations && hypercoreData.stakingInfo.delegations.length > 0 ? (
+              {hypercoreData.stakingInfo?.delegations && hypercoreData.stakingInfo.delegations.length > 0 ? (
                 <div className="divide-y divide-[#1a2225]">
                   {hypercoreData.stakingInfo.delegations.map((delegation: any, index: number) => (
                     <div key={index} className="p-4 hover:bg-[#111618] transition-colors">
@@ -388,9 +425,9 @@ export function HypercoreSection({ isLoading = false }: { isLoading?: boolean })
             </div>
           )}
 
-          {activeTab === "vaults" && (
+          {activeTab === "vaults" && hasData && hypercoreData && (
             <div className="divide-y divide-[#1a2225]">
-              {hypercoreData.vaultInfo.vaults && hypercoreData.vaultInfo.vaults.length > 0 ? (
+              {hypercoreData.vaultInfo?.vaults && hypercoreData.vaultInfo.vaults.length > 0 ? (
                 hypercoreData.vaultInfo.vaults.map((vault: VaultDetail, index: number) => {
                   const isLocked = vault.lockedUntilTimestamp > Date.now()
                   

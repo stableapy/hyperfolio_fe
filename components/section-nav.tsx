@@ -17,26 +17,27 @@ const SECTIONS = [
 
 export function SectionNav({ activeSection, onSectionChange }: SectionNavProps) {
   return (
-    <div className="flex gap-2 border-b border-[#1a2225] mb-6 overflow-x-auto">
+    <nav className="flex gap-1 md:gap-2 border-b border-[#1a2225] overflow-x-auto scrollbar-hide pb-px">
       {SECTIONS.map((section) => {
         const Icon = section.icon
         const isActive = activeSection === section.id
 
         return (
           <button
+            type="button"
             key={section.id}
             onClick={() => onSectionChange(section.id)}
-            className={`flex items-center gap-2 px-4 py-3 font-mono text-sm border-b-2 transition-all whitespace-nowrap ${
+            className={`group flex items-center gap-2 px-3 md:px-4 py-3 font-mono text-sm border-b-2 -mb-px transition-all whitespace-nowrap ${
               isActive
                 ? "border-[#00ff41] text-[#00ff41] text-glow-green"
                 : "border-transparent text-[#708090] hover:text-[#00ff41] hover:border-[#1a2225]"
             }`}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-105"}`} />
             <span>{section.label}</span>
           </button>
         )
       })}
-    </div>
+    </nav>
   )
 }

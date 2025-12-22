@@ -3,65 +3,9 @@
 import { useState, useMemo } from "react"
 import { TrendingUp, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { TerminalCard, TerminalContent } from "../terminal-card"
-import { LoadingSpinner } from "../loading-spinner"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformDeFiPositions, groupPositionsByProtocol, type DeFiPositionDisplay, type ProtocolGroup } from "@/lib/utils/data-transformers"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
-const MOCK_POSITIONS: DeFiPositionDisplay[] = [
-  {
-    id: "1",
-    protocol: "HyperSwap",
-    type: "liquidity",
-    assets: ["HYPE", "ETH"],
-    deposited: 12500.0,
-    current: 13250.0,
-    apy: 24.5,
-    rewards: 125.5,
-    logo: "/placeholder.svg?height=40&width=40",
-    positionDetails: undefined,
-    protocolUrl: undefined,
-  },
-  {
-    id: "2",
-    protocol: "HyperLend",
-    type: "lending",
-    assets: ["USDC"],
-    deposited: 5000.0,
-    current: 5125.0,
-    apy: 8.2,
-    rewards: 42.3,
-    logo: "/placeholder.svg?height=40&width=40",
-    positionDetails: undefined,
-    protocolUrl: undefined,
-  },
-  {
-    id: "3",
-    protocol: "HyperStake",
-    type: "staking",
-    assets: ["HYPE"],
-    deposited: 8000.0,
-    current: 8640.0,
-    apy: 15.8,
-    rewards: 98.7,
-    logo: "/placeholder.svg?height=40&width=40",
-    positionDetails: undefined,
-    protocolUrl: undefined,
-  },
-  {
-    id: "4",
-    protocol: "HyperFarm",
-    type: "farming",
-    assets: ["LINK", "ETH"],
-    deposited: 6500.0,
-    current: 7150.0,
-    apy: 32.1,
-    rewards: 156.2,
-    logo: "/placeholder.svg?height=40&width=40",
-    positionDetails: undefined,
-    protocolUrl: undefined,
-  },
-]
 
 const TYPE_LABELS = {
   lending: "Lending",
@@ -81,7 +25,7 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
   const { wallets, walletData, selectedWalletId } = useWalletStore()
   const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set())
 
-  // Get positions from selected wallet or all wallets
+  // Get positions from selected wallet or all wallets - no mock data
   const { positions, protocolsData } = useMemo(() => {
     if (wallets.length === 0) return { positions: [], protocolsData: [] }
     
@@ -96,9 +40,11 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
           protocolsData: walletData[wallet.address].positions?.data?.protocols || []
         }
       }
+      return { positions: [], protocolsData: [] } // No data yet
     } else {
       // Aggregate positions from all wallets with wallet info
       const allPositions: DeFiPositionDisplay[] = []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allProtocolsData: any[] = []
       wallets.forEach(wallet => {
         if (walletData[wallet.address]?.positions) {
@@ -113,9 +59,10 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
       })
       return { positions: allPositions, protocolsData: allProtocolsData }
     }
-    
-    return { positions: MOCK_POSITIONS, protocolsData: [] }
   }, [wallets, walletData, selectedWalletId])
+  
+  // Check if we have any data loaded
+  const hasData = positions.length > 0
 
   // Group positions by protocol
   const protocolGroups = useMemo(() => {
@@ -160,13 +107,8 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
     setExpandedProtocols(newExpanded)
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
+  // Show skeleton when loading and no data yet
+  const showSkeleton = isLoading && !hasData
 
   return (
     <div className="space-y-4">
@@ -174,27 +116,35 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
         <TerminalCard>
           <TerminalContent>
             <div className="font-mono text-xs text-[#708090] mb-2">TOTAL DEPOSITED</div>
-            <div className="font-mono text-xl text-white font-semibold">
-              ${totalDeposited.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-32 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-white font-semibold">
+                ${totalDeposited.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
-
-
 
         <TerminalCard>
           <TerminalContent>
             <div className="font-mono text-xs text-[#708090] mb-2">UNCLAIMED REWARDS</div>
-            <div className="font-mono text-xl text-[#00d9ff] font-semibold">
-              ${totalRewards.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </div>
+            {showSkeleton ? (
+              <div className="h-7 w-24 bg-[#1a2225] rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-xl text-[#00d9ff] font-semibold">
+                ${totalRewards.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </TerminalContent>
         </TerminalCard>
 
         <TerminalCard>
           <TerminalContent>
             <div className="font-mono text-xs text-[#708090] mb-2">WEIGHTED APY</div>
-            {weightedApy > 0 ? (
+            {showSkeleton ? (
+              <div className="h-7 w-20 bg-[#1a2225] rounded animate-pulse" />
+            ) : weightedApy > 0 ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -241,6 +191,28 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
       </div>
 
       <div className="space-y-3">
+        {/* Show skeletons when loading and no data */}
+        {showSkeleton && (
+          <>
+            {[1, 2, 3].map((i) => (
+              <TerminalCard key={i}>
+                <div className="p-3 animate-pulse">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-7 h-7 rounded bg-[#1a2225]" />
+                      <div className="h-4 w-32 bg-[#1a2225] rounded" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="h-4 w-24 bg-[#1a2225] rounded" />
+                      <div className="h-6 w-16 bg-[#1a2225] rounded" />
+                    </div>
+                  </div>
+                </div>
+              </TerminalCard>
+            ))}
+          </>
+        )}
+        
         {protocolGroups.map((protocol) => {
           const isProtocolExpanded = expandedProtocols.has(protocol.id)
           const protocolPnL = protocol.positions.reduce((sum, pos) => sum + (pos.current - pos.deposited), 0)
@@ -555,7 +527,7 @@ export function DeFiSection({ isLoading = false }: { isLoading?: boolean }) {
         })}
       </div>
 
-      {protocolGroups.length === 0 && (
+      {protocolGroups.length === 0 && !showSkeleton && (
         <div className="text-center py-12">
           <div className="font-mono text-[#708090] mb-2">NO DEFI POSITIONS</div>
           <div className="font-mono text-sm text-[#708090]">Start earning by depositing into DeFi protocols</div>

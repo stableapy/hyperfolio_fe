@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
+// Use internal Docker URL for server-side calls (faster), fallback to public URL
+const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
 const API_KEY = process.env.HYPEREVM_API_KEY || ''
 
 interface HistorySnapshot {

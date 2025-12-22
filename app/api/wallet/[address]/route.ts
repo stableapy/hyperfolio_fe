@@ -9,12 +9,16 @@ export async function GET(
 ) {
   try {
     const { address } = await params
+    
+    // Check for cache bypass parameter
+    const { searchParams } = new URL(request.url)
+    const skipCache = searchParams.get('cache') === 'false'
 
     if (!address) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 })
     }
 
-    const data = await getWalletData(address)
+    const data = await getWalletData(address, skipCache)
 
     // Return data with compositionRaw as composition for compatibility
     return NextResponse.json({
