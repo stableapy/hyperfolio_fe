@@ -63,6 +63,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Install curl for Coolify health checks (required - Coolify uses curl internally)
+RUN apk add --no-cache curl
+
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -80,9 +83,9 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Health check for zero-downtime deployments
-# Using wget (included in Alpine) - Coolify waits for this to pass before routing traffic
+# Coolify uses curl internally for health checks
 HEALTHCHECK --interval=5s --timeout=5s --start-period=40s --retries=5 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["node", "server.js"]
 
