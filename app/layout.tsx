@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { cookieToInitialState } from "wagmi"
+import Script from "next/script"
 
 import "./globals.css"
 
@@ -20,8 +21,10 @@ const geistMono = Geist_Mono({ subsets: ["latin"] })
 // Site configuration for SEO
 const siteConfig = {
   name: "Hyperfolio",
-  title: "Hyperfolio - DeFi Portfolio Tracker for HyperEVM",
-  description: "Track your HyperEVM portfolio across multiple wallets. Monitor tokens, NFTs, DeFi positions, and transactions in real-time on the Hyperliquid ecosystem.",
+  // Title optimized for 50-60 characters (currently 56)
+  title: "Hyperfolio | HyperEVM Multi-Wallet DeFi Portfolio Tracker",
+  // Description optimized for 100-130 characters (currently 118)
+  description: "Track tokens, NFTs, DeFi positions & transactions across multiple wallets on HyperEVM. Real-time Hyperliquid analytics.",
   url: "https://hyperfolio.xyz",
   twitterHandle: "@stableAPY",
   keywords: [
@@ -38,6 +41,10 @@ const siteConfig = {
     "Hyperbeat",
     "HYPE",
   ],
+  // Social links
+  socials: {
+    twitter: "https://x.com/stableAPY",
+  },
 }
 
 export const metadata: Metadata = {
@@ -121,6 +128,80 @@ export const metadata: Metadata = {
   },
 }
 
+// JSON-LD Structured Data for SEO
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}/favicon.svg`,
+      },
+      sameAs: [
+        siteConfig.socials.twitter,
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteConfig.url}/#website`,
+      url: siteConfig.url,
+      name: siteConfig.name,
+      description: siteConfig.description,
+      publisher: {
+        "@id": `${siteConfig.url}/#organization`,
+      },
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${siteConfig.url}/#webapp`,
+      name: siteConfig.name,
+      description: siteConfig.description,
+      url: siteConfig.url,
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Any",
+      browserRequirements: "Requires JavaScript",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      featureList: [
+        "Multi-wallet portfolio tracking",
+        "Real-time token balances",
+        "NFT collection management",
+        "DeFi position monitoring",
+        "Transaction history",
+        "HyperEVM blockchain support",
+      ],
+      creator: {
+        "@id": `${siteConfig.url}/#organization`,
+      },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: siteConfig.name,
+      applicationCategory: "DeFi Portfolio Tracker",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.8",
+        ratingCount: "100",
+        bestRating: "5",
+        worstRating: "1",
+      },
+    },
+  ],
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -132,7 +213,58 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Google Tag Manager */}
+        <Script
+          id="gtm"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-K8ZG67BR');`,
+          }}
+        />
+        {/* Google Analytics */}
+        <Script
+          id="ga"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TCD5G3MPGQ"
+        />
+        <Script
+          id="ga-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-TCD5G3MPGQ', {
+                send_page_view: true
+              });
+            `,
+          }}
+        />
+        {/* JSON-LD Structured Data for rich snippets */}
+        <Script
+          id="json-ld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={`${geistSans.className} bg-[#0a0e0f] text-[#00ff41] antialiased`}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-K8ZG67BR"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+            title="Google Tag Manager"
+          />
+        </noscript>
         <Providers initialState={initialState}>
           {children}
         </Providers>

@@ -6,6 +6,7 @@ import { WelcomeModal } from "@/components/welcome-modal"
 import { ApiBanner } from "@/components/api-banner"
 import { PortfolioHero } from "@/components/portfolio-hero"
 import { SwapWidgetModal } from "@/components/swap-widget"
+import { SeoFooter } from "@/components/seo-footer"
 import { useWalletStore } from "@/lib/store/wallet-store"
 
 // Home page components
@@ -160,6 +161,9 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* SEO-optimized footer with social links and content */}
+      <SeoFooter />
     </main>
   )
 }

@@ -1,0 +1,50 @@
+# Hyperfolio - HyperEVM DeFi Portfolio Tracker
+
+> Hyperfolio is a free, open-source multi-wallet portfolio tracker for the HyperEVM blockchain (Hyperliquid ecosystem).
+
+## What is Hyperfolio?
+
+Hyperfolio allows users to track their cryptocurrency portfolios across multiple wallets on the HyperEVM blockchain. It provides real-time monitoring of tokens, NFTs, DeFi positions, and transaction history.
+
+## Key Features
+
+- **Multi-Wallet Tracking**: Connect and monitor multiple wallet addresses simultaneously
+- **Token Balances**: View real-time token balances with USD valuations
+- **NFT Collections**: Browse and manage NFT holdings
+- **DeFi Positions**: Track lending, staking, and liquidity positions across protocols
+- **Transaction History**: View complete transaction history with detailed information
+- **Portfolio Analytics**: Visualize portfolio performance with charts and statistics
+- **Hypercore Integration**: Native support for Hypercore ecosystem protocols
+
+## Supported Blockchain
+
+Hyperfolio exclusively supports the HyperEVM blockchain, which is part of the Hyperliquid ecosystem. HyperEVM is an EVM-compatible Layer 1 blockchain.
+
+## Technical Details
+
+- Built with Next.js 15 and React
+- Uses Server Components for optimal performance
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Wagmi for wallet connections
+
+## API Access
+
+Hyperfolio provides a public API for developers. Documentation is available at https://api.hyperfolio.xyz/docs
+
+## Contact
+
+- Website: https://hyperfolio.xyz
+- Twitter/X: https://x.com/stableAPY
+- API Docs: https://api.hyperfolio.xyz/docs
+
+## Usage
+
+1. Visit https://hyperfolio.xyz
+2. Add your HyperEVM wallet address
+3. View your complete portfolio across all tracked assets
+
+## Privacy
+
+Hyperfolio is a read-only portfolio tracker. It does not require wallet connections for viewing. Simply enter a public wallet address to view holdings. No private keys or seed phrases are ever requested.
+

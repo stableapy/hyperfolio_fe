@@ -67,6 +67,7 @@ export type {
 export { WelcomeModal, resetWelcomeState, hasSeenWelcome } from "./welcome-modal"
 export { ApiBanner } from "./api-banner"
 export { SectionNav } from "./section-nav"
+export { SeoFooter } from "./seo-footer"
 
 // Home page components
 export * from "./home"
