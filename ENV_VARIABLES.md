@@ -32,6 +32,16 @@ JWT_SECRET=your_jwt_secret_here
 
 # Internal API URL for Docker/Coolify deployments (faster server-side calls)
 # Uses Docker internal networking instead of going through public internet
+#
+# REQUIREMENTS:
+# 1. Enable "Consistent Container Names" in Coolify for the backend service
+# 2. Both frontend and backend must be on the same Docker network (use "coolify" network)
+# 3. The backend service name in Coolify should be "hyperfolio-api"
+#
+# With consistent names enabled, containers are named exactly as the service name
+# instead of {service}-{uuid}-{deployment-id}
+#
+# The code automatically falls back to NEXT_PUBLIC_API_URL if API_INTERNAL_URL is not set
 API_INTERNAL_URL=http://hyperfolio-api:3000
 ```
 

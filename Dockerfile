@@ -44,7 +44,9 @@ ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=$NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 ENV NEXT_PUBLIC_ANALYTICS_ID=$NEXT_PUBLIC_ANALYTICS_ID
 
 # Runtime server-only variables (set in Coolify, not baked into image)
-# API_INTERNAL_URL=http://hyperfolio-api:3000 (set at runtime for Docker internal networking)
+# API_INTERNAL_URL=http://hyperfolio-api:3000
+# Requires: "Consistent Container Names" enabled in Coolify for backend
+# Both services must be on the same Docker network (coolify network)
 
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
