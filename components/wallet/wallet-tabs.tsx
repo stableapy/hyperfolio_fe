@@ -79,7 +79,7 @@ export function WalletTabs({ wallets, onWalletChange, onAddWallet, onRemoveWalle
       <button
         type="button"
         onClick={onAddWallet}
-        className="px-4 py-2 rounded-lg font-mono text-sm border border-dashed border-[#00d9ff] text-[#00d9ff] hover:bg-[#00d9ff]/10 transition-all flex items-center gap-2"
+        className="px-4 py-2 rounded-lg font-mono text-sm border border-dashed border-[#ffb000] text-[#ffb000] hover:bg-[#ffb000]/10 transition-all flex items-center gap-2"
       >
         <Plus className="w-4 h-4" />
         ADD_WALLET

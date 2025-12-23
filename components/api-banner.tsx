@@ -29,8 +29,8 @@ export function ApiBanner() {
         <div className="container mx-auto flex items-center justify-center gap-2 sm:gap-3">
           {/* Terminal-style API label */}
           <div className="flex items-center gap-1.5">
-            <span className="font-mono text-[10px] font-bold text-[#00d9ff]">&gt;</span>
-            <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00d9ff] tracking-wider">
+            <span className="font-mono text-[10px] font-bold text-[#ffb000]">&gt;</span>
+            <span className="font-mono text-[10px] sm:text-xs font-bold text-[#ffb000] tracking-wider">
               hyperfolio_API
             </span>
           </div>

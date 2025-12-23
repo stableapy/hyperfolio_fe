@@ -15,7 +15,7 @@ export const TYPE_CONFIG: Record<string, TypeConfig> = {
   swap: {
     icon: ArrowLeftRight,
     label: "Swap",
-    color: "#00d9ff",
+    color: "#ffb000",
   },
   contract: {
     icon: FileCode2,
@@ -48,7 +48,7 @@ export const ACTION_CONFIG: Record<string, { label: string; color: string; icon:
   },
   swap: {
     label: "Swap",
-    color: "#00d9ff",
+    color: "#ffb000",
     icon: ArrowLeftRight,
   },
   approve: {
@@ -58,7 +58,7 @@ export const ACTION_CONFIG: Record<string, { label: string; color: string; icon:
   },
   transfer: {
     label: "Transfer",
-    color: "#00d9ff",
+    color: "#ffb000",
     icon: Send,
   },
   unknown: {

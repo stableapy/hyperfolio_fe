@@ -19,7 +19,7 @@ export function NFTSearchControls({
         <div className="flex items-center">
           {/* Terminal prompt */}
           <div className="flex items-center gap-1.5 px-3 py-2 bg-theme-bg/50 border-r border-theme-border/50">
-            <span className="font-mono text-xs text-[#a855f7] font-bold">&gt;</span>
+            <span className="font-mono text-xs text-[#b4ff00] font-bold">&gt;</span>
             <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider hidden sm:inline">find</span>
           </div>
           <input
@@ -47,7 +47,7 @@ export function NFTSearchControls({
           onClick={() => onViewModeChange("grid")}
           className={`px-2.5 py-2 transition-all duration-150 border-r border-theme-border/50 ${
             viewMode === "grid" 
-              ? "bg-[#a855f7]/10 text-[#a855f7]" 
+              ? "bg-[#b4ff00]/10 text-[#b4ff00]" 
               : "text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-bg/50"
           }`}
         >
@@ -58,7 +58,7 @@ export function NFTSearchControls({
           onClick={() => onViewModeChange("list")}
           className={`px-2.5 py-2 transition-all duration-150 ${
             viewMode === "list" 
-              ? "bg-[#a855f7]/10 text-[#a855f7]" 
+              ? "bg-[#b4ff00]/10 text-[#b4ff00]" 
               : "text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-bg/50"
           }`}
         >

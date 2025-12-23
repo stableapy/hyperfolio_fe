@@ -9,7 +9,7 @@ export const TYPE_LABELS = {
 
 export const TYPE_COLORS = {
   lending: "#00ff41",
-  liquidity: "#00d9ff",
+  liquidity: "#ffb000",
   staking: "#ff00ff",
   farming: "#ffaa00",
 } as const

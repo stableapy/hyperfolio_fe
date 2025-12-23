@@ -22,7 +22,7 @@ export function SummaryCards({ data, showSkeleton }: SummaryCardsProps) {
       ) : (
         <StatPill
           icon=">_"
-          customColor="#00ff41"
+          color="accent"
           label="--spot"
           value={spotValue}
         />
@@ -34,7 +34,7 @@ export function SummaryCards({ data, showSkeleton }: SummaryCardsProps) {
       ) : (
         <StatPill
           icon="~"
-          color="cyan"
+          color="amber"
           label="--perp"
           value={perpValue}
         />
@@ -45,7 +45,7 @@ export function SummaryCards({ data, showSkeleton }: SummaryCardsProps) {
         <StatPillSkeleton width="w-28 sm:w-36" />
       ) : (
         <StatPill
-          icon="⚡"
+          icon="::"
           color="magenta"
           label="--staked"
           value={stakedValue}
@@ -57,7 +57,7 @@ export function SummaryCards({ data, showSkeleton }: SummaryCardsProps) {
         <StatPillSkeleton width="w-28 sm:w-36" />
       ) : (
         <StatPill
-          icon="◆"
+          icon="[#]"
           color="orange"
           label="--vaults"
           value={vaultValue}

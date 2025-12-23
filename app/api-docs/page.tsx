@@ -168,8 +168,8 @@ export default function ApiDocsPage() {
               <pre className="p-4 overflow-x-auto">
                 <code className="font-mono text-xs sm:text-sm text-theme-text-secondary">
                   <span className="text-theme-text-muted"># Get wallet portfolio data</span>{'\n'}
-                  <span className="text-theme-accent">curl</span> -H <span className="text-[#00d9ff]">&quot;x-api-key: YOUR_API_KEY&quot;</span> \{'\n'}
-                  {'  '}https://api.hyperfolio.xyz/v1/wallet/<span className="text-[#a855f7]">{'{address}'}</span>{'\n'}
+                  <span className="text-theme-accent">curl</span> -H <span className="text-[#ffb000]">&quot;x-api-key: YOUR_API_KEY&quot;</span> \{'\n'}
+                  {'  '}https://api.hyperfolio.xyz/v1/wallet/<span className="text-[#b4ff00]">{'{address}'}</span>{'\n'}
                   {'\n'}
                   <span className="text-theme-text-muted"># Response includes:</span>{'\n'}
                   <span className="text-theme-text-muted"># - Token balances with USD values</span>{'\n'}

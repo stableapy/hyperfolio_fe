@@ -12,11 +12,11 @@ function SpotBalanceRow({ balance }: { balance: SpotBalance }) {
   const usdValue = parseFloat(balance.usdValue)
   
   return (
-    <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group hover:bg-theme-accent/5 border-l-2 border-l-transparent hover:border-l-[#00ff41]">
+    <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group hover:bg-theme-accent/5 border-l-2 border-l-transparent hover:border-l-theme-accent">
       <div className="flex items-center justify-between gap-2">
         {/* Terminal Prompt */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="font-mono text-sm font-bold text-[#00ff41] select-none">&gt;</span>
+          <span className="font-mono text-sm font-bold text-theme-accent select-none">&gt;</span>
         </div>
 
         {/* Left: Token Info */}
@@ -28,7 +28,7 @@ function SpotBalanceRow({ balance }: { balance: SpotBalance }) {
           />
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs sm:text-sm text-[#00ff41] font-bold truncate tracking-wide">
+              <span className="font-mono text-xs sm:text-sm text-theme-accent font-bold truncate tracking-wide">
                 {balance.symbol}
               </span>
               <span className="font-mono text-[9px] sm:text-[10px] text-theme-text-muted bg-theme-bg/50 border border-theme-border/50 px-1 sm:px-1.5 py-0.5 rounded">
@@ -60,7 +60,7 @@ function SpotBalanceRow({ balance }: { balance: SpotBalance }) {
         {/* Right: USD Value */}
         <div className="flex items-center gap-1.5 flex-shrink-0 min-w-[70px] justify-end">
           <span className="font-mono text-[10px] text-theme-text-muted">=</span>
-          <span className="font-mono text-xs sm:text-sm text-[#00ff41] font-bold tabular-nums">
+          <span className="font-mono text-xs sm:text-sm text-theme-accent font-bold tabular-nums">
             ${formatCompactValue(usdValue)}
           </span>
         </div>
@@ -82,7 +82,7 @@ export function SpotTab({ balances }: SpotTabProps) {
           NO SPOT BALANCES
         </div>
         <div className="font-mono text-xs sm:text-sm text-theme-text-muted">
-          <span className="text-[#00ff41]">&gt;</span> hypercore --spot returns empty
+          <span className="text-theme-accent">&gt;</span> hypercore --spot returns empty
         </div>
       </div>
     )

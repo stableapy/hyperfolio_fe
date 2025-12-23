@@ -213,8 +213,12 @@
   text-shadow: 0 0 10px rgba(255, 68, 68, 0.5), 0 0 20px rgba(255, 68, 68, 0.3), 0 0 30px rgba(255, 68, 68, 0.1);
 }
 
-.text-glow-cyan {
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5), 0 0 20px rgba(0, 217, 255, 0.3), 0 0 30px rgba(0, 217, 255, 0.1);
+.text-glow-amber {
+  text-shadow: 0 0 10px rgba(255, 176, 0, 0.5), 0 0 20px rgba(255, 176, 0, 0.3), 0 0 30px rgba(255, 176, 0, 0.1);
+}
+
+.text-glow-lime {
+  text-shadow: 0 0 10px rgba(180, 255, 0, 0.5), 0 0 20px rgba(180, 255, 0, 0.3), 0 0 30px rgba(180, 255, 0, 0.1);
 }
 
 /* Mobile-safe viewport height */
@@ -358,6 +362,15 @@
 }
 .hover\:border-theme-accent:hover {
   border-color: var(--theme-accent);
+}
+.border-l-theme-accent {
+  border-left-color: var(--theme-accent);
+}
+.hover\:border-l-theme-accent:hover {
+  border-left-color: var(--theme-accent);
+}
+.hover\:border-l-theme-accent\/50:hover {
+  border-left-color: color-mix(in srgb, var(--theme-accent) 50%, transparent);
 }
 
 /* Theme accent darker for buttons */

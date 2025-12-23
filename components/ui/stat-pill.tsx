@@ -11,15 +11,15 @@ const STAT_PILL_COLORS = {
     border: "border-theme-accent/20",
     text: "text-theme-accent",
   },
-  cyan: {
-    bg: "bg-[#00d9ff]/10",
-    border: "border-[#00d9ff]/20",
-    text: "text-[#00d9ff]",
+  amber: {
+    bg: "bg-[#ffb000]/10",
+    border: "border-[#ffb000]/20",
+    text: "text-[#ffb000]",
   },
-  purple: {
-    bg: "bg-[#a855f7]/10",
-    border: "border-[#a855f7]/20",
-    text: "text-[#a855f7]",
+  lime: {
+    bg: "bg-[#b4ff00]/10",
+    border: "border-[#b4ff00]/20",
+    text: "text-[#b4ff00]",
   },
   red: {
     bg: "bg-[#ff4444]/10",

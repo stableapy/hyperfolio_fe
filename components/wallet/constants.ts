@@ -2,13 +2,13 @@
 
 export const PRESET_COLORS = [
   "#00ff41", 
-  "#00d9ff", 
-  "#a855f7", 
+  "#ffb000", 
+  "#b4ff00", 
   "#ffaa00", 
   "#ff6b35", 
-  "#00ffff", 
   "#ff1493", 
-  "#7fff00"
+  "#7fff00",
+  "#ff4444"
 ] as const
 
 export type PresetColor = typeof PRESET_COLORS[number]

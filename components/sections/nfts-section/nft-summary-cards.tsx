@@ -40,7 +40,7 @@ export function NFTSummaryCards({ totalValue, nftCount, showSkeleton }: NFTSumma
       ) : (
         <StatPill
           icon="#"
-          color="purple"
+          color="lime"
           label="count:"
           value={nftCount}
         />

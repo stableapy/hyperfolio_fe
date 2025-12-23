@@ -46,13 +46,13 @@ function VaultRow({ vault }: { vault: VaultDetail }) {
       {/* Stats Row */}
       <div className="flex items-center gap-2 sm:gap-3 ml-5">
         {/* APR Badge */}
-        <div className="flex items-center bg-theme-card-bg border border-[#00d9ff]/30 rounded-sm overflow-hidden">
-          <div className="px-1.5 py-1 bg-[#00d9ff]/10 border-r border-[#00d9ff]/20">
-            <span className="font-mono text-[9px] font-bold text-[#00d9ff]">%</span>
+        <div className="flex items-center bg-theme-card-bg border border-[#ffb000]/30 rounded-sm overflow-hidden">
+          <div className="px-1.5 py-1 bg-[#ffb000]/10 border-r border-[#ffb000]/20">
+            <span className="font-mono text-[9px] font-bold text-[#ffb000]">%</span>
           </div>
           <div className="flex items-center gap-1 px-1.5 py-1">
             <span className="font-mono text-[9px] text-theme-text-muted">apr:</span>
-            <span className="font-mono text-[10px] text-[#00d9ff] font-bold tabular-nums">
+            <span className="font-mono text-[10px] text-[#ffb000] font-bold tabular-nums">
               {vault.apr.toFixed(1)}%
             </span>
           </div>
@@ -62,24 +62,24 @@ function VaultRow({ vault }: { vault: VaultDetail }) {
         <div 
           className={`flex items-center bg-theme-card-bg border rounded-sm overflow-hidden ${
             pnl >= 0 
-              ? 'border-[#00ff41]/30' 
+              ? 'border-theme-accent/30' 
               : 'border-[#ff4444]/30'
           }`}
         >
           <div 
             className={`px-1.5 py-1 border-r ${
               pnl >= 0 
-                ? 'bg-[#00ff41]/10 border-[#00ff41]/20' 
+                ? 'bg-theme-accent/10 border-theme-accent/20' 
                 : 'bg-[#ff4444]/10 border-[#ff4444]/20'
             }`}
           >
-            <span className={`font-mono text-[9px] font-bold ${pnl >= 0 ? 'text-[#00ff41]' : 'text-[#ff4444]'}`}>
+            <span className={`font-mono text-[9px] font-bold ${pnl >= 0 ? 'text-theme-accent' : 'text-[#ff4444]'}`}>
               {pnl >= 0 ? '+' : '-'}
             </span>
           </div>
           <div className="flex items-center gap-1 px-1.5 py-1">
             <span className="font-mono text-[9px] text-theme-text-muted">pnl:</span>
-            <span className={`font-mono text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-[#00ff41]' : 'text-[#ff4444]'}`}>
+            <span className={`font-mono text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-theme-accent' : 'text-[#ff4444]'}`}>
               ${formatCompactValue(Math.abs(pnl))}
             </span>
           </div>

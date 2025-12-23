@@ -39,7 +39,7 @@ export function PositionItem({ position, showWalletIndicator }: PositionItemProp
                     ? `${(parseFloat(position.positionDetails.token.formattedBalance) / 1000).toFixed(1)}K` 
                     : parseFloat(position.positionDetails.token.formattedBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </span>
-                <span className="font-mono text-[10px] sm:text-[11px] text-[#00d9ff]/70">{position.positionDetails.token.symbol}</span>
+                <span className="font-mono text-[10px] sm:text-[11px] text-[#ffb000]/70">{position.positionDetails.token.symbol}</span>
               </div>
             </>
           )}
@@ -115,16 +115,16 @@ export function PositionItem({ position, showWalletIndicator }: PositionItemProp
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="px-1 py-0.5 bg-[#00d9ff]/10 border border-[#00d9ff]/20 rounded flex items-center">
-                    <span className="font-mono text-[9px] sm:text-[10px] text-[#00d9ff] tabular-nums">
+                  <span className="px-1 py-0.5 bg-[#ffb000]/10 border border-[#ffb000]/20 rounded flex items-center">
+                    <span className="font-mono text-[9px] sm:text-[10px] text-[#ffb000] tabular-nums">
                       +${position.rewards >= 100 ? `${(position.rewards).toFixed(0)}` : position.rewards.toFixed(2)}
                     </span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="bg-theme-bg border border-theme-border p-3">
                   <div className="font-mono text-xs space-y-1">
-                    <div className="text-[#00d9ff] font-bold mb-2">
-                      <span className="text-[#00d9ff]">&gt;</span> fees --uncollected
+                    <div className="text-[#ffb000] font-bold mb-2">
+                      <span className="text-[#ffb000]">&gt;</span> fees --uncollected
                     </div>
                     {position.positionDetails?.uncollectedFees && (
                       <>
@@ -142,7 +142,7 @@ export function PositionItem({ position, showWalletIndicator }: PositionItemProp
                         )}
                         <div className="border-t border-theme-border/50 mt-2 pt-2 flex justify-between gap-4">
                           <span className="text-theme-text-muted">total:</span>
-                          <span className="text-[#00d9ff] font-bold tabular-nums">${position.positionDetails.uncollectedFees.usdValue}</span>
+                          <span className="text-[#ffb000] font-bold tabular-nums">${position.positionDetails.uncollectedFees.usdValue}</span>
                         </div>
                       </>
                     )}

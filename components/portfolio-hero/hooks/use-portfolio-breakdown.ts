@@ -137,10 +137,10 @@ export function usePortfolioBreakdown({
 
     return [
       { category: "Tokens", value: data.total_spot || 0, percentage: ((data.total_spot || 0) / totalVal) * 100, color: "#00ff41" },
-      { category: "Staking", value: stakingValue, percentage: (stakingValue / totalVal) * 100, color: "#00d9ff" },
+      { category: "Staking", value: stakingValue, percentage: (stakingValue / totalVal) * 100, color: "#ffb000" },
       { category: "DeFi", value: defiValue, percentage: (defiValue / totalVal) * 100, color: "#ffaa00" },
       { category: "NFTs", value: nftValue, percentage: (nftValue / totalVal) * 100, color: "#ff7f00" },
-      { category: "Hypercore", value: data.total_hypercore || 0, percentage: ((data.total_hypercore || 0) / totalVal) * 100, color: "#a855f7" },
+      { category: "Hypercore", value: data.total_hypercore || 0, percentage: ((data.total_hypercore || 0) / totalVal) * 100, color: "#b4ff00" },
     ].filter(item => item.value > 0)
   }, [aggregateData, selectedWalletId, wallets, walletData])
 }

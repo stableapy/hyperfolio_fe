@@ -14,9 +14,10 @@ import { VaultsTab } from "./vaults-tab"
 import type { HypercoerSectionProps, TabId, TabConfig } from "./types"
 
 // Tab configuration with terminal-style colors
+// Note: spot uses CSS variable to respect light/dark theme accent
 const TABS: TabConfig[] = [
-  { id: "spot", label: "Spot", icon: DollarSign, color: "#00ff41" },
-  { id: "perp", label: "Perp", icon: TrendingUp, color: "#00d9ff" },
+  { id: "spot", label: "Spot", icon: DollarSign, color: "var(--theme-accent)" },
+  { id: "perp", label: "Perp", icon: TrendingUp, color: "#ffb000" },
   { id: "staking", label: "Staking", icon: Lock, color: "#ff00ff" },
   { id: "vaults", label: "Vaults", icon: Vault, color: "#ffaa00" },
 ]

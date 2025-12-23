@@ -100,6 +100,14 @@ export function SwapWidgetInline({
           }
           .kyberswap-widget-inline > div {
             width: 100% !important;
+            box-shadow: none !important;
+          }
+          /* Remove all shadows from widget elements */
+          .kyberswap-widget-inline [class^="sc-"],
+          .kyberswap-widget-inline [class*=" sc-"],
+          .kyberswap-widget-inline div[class^="sc-"],
+          .kyberswap-widget-inline > div > div {
+            box-shadow: none !important;
           }
           .kyberswap-widget-inline * {
             scrollbar-width: none !important;

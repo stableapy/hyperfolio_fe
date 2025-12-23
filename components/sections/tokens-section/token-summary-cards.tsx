@@ -32,7 +32,7 @@ export function TokenSummaryCards({
       ) : (
         <StatPill
           icon="#"
-          color="cyan"
+          color="amber"
           label="count:"
           value={tokenCount}
         />
