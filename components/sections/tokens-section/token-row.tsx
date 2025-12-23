@@ -8,7 +8,7 @@ import type { TokenRowProps } from "./types"
 
 /**
  * Desktop layout for token row (>= sm breakpoint)
- * Clean horizontal layout with wallet indicator and swap button
+ * Terminal-style layout with prompt indicator, wallet dot and swap button
  */
 export function TokenRow({ 
   token, 
@@ -17,14 +17,19 @@ export function TokenRow({
   onSwapClick 
 }: TokenRowProps) {
   return (
-    <div className="hidden sm:flex items-center justify-between gap-4">
+    <div className="hidden sm:flex items-center justify-between gap-3">
+      {/* Terminal Prompt */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="font-mono text-sm font-bold text-theme-accent select-none">&gt;</span>
+      </div>
+
       {/* Left: Token Info with icon */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="relative">
           <TokenImage 
             src={token.logo} 
             symbol={token.symbol} 
-            className="w-10 h-10 rounded-full flex-shrink-0" 
+            className="w-9 h-9 rounded-full flex-shrink-0 ring-1 ring-theme-border" 
           />
           {/* Wallet indicator dot with tooltip */}
           {!selectedWalletId && !isGrouped && token.walletColor && (
@@ -32,13 +37,13 @@ export function TokenRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0a0e0f] "
+                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-theme-bg"
                     style={{ backgroundColor: token.walletColor }}
                   />
                 </TooltipTrigger>
-                <TooltipContent className="bg-[#0a0e0f] border border-[#1a2225] p-2">
+                <TooltipContent className="bg-theme-bg border border-theme-border p-2">
                   <div className="font-mono text-xs">
-                    <span className="text-[#708090]">Wallet: </span>
+                    <span className="text-theme-text-secondary">wallet: </span>
                     <span style={{ color: token.walletColor }}>{token.walletName}</span>
                   </div>
                 </TooltipContent>
@@ -49,33 +54,36 @@ export function TokenRow({
         
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-sm text-[#00ff41] font-bold truncate">
+            <span className="font-mono text-sm text-theme-accent font-bold truncate tracking-wide">
               {token.symbol}
             </span>
-            <span className="font-mono text-[11px] text-[#708090] bg-[#1a2225] px-2 py-0.5 rounded">
-              ${formatPriceDesktop(token.price)}
+            <span className="font-mono text-[10px] text-theme-text-muted bg-theme-bg/50 border border-theme-border/50 px-1.5 py-0.5 rounded">
+              @${formatPriceDesktop(token.price)}
             </span>
           </div>
-          <div className="font-mono text-xs text-[#708090] truncate">
+          <div className="font-mono text-[11px] text-theme-text-muted truncate opacity-70">
             {token.name}
           </div>
         </div>
       </div>
 
-      {/* Center: Balance */}
-      <div className="hidden md:block text-center min-w-[140px]">
-        <div className="font-mono text-xs text-[#556070]">
-          {formatBalance(token.balance)}{" "}
-          <span className="text-[#708090]">{token.symbol}</span>
-        </div>
+      {/* Center: Balance - Terminal style */}
+      <div className="hidden md:flex items-center gap-1.5 text-center min-w-[160px]">
+        <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">bal:</span>
+        <span className="font-mono text-xs text-theme-text-secondary tabular-nums">
+          {formatBalance(token.balance)}
+        </span>
+        <span className="font-mono text-[10px] text-[#00d9ff]/70">{token.symbol}</span>
       </div>
 
       {/* Right: Value + Swap */}
-      <div className="flex items-center gap-4 flex-shrink-0">
-        <div className="text-right min-w-[100px]">
-          <div className="font-mono text-base text-[#00ff41] font-bold">
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Value display - terminal style */}
+        <div className="flex items-center gap-1.5 min-w-[110px] justify-end">
+          <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">=</span>
+          <span className="font-mono text-sm text-theme-accent font-bold tabular-nums tracking-tight">
             ${formatValue(token.value)}
-          </div>
+          </span>
         </div>
 
         {/* Swap Button - Hidden on tablet, shown on lg+ */}
@@ -85,15 +93,15 @@ export function TokenRow({
               <button
                 type="button"
                 onClick={(e) => onSwapClick(token, e)}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-[#00ff41]/10 border border-[#00ff41]/20 rounded-lg hover:bg-[#00ff41]/20 hover:border-[#00ff41]/40 transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-transparent border border-theme-accent/30 rounded hover:bg-theme-accent/10 hover:border-theme-accent/50 transition-all duration-150 group/swap"
               >
-                <ArrowRightLeft className="w-3.5 h-3.5 text-[#00ff41]" />
-                <span className="font-mono text-xs text-[#00ff41]">Swap</span>
+                <ArrowRightLeft className="w-3 h-3 text-theme-accent/70 group-hover/swap:text-theme-accent transition-colors" />
+                <span className="font-mono text-[11px] text-theme-accent/70 group-hover/swap:text-theme-accent uppercase tracking-wider transition-colors">swap</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent className="bg-[#0a0e0f] border border-[#1a2225] p-2">
-              <div className="font-mono text-xs text-[#708090]">
-                Swap {token.symbol}
+            <TooltipContent className="bg-theme-bg border border-theme-border p-2">
+              <div className="font-mono text-xs text-theme-text-secondary">
+                <span className="text-theme-accent">&gt;</span> swap --from {token.symbol}
               </div>
             </TooltipContent>
           </Tooltip>

@@ -69,9 +69,9 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
           showGroupToggle={showGroupToggle}
         />
 
-        {/* Token List */}
-        <TerminalCard>
-          <div className="divide-y divide-[#1a2225]">
+        {/* Token List - Terminal style */}
+        <TerminalCard showHeader title="tokens --list">
+          <div className="divide-y divide-theme-border/30">
             {/* Show skeletons when loading and no data */}
             {showSkeleton && <TokenListSkeleton />}
             
@@ -79,7 +79,7 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
             {filteredTokens.map((token) => (
               <div
                 key={token.id}
-                className="p-3 sm:p-4 hover:bg-[#111618] transition-colors  group"
+                className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group border-l-2 border-l-transparent hover:border-l-theme-accent"
               >
                 {/* Mobile Layout */}
                 <TokenRowMobile 
@@ -103,10 +103,10 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
         {/* Empty State */}
         {filteredTokens.length === 0 && !showSkeleton && (
           <div className="text-center py-8 sm:py-12">
-            <div className="font-mono text-sm sm:text-base text-[#708090] mb-2">
+            <div className="font-mono text-sm sm:text-base text-theme-text-secondary mb-2">
               {searchQuery ? "NO TOKENS FOUND" : "NO TOKENS"}
             </div>
-            <div className="font-mono text-xs sm:text-sm text-[#708090]">
+            <div className="font-mono text-xs sm:text-sm text-theme-text-muted">
               {searchQuery ? "Try adjusting your search query" : "Add a wallet to view tokens"}
             </div>
           </div>
@@ -115,7 +115,7 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
 
       {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
       <div className="hidden lg:block w-[380px] flex-shrink-0">
-        <div className="sticky top-20">
+        <div className="sticky top-24">
           <SwapWidgetInline fromToken={selectedSwapToken} />
         </div>
       </div>

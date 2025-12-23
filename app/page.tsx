@@ -89,7 +89,7 @@ export default function Home() {
   const totalChange24h = aggregateData?.total_change_24h || 0
 
   return (
-    <main className="min-h-screen bg-[#0a0f0f]">
+    <main className="min-h-screen bg-theme-bg">
       {/* API Promotion Banner - Top of page */}
       <ApiBanner />
 

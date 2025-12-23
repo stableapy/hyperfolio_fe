@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DollarSign, TrendingUp, Lock, Vault } from "lucide-react"
-import { TerminalCard, TerminalContent } from "@/components/ui/terminal-card"
+import { TerminalCard } from "@/components/ui/terminal-card"
 import { useHypercoreData } from "./hooks"
 import { SummaryCards } from "./summary-cards"
 import { TabNavigation } from "./tab-navigation"
@@ -13,7 +13,7 @@ import { StakingTab } from "./staking-tab"
 import { VaultsTab } from "./vaults-tab"
 import type { HypercoerSectionProps, TabId, TabConfig } from "./types"
 
-// Tab configuration
+// Tab configuration with terminal-style colors
 const TABS: TabConfig[] = [
   { id: "spot", label: "Spot", icon: DollarSign, color: "#00ff41" },
   { id: "perp", label: "Perp", icon: TrendingUp, color: "#00d9ff" },
@@ -22,23 +22,37 @@ const TABS: TabConfig[] = [
 ]
 
 /**
- * Empty state component when no data is available
+ * Terminal-style empty state component
  */
 function EmptyState() {
   return (
     <div className="text-center py-8 sm:py-12">
-      <div className="font-mono text-xs sm:text-sm text-[#708090] mb-1 sm:mb-2">
+      <div className="font-mono text-sm sm:text-base text-theme-text-secondary mb-2">
         NO HYPERCORE DATA
       </div>
-      <div className="font-mono text-[10px] sm:text-sm text-[#556070]">
-        Add a wallet to view Hypercore data
+      <div className="font-mono text-xs sm:text-sm text-theme-text-muted">
+        <span className="text-theme-accent">&gt;</span> Add a wallet to view Hypercore data
       </div>
     </div>
   )
 }
 
 /**
+ * Get terminal command based on active tab
+ */
+function getTerminalCommand(activeTab: TabId): string {
+  const commands: Record<TabId, string> = {
+    spot: "hypercore --spot",
+    perp: "hypercore --perp",
+    staking: "hypercore --staking",
+    vaults: "hypercore --vaults",
+  }
+  return commands[activeTab]
+}
+
+/**
  * Hypercore section component displaying spot, perp, staking, and vault data
+ * Uses terminal-style layout matching tokens-section and defi-section
  */
 export function HypercoreSection({ isLoading = false }: HypercoerSectionProps) {
   const { hypercoreData } = useHypercoreData()
@@ -54,20 +68,20 @@ export function HypercoreSection({ isLoading = false }: HypercoerSectionProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Summary Cards */}
+    <div className="space-y-3 sm:space-y-4">
+      {/* Summary Cards - Terminal style badges */}
       <SummaryCards data={hypercoreData} showSkeleton={showSkeleton} />
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Terminal style */}
       <TabNavigation 
         tabs={TABS} 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
       />
 
-      {/* Tab Content */}
-      <TerminalCard>
-        <TerminalContent>
+      {/* Tab Content - Terminal Card */}
+      <TerminalCard showHeader title={getTerminalCommand(activeTab)}>
+        <div className="divide-y divide-theme-border/30">
           {/* Loading skeleton */}
           {showSkeleton && <ContentSkeleton />}
           
@@ -92,9 +106,8 @@ export function HypercoreSection({ isLoading = false }: HypercoerSectionProps) {
           {activeTab === "vaults" && hasData && (
             <VaultsTab vaults={hypercoreData.vaultInfo?.vaults || []} />
           )}
-        </TerminalContent>
+        </div>
       </TerminalCard>
     </div>
   )
 }
-

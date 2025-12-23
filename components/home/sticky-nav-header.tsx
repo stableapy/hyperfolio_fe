@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { Terminal } from "lucide-react"
 import { SectionNav } from "@/components/section-nav"
 import { WalletDropdown } from "./wallet-dropdown"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { StickyNavHeaderProps } from "./types"
 
 /**
  * Sticky navigation header with section tabs and wallet selector
- * Sticks to top of viewport when scrolling through content sections
+ * Terminal-style aesthetic with sharp corners and mono fonts
  */
 export function StickyNavHeader({
   activeSection,
@@ -21,13 +23,19 @@ export function StickyNavHeader({
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false)
 
   return (
-    <div className="sticky top-0 z-40 -mx-6 px-6 pt-4 mb-6 bg-gradient-to-b from-[#0a0f0f] via-[#0a0f0f]/98 to-[#0a0f0f]/95 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.5)]">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 overflow-x-auto">
-          <SectionNav activeSection={activeSection} onSectionChange={onSectionChange} />
-        </div>
-        
-        {/* Wallet Selector in sticky header */}
+    <div className="relative sticky top-0 z-40 ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] w-screen px-4 sm:px-6 pt-3 mb-6 bg-theme-bg/98 backdrop-blur-md border-b border-theme-border/70">
+      {/* Terminal prompt indicator */}
+      <div className="flex items-center gap-2 mb-2">
+        <Terminal className="w-3.5 h-3.5 text-theme-accent" />
+        <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">
+          hyperfolio<span className="text-theme-accent">@</span>portfolio
+        </span>
+        <span className="font-mono text-theme-accent animate-pulse">_</span>
+      </div>
+
+      {/* Theme Toggle & Wallet Selector - Positioned absolutely on the right */}
+      <div className="absolute right-4 sm:right-6 top-3 flex items-center gap-2 z-10">
+        <ThemeToggle />
         <WalletDropdown
           wallets={wallets}
           selectedWalletId={selectedWalletId}
@@ -38,6 +46,11 @@ export function StickyNavHeader({
           onRemoveWallet={onRemoveWallet}
           onAddWallet={onAddWallet}
         />
+      </div>
+      
+      {/* Section nav with terminal styling */}
+      <div className="overflow-x-auto pr-28 sm:pr-36">
+        <SectionNav activeSection={activeSection} onSectionChange={onSectionChange} />
       </div>
     </div>
   )

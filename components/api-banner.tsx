@@ -1,8 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Zap, ExternalLink, Code2 } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
+/**
+ * API Banner component - Terminal-style promotional banner for the API
+ * Uses consistent terminal aesthetic matching the rest of the UI
+ */
 export function ApiBanner() {
   const [isAnimating, setIsAnimating] = useState(false)
 
@@ -16,71 +20,53 @@ export function ApiBanner() {
 
   return (
     <div
-      className={`relative z-50 overflow-hidden transition-all duration-300 ease-out ${
+      className={`relative z-50 bg-theme-bg border-b border-theme-border/50 transition-all duration-300 ease-out ${
         isAnimating ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full"
       }`}
     >
-      {/* Background with animated gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0d1214] via-[#00ff41]/5 to-[#0d1214]" />
-      
-      {/* Animated scanline effect */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.03) 2px, rgba(0, 255, 65, 0.03) 4px)',
-          animation: 'scanline 8s linear infinite',
-        }}
-      />
-
       {/* Content */}
-      <div className="relative px-4 py-2.5 sm:py-2">
-        <div className="container mx-auto flex items-center justify-center gap-3 sm:gap-4">
-          {/* Icon with pulse animation */}
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="relative">
-              <Code2 className="w-4 h-4 text-[#00ff41]" />
-              <div className="absolute inset-0 animate-ping">
-                <Code2 className="w-4 h-4 text-[#00ff41] opacity-40" />
-              </div>
-            </div>
+      <div className="relative px-4 py-2">
+        <div className="container mx-auto flex items-center justify-center gap-2 sm:gap-3">
+          {/* Terminal-style API label */}
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[10px] font-bold text-[#00d9ff]">&gt;</span>
+            <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00d9ff] tracking-wider">
+              hyperfolio_API
+            </span>
           </div>
 
-          {/* Message */}
-          <div className="flex items-center gap-2 sm:gap-3 text-center">
-            <span className="font-mono text-[10px] sm:text-xs text-[#708090] uppercase tracking-wider">
-              <span className="text-[#00ff41] font-semibold">Hyperfolio API</span>
-              <span className="hidden sm:inline"> — Build on HyperEVM data</span>
-            </span>
-            
-            <span className="text-[#1a2225]">|</span>
-            
-            {/* CTA Link */}
-            <a
-              href="https://api.hyperfolio.xyz/docs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#00ff41]/30 bg-[#00ff41]/10 hover:bg-[#00ff41]/20 hover:border-[#00ff41]/50 transition-all"
-            >
-              <Zap className="w-3 h-3 text-[#00ff41]" />
-              <span className="font-mono text-[10px] sm:text-xs text-[#00ff41] font-semibold">
+          {/* Separator */}
+          <span className="font-mono text-[10px] text-theme-border hidden sm:inline">—</span>
+
+          {/* Description */}
+          <span className="font-mono text-[9px] sm:text-[10px] text-theme-text-muted uppercase tracking-wider hidden sm:inline">
+            Build on HyperEVM data
+          </span>
+
+          {/* Separator */}
+          <span className="font-mono text-[10px] text-theme-border">|</span>
+
+          {/* CTA Link - Terminal button style */}
+          <a
+            href="https://api.hyperfolio.xyz/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden transition-all duration-150 hover:border-theme-accent/50"
+          >
+            {/* Icon section */}
+            <div className="px-1.5 py-1 bg-theme-accent/10 border-r border-theme-accent/20 transition-colors group-hover:bg-theme-accent/15">
+              <span className="font-mono text-[9px] font-bold text-theme-accent">&gt;</span>
+            </div>
+            {/* Label section */}
+            <div className="flex items-center gap-1 px-2 py-1">
+              <span className="font-mono text-[10px] font-bold text-theme-accent">
                 View Docs
               </span>
-              <ExternalLink className="w-3 h-3 text-[#00ff41] opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-            </a>
-          </div>
+              <ExternalLink className="w-2.5 h-2.5 text-theme-accent opacity-60 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </a>
         </div>
       </div>
-
-      {/* Bottom border with glow */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00ff41]/40 to-transparent" />
-
-      {/* Keyframes for scanline animation */}
-      <style jsx>{`
-        @keyframes scanline {
-          0% { background-position: 0 0; }
-          100% { background-position: 0 100vh; }
-        }
-      `}</style>
     </div>
   )
 }

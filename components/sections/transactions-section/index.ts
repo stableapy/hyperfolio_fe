@@ -7,6 +7,7 @@ export { TransactionsSection } from "./transactions-section"
 export { TransactionRow } from "./transaction-row"
 export { TransactionFilters } from "./transaction-filters"
 export { TransactionListSkeleton } from "./transaction-list-skeleton"
+export { TransactionStatsGrid } from "./transaction-stats-grid"
 
 // Hooks
 export { useTransactions } from "./hooks"

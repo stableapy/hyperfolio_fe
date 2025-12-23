@@ -17,7 +17,7 @@ const KyberSwapWidget = dynamic(
   {
     loading: () => (
       <div className="flex items-center justify-center py-12">
-        <div className="font-mono text-[#708090]">Loading swap widget...</div>
+        <div className="font-mono text-theme-text-muted text-xs">loading swap widget...</div>
       </div>
     ),
     ssr: false,
@@ -28,7 +28,7 @@ export function SwapWidgetInline({
   fromToken,
   toToken,
 }: SwapWidgetInlineProps) {
-  const { theme, feeSetting } = useSwapConfig()
+  const { theme, feeSetting, defaultSlippage, exactAmount } = useSwapConfig()
   const {
     address,
     isConnected,
@@ -48,29 +48,31 @@ export function SwapWidgetInline({
   const { tokenList } = useKyberSwapTokenList()
 
   return (
-    <TerminalCard>
-      <div className="p-3">
-        {/* Header with wallet info inline */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="font-mono text-[#00ff41] text-xs flex items-center gap-1.5">
-            <span className="text-[#708090]">&gt;</span>
-            <span>SWAP</span>
-            {fromToken && (
-              <span className="text-[10px] text-[#708090]">({fromToken.symbol})</span>
+    <TerminalCard showHeader compact title="swap --execute" className="overflow-visible">
+      <div className="px-2 pt-1.5 pb-1">
+        {/* Compact header with wallet info */}
+        <div className="flex items-center justify-between mb-1">
+          <div className="font-mono text-[10px] flex items-center gap-1">
+            <span className="text-theme-accent font-bold">&gt;</span>
+            <span className="text-theme-text-muted">--token</span>
+            {fromToken ? (
+              <span className="text-theme-accent font-bold">{fromToken.symbol}</span>
+            ) : (
+              <span className="text-theme-text-muted">any</span>
             )}
           </div>
           
           {/* Wallet status - compact */}
           {isConnected && address ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs">{activeConnector ? getWalletIcon(activeConnector.name) : "💼"}</span>
-              <span className="font-mono text-[10px] text-[#00ff41]">
+            <div className="flex items-center gap-1 bg-theme-bg/50 border border-theme-border/50 px-1 py-0.5 rounded-sm">
+              <span className="text-[10px]">{activeConnector ? getWalletIcon(activeConnector.name) : "💼"}</span>
+              <span className="font-mono text-[9px] text-theme-accent tabular-nums">
                 {address.slice(0, 4)}...{address.slice(-3)}
               </span>
               <button
                 type="button"
                 onClick={() => disconnect()}
-                className="text-[9px] font-mono text-[#708090] hover:text-[#ff4444] transition-colors ml-1"
+                className="text-[8px] font-mono text-theme-text-muted hover:text-[#dc3545] transition-colors"
               >
                 ✕
               </button>
@@ -80,9 +82,9 @@ export function SwapWidgetInline({
               type="button"
               onClick={handleConnect}
               disabled={isConnecting}
-              className="px-2 py-0.5 text-[10px] font-mono text-[#00ff41] border border-[#00ff41]/30 rounded hover:bg-[#00ff41]/10 transition-colors disabled:opacity-50"
+              className="px-1.5 py-0.5 text-[9px] font-mono text-theme-accent border border-theme-accent/40 rounded-sm hover:bg-theme-accent/10 transition-colors disabled:opacity-50"
             >
-              {isConnecting ? "..." : "Connect"}
+              {isConnecting ? "..." : "--connect"}
             </button>
           ) : null}
         </div>
@@ -92,6 +94,12 @@ export function SwapWidgetInline({
             width: 100%;
             display: flex;
             justify-content: center;
+            transform: scale(0.92);
+            transform-origin: top center;
+            margin-bottom: -30px;
+          }
+          .kyberswap-widget-inline > div {
+            width: 100% !important;
           }
           .kyberswap-widget-inline * {
             scrollbar-width: none !important;
@@ -100,99 +108,103 @@ export function SwapWidgetInline({
           .kyberswap-widget-inline *::-webkit-scrollbar {
             display: none !important;
           }
+          /* Reduce overall padding in widget */
+          .kyberswap-widget-inline [class^="sc-"] {
+            font-size: 12px !important;
+          }
           /* Target KyberSwap styled-components classes */
           .kyberswap-widget-inline [class^="sc-"][class*=" "] input,
           .kyberswap-widget-inline input[class^="sc-"] {
-            font-size: 20px !important;
+            font-size: 18px !important;
           }
           .kyberswap-widget-inline button[class^="sc-"] {
-            font-size: 13px !important;
+            font-size: 11px !important;
           }
           .kyberswap-widget-inline button[class^="sc-"] div {
-            font-size: 13px !important;
+            font-size: 11px !important;
           }
           .kyberswap-widget-inline span[class^="sc-"] {
-            font-size: 13px !important;
+            font-size: 11px !important;
           }
           /* Token selector buttons only (buttons with token images) */
           .kyberswap-widget-inline button[class^="sc-"]:has(img) {
-            min-width: 100px !important;
-            padding: 6px 8px !important;
-            gap: 4px !important;
+            min-width: 90px !important;
+            padding: 4px 6px !important;
+            gap: 3px !important;
           }
           .kyberswap-widget-inline button[class^="sc-"]:has(img) img {
-            width: 18px !important;
-            height: 18px !important;
+            width: 16px !important;
+            height: 16px !important;
             flex-shrink: 0 !important;
           }
           .kyberswap-widget-inline button[class^="sc-"]:has(img) svg {
             flex-shrink: 0 !important;
-            width: 14px !important;
-            height: 14px !important;
+            width: 12px !important;
+            height: 12px !important;
           }
           .kyberswap-widget-inline button[class^="sc-"]:has(img) div {
-            margin: 0 4px !important;
+            margin: 0 3px !important;
           }
           /* Select a token button (no img, has span) */
           .kyberswap-widget-inline button[class^="sc-"]:has(span) {
-            min-width: 120px !important;
-            padding: 6px 8px !important;
+            min-width: 100px !important;
+            padding: 4px 6px !important;
           }
         `}</style>
         
         {!isConnected && !injectedConnector && (
-          <div className="flex flex-col items-center justify-center py-4 space-y-2">
-            <div className="font-mono text-[#708090] text-[10px] text-center">
-              No wallet detected
+          <div className="flex flex-col items-center justify-center py-3 space-y-1.5">
+            <div className="font-mono text-theme-text-muted text-[9px]">
+              # no wallet detected
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href="https://rabby.io/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] text-[#00ff41] hover:underline"
+                className="text-[9px] font-mono text-theme-accent hover:underline"
               >
-                🐰 Rabby
+                🐰 rabby
               </a>
               <a
                 href="https://metamask.io/download/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] text-[#00ff41] hover:underline"
+                className="text-[9px] font-mono text-theme-accent hover:underline"
               >
-                🦊 MetaMask
+                🦊 metamask
               </a>
             </div>
           </div>
         )}
         
         {!isConnected && injectedConnector && (
-          <div className="flex items-center justify-center py-6">
-            <div className="font-mono text-[#708090] text-[10px]">
-              Connect wallet to swap
+          <div className="flex items-center justify-center py-4">
+            <div className="font-mono text-theme-text-muted text-[9px]">
+              # connect wallet to swap
             </div>
           </div>
         )}
         
         {isConnected && !isCorrectChain && (
-          <div className="flex flex-col items-center justify-center py-4 space-y-2">
-            <div className="font-mono text-[#ffaa00] text-[10px] text-center">
-              ⚠️ Switch to HyperEVM
+          <div className="flex flex-col items-center justify-center py-3 space-y-1.5">
+            <div className="font-mono text-[#e6a700] text-[9px]">
+              # switch to hyperevm
             </div>
             <button
               type="button"
               onClick={handleSwitchChain}
               disabled={isSwitching}
-              className="px-3 py-1 text-[10px] font-mono text-[#00ff41] border border-[#00ff41]/30 rounded hover:bg-[#00ff41]/10 transition-colors disabled:opacity-50"
+              className="px-1.5 py-0.5 text-[9px] font-mono text-theme-accent border border-theme-accent/40 rounded-sm hover:bg-theme-accent/10 transition-colors disabled:opacity-50"
             >
-              {isSwitching ? "Switching..." : "Switch Network"}
+              {isSwitching ? "switching..." : "--switch-network"}
             </button>
           </div>
         )}
         
         {isConnected && isCorrectChain && !isWidgetReady && (
-          <div className="flex items-center justify-center py-4">
-            <div className="font-mono text-[#708090] text-[10px]">Initializing...</div>
+          <div className="flex items-center justify-center py-3">
+            <div className="font-mono text-theme-text-muted text-[9px]">initializing...</div>
           </div>
         )}
         
@@ -208,6 +220,8 @@ export function SwapWidgetInline({
               enableRoute: true,
               enableDexes: "kyberswap-elastic,uniswapv3,uniswap",
               feeSetting,
+              defaultSlippage,
+              exactAmount,
               provider: ethersSigner,
               width: "100%",
               defaultTokenIn: fromToken?.address && fromToken.address !== '' 

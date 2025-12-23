@@ -31,14 +31,14 @@ export function SeoFooter() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-[#050808] border-t border-[#1a2225] mt-auto">
+    <footer className="bg-theme-bg-alt border-t border-theme-border mt-auto">
       <div className="container mx-auto px-6 py-6">
         {/* Compact single row layout */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: Copyright */}
           <div className="flex items-center gap-3">
-            <span className="text-[#00ff41] font-mono text-xs font-bold">HYPERFOLIO</span>
-            <span className="text-[#3a4448] font-mono text-xs">
+            <span className="text-theme-accent font-mono text-xs font-bold">HYPERFOLIO</span>
+            <span className="text-theme-text-muted font-mono text-xs">
               © {currentYear}
             </span>
           </div>
@@ -50,7 +50,7 @@ export function SeoFooter() {
                 <a
                   href={link.href}
                   {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  className="text-[#708090] hover:text-[#00ff41] font-mono text-xs transition-colors inline-flex items-center gap-1 group"
+                  className="text-theme-text-secondary hover:text-theme-accent font-mono text-xs transition-colors inline-flex items-center gap-1 group"
                 >
                   {link.name}
                   {link.external && (
@@ -58,7 +58,7 @@ export function SeoFooter() {
                   )}
                 </a>
                 {index < QUICK_LINKS.length - 1 && (
-                  <span className="text-[#1a2225]">·</span>
+                  <span className="text-theme-border">·</span>
                 )}
               </span>
             ))}
@@ -75,7 +75,7 @@ export function SeoFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="p-2 rounded-md text-[#708090] hover:text-[#00ff41] hover:bg-[#0d1214] transition-all"
+                  className="p-2 rounded-md text-theme-text-secondary hover:text-theme-accent hover:bg-theme-accent-muted transition-all"
                 >
                   <Icon />
                 </a>

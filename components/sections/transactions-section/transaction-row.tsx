@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { ExternalLink } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TYPE_CONFIG, STATUS_CONFIG, ACTION_CONFIG, DIRECTION_CONFIG } from "./constants"
 import { formatTimestamp, formatUsdValue, shortenAddress } from "./utils"
 import type { Transaction } from "./types"
@@ -10,6 +11,10 @@ interface TransactionRowProps {
   transaction: Transaction
 }
 
+/**
+ * Terminal-style transaction row with prompt indicator
+ * Matches the styling from tokens-section/token-row.tsx
+ */
 export function TransactionRow({ transaction: tx }: TransactionRowProps) {
   // Get action config for better display, fallback to type config
   const actionConfig = ACTION_CONFIG[tx.action] || ACTION_CONFIG.unknown
@@ -26,93 +31,178 @@ export function TransactionRow({ transaction: tx }: TransactionRowProps) {
     : typeConfig.label
 
   return (
-    <div className="p-4 hover:bg-[#111618] transition-colors group">
-      <div className="flex items-center gap-4">
-        {/* Icon with protocol logo */}
-        <div className="relative">
-          <div
-            className="p-3 rounded-lg"
-            style={{ backgroundColor: `${actionConfig.color}20`, color: actionConfig.color }}
-          >
-            <Icon className="w-5 h-5" />
-          </div>
-          {tx.protocol?.logo && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0a0d0f] border border-[#1a2225] overflow-hidden">
-              <Image
-                src={tx.protocol.logo.startsWith('http') ? tx.protocol.logo : tx.protocol.logo}
-                alt={tx.protocol.name || ''}
-                width={20}
-                height={20}
-                className="object-cover"
-              />
+    <TooltipProvider>
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group border-l-2 border-l-transparent hover:border-l-theme-accent">
+        {/* Mobile Layout */}
+        <div className="flex sm:hidden items-start gap-2.5">
+          {/* Terminal Prompt + Icon */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="font-mono text-xs font-bold text-theme-accent select-none">&gt;</span>
+            <div className="relative">
+              <div
+                className="p-2 rounded-sm"
+                style={{ backgroundColor: `${actionConfig.color}15`, color: actionConfig.color }}
+              >
+                <Icon className="w-4 h-4" />
+              </div>
+              {tx.protocol?.logo && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-theme-bg border border-theme-border overflow-hidden">
+                  <Image
+                    src={tx.protocol.logo}
+                    alt={tx.protocol.name || ''}
+                    width={16}
+                    height={16}
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Transaction details */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="font-mono text-sm text-[#00ff41] font-semibold">{displayLabel}</span>
-            {tx.protocol?.name && tx.protocol.name !== 'Unknown' && tx.protocol.name !== 'Approve' && (
-              <span className="px-2 py-0.5 rounded text-xs font-mono bg-[#1a2225] text-[#00d9ff]">
-                {tx.protocol.name}
-              </span>
-            )}
-            <span
-              className="px-2 py-0.5 rounded text-xs font-mono"
-              style={{
-                backgroundColor: `${statusConfig.color}20`,
-                color: statusConfig.color,
-              }}
-            >
-              {statusConfig.label}
-            </span>
-            {tx.direction !== 'neutral' && (
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+              <span className="font-mono text-xs text-theme-accent font-bold">{displayLabel}</span>
+              {tx.protocol?.name && tx.protocol.name !== 'Unknown' && tx.protocol.name !== 'Approve' && (
+                <span className="font-mono text-[9px] text-[#00d9ff] bg-[#00d9ff]/10 border border-[#00d9ff]/20 px-1 py-0.5 rounded">
+                  {tx.protocol.name}
+                </span>
+              )}
               <span
-                className="px-2 py-0.5 rounded text-xs font-mono"
+                className="font-mono text-[9px] px-1 py-0.5 rounded"
                 style={{
-                  backgroundColor: `${directionConfig.color}20`,
-                  color: directionConfig.color,
+                  backgroundColor: `${statusConfig.color}15`,
+                  color: statusConfig.color,
                 }}
               >
-                {directionConfig.label}
+                {statusConfig.label.toLowerCase()}
               </span>
+            </div>
+            <div className="font-mono text-[10px] text-theme-text-muted truncate">
+              {formatAmount(tx.amount)} <span className="text-theme-accent/70">{tx.token}</span>
+            </div>
+            <div className="font-mono text-[9px] text-theme-text-muted/60 mt-0.5">
+              {formatTimestamp(tx.timestamp)}
+            </div>
+          </div>
+
+          {/* Value */}
+          <div className="text-right flex-shrink-0">
+            <div className="font-mono text-xs text-theme-accent font-bold tabular-nums">
+              {tx.value > 0 ? formatUsdValue(tx.value) : '-'}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center gap-3">
+          {/* Terminal Prompt */}
+          <span className="font-mono text-sm font-bold text-theme-accent select-none">&gt;</span>
+
+          {/* Icon with protocol logo */}
+          <div className="relative flex-shrink-0">
+            <div
+              className="p-2.5 rounded-sm"
+              style={{ backgroundColor: `${actionConfig.color}15`, color: actionConfig.color }}
+            >
+              <Icon className="w-5 h-5" />
+            </div>
+            {tx.protocol?.logo && (
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-theme-bg border border-theme-border overflow-hidden">
+                <Image
+                  src={tx.protocol.logo}
+                  alt={tx.protocol.name || ''}
+                  width={20}
+                  height={20}
+                  className="object-cover"
+                />
+              </div>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#708090] truncate">
-            <span>{shortenAddress(tx.from)}</span>
-            <span>→</span>
-            <span>{shortenAddress(tx.to)}</span>
+
+          {/* Transaction details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-mono text-sm text-theme-accent font-bold tracking-wide">{displayLabel}</span>
+              {tx.protocol?.name && tx.protocol.name !== 'Unknown' && tx.protocol.name !== 'Approve' && (
+                <span className="font-mono text-[10px] text-[#00d9ff] bg-[#00d9ff]/10 border border-[#00d9ff]/20 px-1.5 py-0.5 rounded">
+                  {tx.protocol.name}
+                </span>
+              )}
+              <span
+                className="font-mono text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider"
+                style={{
+                  backgroundColor: `${statusConfig.color}15`,
+                  color: statusConfig.color,
+                }}
+              >
+                {statusConfig.label.toLowerCase()}
+              </span>
+              {tx.direction !== 'neutral' && (
+                <span
+                  className="font-mono text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider"
+                  style={{
+                    backgroundColor: `${directionConfig.color}15`,
+                    color: directionConfig.color,
+                  }}
+                >
+                  {directionConfig.label.toLowerCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 font-mono text-[11px] text-theme-text-muted">
+              <span className="text-[9px] text-theme-text-muted/60">from:</span>
+              <span>{shortenAddress(tx.from)}</span>
+              <span className="text-theme-accent/50">→</span>
+              <span className="text-[9px] text-theme-text-muted/60">to:</span>
+              <span>{shortenAddress(tx.to)}</span>
+            </div>
+          </div>
+
+          {/* Amount and token - terminal style */}
+          <div className="hidden md:flex items-center gap-1.5 min-w-[140px]">
+            <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">amt:</span>
+            <span className="font-mono text-xs text-theme-text-secondary tabular-nums truncate" title={tx.amount}>
+              {formatAmount(tx.amount)}
+            </span>
+            <span className="font-mono text-[10px] text-theme-accent/70">{tx.token}</span>
+          </div>
+
+          {/* Value and timestamp - terminal style */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 min-w-[90px] justify-end">
+              <span className="font-mono text-[10px] text-theme-text-muted">=</span>
+              <span className="font-mono text-sm text-theme-accent font-bold tabular-nums">
+                {tx.value > 0 ? formatUsdValue(tx.value) : '-'}
+              </span>
+            </div>
+
+            <div className="font-mono text-[10px] text-theme-text-muted min-w-[60px] text-right">
+              {formatTimestamp(tx.timestamp)}
+            </div>
+
+            {/* External link */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={`https://hyperevmscan.io/tx/${tx.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-150 hover:bg-theme-accent/10 rounded"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-theme-text-muted hover:text-theme-accent" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent className="bg-theme-bg border border-theme-border p-2">
+                <div className="font-mono text-xs text-theme-text-secondary">
+                  <span className="text-theme-accent">&gt;</span> open --explorer
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
-
-        {/* Amount and token */}
-        <div className="text-right min-w-[120px]">
-          <div className="font-mono text-sm text-white font-semibold mb-1 truncate" title={tx.amount}>
-            {formatAmount(tx.amount)}
-          </div>
-          <div className="font-mono text-xs text-[#708090]">{tx.token}</div>
-        </div>
-
-        {/* Value and timestamp */}
-        <div className="text-right w-32">
-          <div className="font-mono text-sm text-white font-semibold mb-1">
-            {tx.value > 0 ? formatUsdValue(tx.value) : '-'}
-          </div>
-          <div className="font-mono text-xs text-[#708090]">{formatTimestamp(tx.timestamp)}</div>
-        </div>
-
-        {/* External link */}
-        <a
-          href={`https://hyperevmscan.io/tx/${tx.hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <ExternalLink className="w-4 h-4 text-[#708090] hover:text-[#00d9ff]" />
-        </a>
       </div>
-    </div>
+    </TooltipProvider>
   )
 }
 

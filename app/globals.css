@@ -4,24 +4,24 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.98 0.005 220);
+  --foreground: oklch(0.2 0.02 220);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.95 0.01 220);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --muted: oklch(0.95 0.01 220);
+  --muted-foreground: oklch(0.45 0.02 220);
+  --accent: oklch(0.95 0.01 220);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.88 0.01 220);
+  --input: oklch(0.92 0.01 220);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -41,8 +41,23 @@
   --shadow-y: 1px;
   --shadow-blur: 2px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.05;
+  --shadow-opacity: 0.08;
   --shadow-color: #000000;
+  
+  /* Theme-specific accent colors - Softer emerald green for light mode */
+  --theme-bg: #f5f8f5;
+  --theme-bg-alt: #e8efe8;
+  --theme-accent: #10b981;
+  --theme-accent-darker: #059669;
+  --theme-accent-muted: rgba(16, 185, 129, 0.1);
+  --theme-text-primary: #0a1a0f;
+  --theme-text-secondary: #3d5a47;
+  --theme-text-muted: #6b8b76;
+  --theme-grid-color: rgba(16, 185, 129, 0.15);
+  --theme-border: rgba(0, 60, 20, 0.15);
+  --theme-glow: rgba(16, 185, 129, 0.3);
+  --theme-card-bg: #ffffff;
+  --theme-card-border: rgba(16, 185, 129, 0.15);
 }
 
 .dark {
@@ -84,6 +99,21 @@
   --shadow-spread: 0px;
   --shadow-opacity: 0.05;
   --shadow-color: #000000;
+  
+  /* Theme-specific accent colors - Electric green in both modes */
+  --theme-bg: #0a0f0f;
+  --theme-bg-alt: #0d1214;
+  --theme-accent: #00ff41;
+  --theme-accent-darker: #00cc33;
+  --theme-accent-muted: rgba(0, 255, 65, 0.05);
+  --theme-text-primary: #ffffff;
+  --theme-text-secondary: #708090;
+  --theme-text-muted: #4a5568;
+  --theme-grid-color: rgba(0, 255, 65, 0.04);
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-glow: rgba(0, 255, 65, 0.5);
+  --theme-card-bg: #1a2225;
+  --theme-card-border: rgba(0, 255, 65, 0.2);
 }
 
 @theme inline {
@@ -126,6 +156,19 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-serif: 'Source Serif 4', 'Source Serif 4 Fallback';
+  
+  /* Theme-aware color mappings */
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-bg-alt: var(--theme-bg-alt);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-accent-muted: var(--theme-accent-muted);
+  --color-theme-text-primary: var(--theme-text-primary);
+  --color-theme-text-secondary: var(--theme-text-secondary);
+  --color-theme-text-muted: var(--theme-text-muted);
+  --color-theme-grid: var(--theme-grid-color);
+  --color-theme-border: var(--theme-border);
+  --color-theme-glow: var(--theme-glow);
+  
   /* computed shadow variables below - do not modify */
   --shadow-2xs: var(--shadow-x) var(--shadow-y) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
   --shadow-xs: var(--shadow-x) var(--shadow-y) var(--shadow-blur) var(--shadow-spread) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
@@ -179,4 +222,153 @@
   .min-h-\[100svh\] {
     min-height: 100svh;
   }
+}
+
+/* Theme-aware utility classes */
+.bg-theme-bg {
+  background-color: var(--theme-bg);
+}
+.bg-theme-bg-alt {
+  background-color: var(--theme-bg-alt);
+}
+.from-theme-bg {
+  --tw-gradient-from: var(--theme-bg) var(--tw-gradient-from-position);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-theme-bg {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--theme-bg) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-theme-bg {
+  --tw-gradient-to: var(--theme-bg) var(--tw-gradient-to-position);
+}
+.to-theme-bg-alt\/30 {
+  --tw-gradient-to: color-mix(in srgb, var(--theme-bg-alt) 30%, transparent) var(--tw-gradient-to-position);
+}
+.text-theme-accent {
+  color: var(--theme-accent);
+}
+.text-theme-text-primary {
+  color: var(--theme-text-primary);
+}
+.text-theme-text-secondary {
+  color: var(--theme-text-secondary);
+}
+.text-theme-text-muted {
+  color: var(--theme-text-muted);
+}
+.bg-theme-accent-muted {
+  background-color: var(--theme-accent-muted);
+}
+.hover\:bg-theme-accent-muted:hover {
+  background-color: var(--theme-accent-muted);
+}
+.hover\:text-theme-accent:hover {
+  color: var(--theme-accent);
+}
+.hover\:text-theme-text-primary:hover {
+  color: var(--theme-text-primary);
+}
+.border-theme-accent\/30 {
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, transparent);
+}
+.hover\:border-theme-accent\/60:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 60%, transparent);
+}
+.bg-theme-bg\/80 {
+  background-color: color-mix(in srgb, var(--theme-bg) 80%, transparent);
+}
+.hover\:bg-theme-bg\/95:hover {
+  background-color: color-mix(in srgb, var(--theme-bg) 95%, transparent);
+}
+.from-theme-bg\/98 {
+  --tw-gradient-from: color-mix(in srgb, var(--theme-bg) 98%, transparent) var(--tw-gradient-from-position);
+}
+.via-theme-bg\/98 {
+  --tw-gradient-stops: var(--tw-gradient-from), color-mix(in srgb, var(--theme-bg) 98%, transparent) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-theme-bg\/95 {
+  --tw-gradient-to: color-mix(in srgb, var(--theme-bg) 95%, transparent) var(--tw-gradient-to-position);
+}
+
+/* Additional theme utilities */
+.bg-theme-bg-alt {
+  background-color: var(--theme-bg-alt);
+}
+.from-theme-bg-alt {
+  --tw-gradient-from: var(--theme-bg-alt) var(--tw-gradient-from-position);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-theme-accent\/5 {
+  --tw-gradient-stops: var(--tw-gradient-from), color-mix(in srgb, var(--theme-accent) 5%, transparent) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-theme-bg-alt {
+  --tw-gradient-to: var(--theme-bg-alt) var(--tw-gradient-to-position);
+}
+.border-theme-border {
+  border-color: var(--theme-border);
+}
+.border-theme-accent\/30 {
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, transparent);
+}
+.bg-theme-accent\/10 {
+  background-color: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+}
+.hover\:bg-theme-accent\/20:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 20%, transparent);
+}
+.hover\:border-theme-accent\/50:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent);
+}
+.via-theme-accent\/40 {
+  --tw-gradient-stops: var(--tw-gradient-from), color-mix(in srgb, var(--theme-accent) 40%, transparent) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.text-theme-border {
+  color: var(--theme-border);
+}
+.bg-theme-card-bg {
+  background-color: var(--theme-card-bg);
+}
+.border-theme-card-border {
+  border-color: var(--theme-card-border);
+}
+
+/* Text muted utility */
+.text-theme-text-muted {
+  color: var(--theme-text-muted);
+}
+
+/* Gradient stops for theme colors */
+.from-theme-bg {
+  --tw-gradient-from: var(--theme-bg) var(--tw-gradient-from-position);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+/* Theme accent muted utility */
+.bg-theme-accent-muted {
+  background-color: var(--theme-accent-muted);
+}
+
+/* Border accent utilities */
+.border-theme-accent\/20 {
+  border-color: color-mix(in srgb, var(--theme-accent) 20%, transparent);
+}
+.hover\:border-theme-accent:hover {
+  border-color: var(--theme-accent);
+}
+
+/* Theme accent darker for buttons */
+.bg-theme-accent-darker {
+  background-color: var(--theme-accent-darker);
+}
+
+/* Theme card background */
+.bg-theme-card-bg {
+  background-color: var(--theme-card-bg);
+}
+.bg-theme-card-bg\/80 {
+  background-color: color-mix(in srgb, var(--theme-card-bg) 80%, transparent);
 }

@@ -6,12 +6,12 @@ import { NFTListSkeleton } from "./nft-list-skeleton"
 import type { NFTListViewProps } from "./types"
 
 /**
- * List layout view for displaying NFTs
+ * Terminal-style list layout view for displaying NFTs
  */
 export function NFTListView({ nfts, showSkeleton }: NFTListViewProps) {
   return (
-    <TerminalCard>
-      <div className="divide-y divide-[#1a2225]">
+    <TerminalCard showHeader title="nfts --list">
+      <div className="divide-y divide-theme-border/30">
         {/* Show skeletons when loading and no data */}
         {showSkeleton && <NFTListSkeleton />}
         

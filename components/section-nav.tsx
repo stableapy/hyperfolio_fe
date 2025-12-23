@@ -20,7 +20,7 @@ export function SectionNav({ activeSection, onSectionChange }: SectionNavProps) 
   return (
     <TooltipProvider>
       <nav 
-        className="flex justify-between sm:justify-start gap-0 sm:gap-2 border-b border-[#1a2225] pb-px"
+        className="w-full flex justify-between sm:justify-start gap-0 sm:gap-2 pb-px"
         aria-label="Portfolio sections"
         role="tablist"
       >
@@ -40,8 +40,8 @@ export function SectionNav({ activeSection, onSectionChange }: SectionNavProps) 
                   onClick={() => onSectionChange(section.id)}
                   className={`group flex items-center justify-center sm:justify-start gap-2 flex-1 sm:flex-initial px-2 sm:px-4 py-3 font-mono text-sm border-b-2 -mb-px transition-all ${
                     isActive
-                      ? "border-[#00ff41] text-[#00ff41] text-glow-green"
-                      : "border-transparent text-[#708090] hover:text-[#00ff41] hover:border-[#1a2225]"
+                      ? "border-theme-accent text-theme-accent dark:text-glow-green"
+                      : "border-transparent text-theme-text-secondary hover:text-theme-accent hover:border-theme-border"
                   }`}
                 >
                   <Icon className={`w-5 h-5 sm:w-4 sm:h-4 transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-105"}`} aria-hidden="true" />
@@ -51,7 +51,7 @@ export function SectionNav({ activeSection, onSectionChange }: SectionNavProps) 
               {/* Tooltip only shows on mobile - hidden on sm and up */}
               <TooltipContent 
                 side="bottom" 
-                className="sm:hidden bg-[#0d1214] border-[#1a2225] font-mono text-xs"
+                className="sm:hidden bg-theme-bg-alt border-theme-border font-mono text-xs"
               >
                 {section.label}
               </TooltipContent>

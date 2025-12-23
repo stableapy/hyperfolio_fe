@@ -71,24 +71,28 @@ export function WalletSelector({
       <button
         type="button"
         onClick={handleButtonClick}
-        className="flex items-center gap-2 px-3 py-1.5 sm:py-2.5 rounded-lg border border-[#00ff41]/30 bg-[#0a0f0f]/80 backdrop-blur-sm hover:border-[#00ff41]/60 transition-all"
+        className="flex items-center bg-theme-card-bg/90 backdrop-blur-sm border border-theme-border/70 rounded-sm overflow-hidden hover:border-theme-accent/50 transition-all duration-150"
       >
-        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00ff41]" />
-        <span className="font-mono text-[11px] sm:text-sm text-white truncate max-w-[120px] sm:max-w-none">
-          {wallets.length === 0 
-            ? '+ Add' 
-            : selectedWallet 
-              ? selectedWallet.name 
-              : 'All Wallets'}
-        </span>
-        {wallets.length > 0 && (
-          <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#708090] transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
-        )}
+        <div className="px-1.5 sm:px-2 py-1.5 sm:py-2 bg-theme-accent/10 border-r border-theme-accent/20">
+          <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-theme-accent shrink-0" />
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2">
+          <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary truncate max-w-[70px] sm:max-w-[100px] md:max-w-none">
+            {wallets.length === 0 
+              ? '--add' 
+              : selectedWallet 
+                ? selectedWallet.name 
+                : '--all'}
+          </span>
+          {wallets.length > 0 && (
+            <ChevronDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-theme-text-muted transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+          )}
+        </div>
       </button>
       
-      {/* Arrow indicator when no wallets - left on mobile, right on desktop */}
+      {/* Arrow indicator when no wallets - centered below button */}
       {wallets.length === 0 && (
-        <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-3 flex flex-col items-center text-[#708090] animate-bounce">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex flex-col items-center text-theme-text-secondary animate-bounce">
           <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
@@ -107,69 +111,75 @@ export function WalletSelector({
             aria-label="Close dropdown"
           />
           
-          {/* Menu - Full width on mobile, fixed width on larger screens */}
-          <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-64 py-2 rounded-xl border border-[#1a2225] bg-[#0d1214]/95 backdrop-blur-md shadow-2xl z-50">
+          {/* Menu - Terminal style dropdown */}
+          <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-auto mt-2 sm:w-72 bg-theme-card-bg border border-theme-border/70 rounded-sm shadow-2xl z-50 max-h-[70vh] overflow-y-auto">
+            {/* Terminal header */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-theme-bg/50 border-b border-theme-border/50">
+              <span className="font-mono text-xs text-theme-accent font-bold">&gt;</span>
+              <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">wallet --select</span>
+            </div>
+            
             {/* All Wallets Option */}
             <button
               type="button"
               onClick={() => handleSelectWallet(null)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-3 hover:bg-theme-accent-muted active:bg-theme-accent-muted transition-colors min-h-[44px] border-l-2 border-l-transparent hover:border-l-theme-accent"
             >
-              <span className="font-mono text-sm text-white">All Wallets</span>
+              <span className="font-mono text-xs text-theme-text-primary">--all-wallets</span>
               {selectedWalletId === null && (
-                <Check className="w-4 h-4 text-[#00ff41]" />
+                <Check className="w-3.5 h-3.5 text-theme-accent shrink-0" />
               )}
             </button>
             
-            <div className="h-px bg-[#1a2225] my-1" />
+            <div className="h-px bg-theme-border/50 mx-3" />
             
             {/* Individual Wallets */}
             {wallets.map((wallet) => (
               <div
                 key={wallet.id}
-                className="flex items-center group hover:bg-white/5 transition-colors"
+                className="flex items-center group hover:bg-theme-accent-muted active:bg-theme-accent-muted transition-colors border-l-2 border-l-transparent hover:border-l-theme-accent"
               >
                 <button
                   type="button"
                   onClick={() => handleSelectWallet(wallet.id)}
-                  className="flex-1 flex items-center gap-3 px-4 py-3"
+                  className="flex-1 flex items-center gap-2 sm:gap-2.5 px-3 py-3 min-h-[44px]"
                 >
                   <div 
-                    className="w-2.5 h-2.5 rounded-full" 
+                    className="w-2 h-2 rounded-sm shrink-0" 
                     style={{ backgroundColor: wallet.color }}
                   />
-                  <div className="flex-1 text-left">
-                    <span className="font-mono text-sm text-white">{wallet.name}</span>
-                    <span className="font-mono text-xs text-[#708090] ml-2">
+                  <div className="flex-1 text-left min-w-0">
+                    <span className="font-mono text-xs text-theme-text-primary block truncate">{wallet.name}</span>
+                    <span className="font-mono text-[9px] text-theme-text-muted block truncate">
                       {formatAddress(wallet.address)}
                     </span>
                   </div>
                   {selectedWalletId === wallet.id && (
-                    <Check className="w-4 h-4 text-[#00ff41]" />
+                    <Check className="w-3.5 h-3.5 text-theme-accent shrink-0" />
                   )}
                 </button>
-                {/* Delete button - visible on hover */}
+                {/* Delete button - Always visible on mobile, hover on desktop */}
                 <button
                   type="button"
                   onClick={(e) => handleDeleteWallet(e, wallet.id)}
-                  className="opacity-0 group-hover:opacity-100 p-2 mr-2 rounded-lg text-[#708090] hover:text-red-500 hover:bg-red-500/10 transition-all"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 mr-2 rounded-sm text-theme-text-muted hover:text-[#ff4444] active:text-[#ff4444] hover:bg-[#ff4444]/10 active:bg-[#ff4444]/10 transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
                   aria-label={`Delete ${wallet.name}`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
             
-            <div className="h-px bg-[#1a2225] my-1" />
+            <div className="h-px bg-theme-border/50 mx-3" />
             
             {/* Add Wallet */}
             <button
               type="button"
               onClick={handleAddWallet}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-[#708090] hover:text-white"
+              className="w-full flex items-center gap-2 px-3 py-3 hover:bg-theme-accent-muted active:bg-theme-accent-muted transition-colors text-theme-text-muted hover:text-theme-accent min-h-[44px] border-l-2 border-l-transparent hover:border-l-theme-accent"
             >
-              <Plus className="w-4 h-4" />
-              <span className="font-mono text-sm">Add Wallet</span>
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span className="font-mono text-xs">--add-new</span>
             </button>
           </div>
         </>

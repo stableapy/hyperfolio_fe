@@ -212,7 +212,7 @@ export default async function RootLayout({
   const initialState = cookieToInitialState(config, cookie)
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Google Tag Manager */}
         <Script
@@ -254,7 +254,7 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className={`${geistSans.className} bg-[#0a0e0f] text-[#00ff41] antialiased`}>
+      <body className={`${geistSans.className} bg-background text-foreground antialiased`}>
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

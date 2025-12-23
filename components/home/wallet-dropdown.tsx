@@ -6,7 +6,7 @@ import { formatAddress } from "./utils"
 
 /**
  * Wallet Dropdown component for selecting and managing wallets
- * Used in the sticky navigation header
+ * Terminal-style aesthetic with sharp corners and command prompts
  */
 export function WalletDropdown({
   wallets,
@@ -27,13 +27,14 @@ export function WalletDropdown({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1a2225] bg-[#0d1214]/80 hover:border-[#00ff41]/40 transition-all"
+        className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-sm border border-theme-border/70 bg-theme-card-bg hover:border-theme-accent/50 transition-all"
       >
-        <Wallet className="w-4 h-4 text-[#00ff41]" />
-        <span className="font-mono text-xs text-white hidden sm:inline">
-          {selectedWallet ? selectedWallet.name : 'All'}
+        <span className="font-mono text-xs text-theme-accent font-bold">&gt;</span>
+        <Wallet className="w-3.5 h-3.5 text-theme-accent shrink-0" />
+        <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary uppercase tracking-wider truncate max-w-[50px] sm:max-w-none">
+          {selectedWallet ? selectedWallet.name : 'all'}
         </span>
-        <ChevronDown className={`w-3 h-3 text-[#708090] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-theme-text-secondary transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
       {/* Dropdown Menu */}
@@ -46,27 +47,49 @@ export function WalletDropdown({
             aria-label="Close dropdown"
           />
           
-          <div className="absolute right-0 mt-2 w-56 py-2 rounded-xl border border-[#1a2225] bg-[#0d1214]/95 backdrop-blur-md shadow-2xl z-50">
+          {/* Menu - Terminal style with sharp corners */}
+          <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-auto mt-2 sm:w-64 py-1 rounded-sm border border-theme-border/70 bg-theme-card-bg/98 backdrop-blur-md shadow-xl z-50 max-h-[70vh] overflow-y-auto">
+            {/* Header */}
+            <div className="px-3 py-2 border-b border-theme-border/50 bg-theme-bg/30">
+              <div className="flex items-center gap-2">
+                <span className="text-theme-accent font-mono text-xs font-bold">&gt;</span>
+                <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">
+                  wallet --select
+                </span>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={() => {
                 onSelectWallet(null)
                 onClose()
               }}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors"
+              className={`w-full flex items-center justify-between px-3 py-2.5 transition-colors min-h-[40px] border-l-2 ${
+                selectedWalletId === null 
+                  ? "border-l-theme-accent bg-theme-accent/5" 
+                  : "border-l-transparent hover:border-l-theme-accent/50 hover:bg-theme-accent-muted"
+              }`}
             >
-              <span className="font-mono text-sm text-white">All Wallets</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-theme-text-muted">--</span>
+                <span className="font-mono text-xs text-theme-text-primary uppercase tracking-wider">all wallets</span>
+              </div>
               {selectedWalletId === null && (
-                <Check className="w-4 h-4 text-[#00ff41]" />
+                <Check className="w-3.5 h-3.5 text-theme-accent shrink-0" />
               )}
             </button>
             
-            <div className="h-px bg-[#1a2225] my-1" />
+            <div className="h-px bg-theme-border/50 mx-3" />
             
             {wallets.map((wallet) => (
               <div
                 key={wallet.id}
-                className="flex items-center group hover:bg-white/5 transition-colors"
+                className={`flex items-center group transition-colors border-l-2 ${
+                  selectedWalletId === wallet.id 
+                    ? "border-l-theme-accent bg-theme-accent/5" 
+                    : "border-l-transparent hover:border-l-theme-accent/50 hover:bg-theme-accent-muted"
+                }`}
               >
                 <button
                   type="button"
@@ -74,22 +97,23 @@ export function WalletDropdown({
                     onSelectWallet(wallet.id)
                     onClose()
                   }}
-                  className="flex-1 flex items-center gap-2 px-4 py-2.5"
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 min-h-[40px]"
                 >
                   <div 
-                    className="w-2 h-2 rounded-full" 
+                    className="w-2 h-2 rounded-sm shrink-0" 
                     style={{ backgroundColor: wallet.color }}
                   />
-                  <div className="flex-1 text-left">
-                    <span className="font-mono text-sm text-white">{wallet.name}</span>
-                    <span className="font-mono text-[10px] text-[#708090] ml-2">
+                  <div className="flex-1 text-left min-w-0">
+                    <span className="font-mono text-xs text-theme-text-primary block truncate uppercase tracking-wider">{wallet.name}</span>
+                    <span className="font-mono text-[9px] text-theme-text-muted block truncate">
                       {formatAddress(wallet.address)}
                     </span>
                   </div>
                   {selectedWalletId === wallet.id && (
-                    <Check className="w-4 h-4 text-[#00ff41]" />
+                    <Check className="w-3.5 h-3.5 text-theme-accent shrink-0" />
                   )}
                 </button>
+                {/* Delete button */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -99,7 +123,7 @@ export function WalletDropdown({
                     }
                     onRemoveWallet(wallet.id)
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 mr-2 rounded text-[#708090] hover:text-red-500 hover:bg-red-500/10 transition-all"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 mr-2 rounded-sm text-theme-text-muted hover:text-red-500 active:text-red-500 hover:bg-red-500/10 active:bg-red-500/10 transition-all min-w-[32px] min-h-[32px] flex items-center justify-center"
                   aria-label={`Delete ${wallet.name}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -107,7 +131,7 @@ export function WalletDropdown({
               </div>
             ))}
             
-            <div className="h-px bg-[#1a2225] my-1" />
+            <div className="h-px bg-theme-border/50 mx-3" />
             
             <button
               type="button"
@@ -115,10 +139,10 @@ export function WalletDropdown({
                 onClose()
                 onAddWallet()
               }}
-              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-white/5 transition-colors text-[#708090] hover:text-white"
+              className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-theme-accent-muted transition-colors text-theme-text-muted hover:text-theme-accent min-h-[40px] border-l-2 border-l-transparent hover:border-l-theme-accent/50"
             >
-              <Plus className="w-4 h-4" />
-              <span className="font-mono text-sm">Add Wallet</span>
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span className="font-mono text-xs uppercase tracking-wider">add wallet</span>
             </button>
           </div>
         </>

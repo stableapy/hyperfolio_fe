@@ -1,49 +1,50 @@
 "use client"
 
-import { TerminalCard, TerminalContent } from "@/components/ui/terminal-card"
+import { StatPill, StatPillSkeleton } from "@/components/ui/stat-pill"
 import type { NFTSummaryCardsProps } from "./types"
 
 /**
- * Summary cards showing total NFT value and count
+ * Format value with K/M suffix for compact display
+ */
+function formatValue(value: number): string {
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`
+  }
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(1)}K`
+  }
+  return `$${value.toFixed(2)}`
+}
+
+/**
+ * Terminal-style summary badges showing total NFT value and count
  */
 export function NFTSummaryCards({ totalValue, nftCount, showSkeleton }: NFTSummaryCardsProps) {
-  const formatValue = (value: number) => {
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`
-    }
-    return `$${value.toFixed(2)}`
-  }
-
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
-      {/* Value Card */}
-      <TerminalCard>
-        <TerminalContent className="p-3 sm:p-4">
-          <div className="font-mono text-[10px] sm:text-xs text-[#708090] mb-1 sm:mb-2">VALUE</div>
-          {showSkeleton ? (
-            <div className="h-5 sm:h-7 w-20 sm:w-28 bg-[#1a2225] rounded animate-pulse" />
-          ) : (
-            <div className="font-mono text-base sm:text-xl text-[#00ff41] font-semibold">
-              {formatValue(totalValue)}
-            </div>
-          )}
-        </TerminalContent>
-      </TerminalCard>
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+      {/* Value */}
+      {showSkeleton ? (
+        <StatPillSkeleton width="w-32 sm:w-40" />
+      ) : (
+        <StatPill
+          icon=">_"
+          color="accent"
+          label="--value"
+          value={formatValue(totalValue)}
+        />
+      )}
       
-      {/* Count Card */}
-      <TerminalCard>
-        <TerminalContent className="p-3 sm:p-4">
-          <div className="font-mono text-[10px] sm:text-xs text-[#708090] mb-1 sm:mb-2">COUNT</div>
-          {showSkeleton ? (
-            <div className="h-5 sm:h-7 w-10 sm:w-16 bg-[#1a2225] rounded animate-pulse" />
-          ) : (
-            <div className="font-mono text-base sm:text-xl text-white font-semibold">
-              {nftCount}
-            </div>
-          )}
-        </TerminalContent>
-      </TerminalCard>
+      {/* Count */}
+      {showSkeleton ? (
+        <StatPillSkeleton width="w-24 sm:w-32" />
+      ) : (
+        <StatPill
+          icon="#"
+          color="purple"
+          label="count:"
+          value={nftCount}
+        />
+      )}
     </div>
   )
 }
-

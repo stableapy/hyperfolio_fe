@@ -11,14 +11,14 @@ interface PortfolioChartProps {
 }
 
 /**
- * Custom tooltip component for the portfolio chart
+ * Custom tooltip component for the portfolio chart - Terminal style
  */
 function ChartTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { date: string }; value: number }> }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#0a0f0f]/95 border border-[#00ff41]/30 rounded-lg px-2 py-1.5 sm:px-4 sm:py-3 shadow-2xl backdrop-blur-md">
-        <p className="font-mono text-[10px] sm:text-xs text-[#708090] mb-0.5 sm:mb-1">{payload[0].payload.date}</p>
-        <p className="font-mono text-sm sm:text-lg text-[#00ff41] font-bold">
+      <div className="bg-theme-bg border border-theme-accent/30 rounded-sm px-2 py-1.5 sm:px-4 sm:py-3 shadow-2xl backdrop-blur-md">
+        <p className="font-mono text-[10px] sm:text-xs text-theme-text-muted mb-0.5 sm:mb-1">{payload[0].payload.date}</p>
+        <p className="font-mono text-sm sm:text-lg text-theme-accent font-bold tabular-nums">
           ${payload[0].value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
       </div>
@@ -68,4 +68,3 @@ export function PortfolioChart({ chartData, isPositive, showChart, privacyMode }
     </div>
   )
 }
-

@@ -12,18 +12,18 @@ export function EmptyState({ onAddWallet }: EmptyStateProps) {
     <section className="container mx-auto px-6 py-20 text-center" aria-labelledby="empty-state-heading">
       <h2 
         id="empty-state-heading"
-        className="font-mono text-2xl text-[#00ff41] mb-4 text-glow-green"
+        className="font-mono text-2xl text-theme-accent mb-4 dark:text-glow-green"
       >
         &gt; Start Tracking Your HyperEVM Portfolio
       </h2>
-      <p className="font-mono text-sm text-[#708090] mb-6 max-w-md mx-auto">
+      <p className="font-mono text-sm text-theme-text-secondary mb-6 max-w-md mx-auto">
         Add your first HyperEVM wallet address to monitor your tokens, NFTs, DeFi positions, 
         and transaction history in real-time.
       </p>
       <button
         type="button"
         onClick={onAddWallet}
-        className="px-6 py-3 bg-[#00ff41] text-[#0a0e0f] rounded-lg font-mono text-sm font-bold hover:bg-[#00d9ff] transition-colors glow-green"
+        className="px-6 py-3 bg-theme-accent text-theme-bg rounded-lg font-mono text-sm font-bold hover:opacity-90 transition-all dark:glow-green"
       >
         + ADD FIRST WALLET
       </button>
