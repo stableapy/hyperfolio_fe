@@ -19,7 +19,7 @@ import { formatValue, calculateWalletTotalValue } from "./utils"
 import type { PortfolioHeroProps } from "./types"
 
 export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefresh, onAddWallet, onScrollToContent }: PortfolioHeroProps) {
-  const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet, streaming } = useWalletStore()
+  const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet, streaming, loading } = useWalletStore()
   
   // Local state
   const [privacyMode] = useState(false)
@@ -153,10 +153,10 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 onClick={handleRefresh}
                 className="flex items-center bg-theme-card-bg/90 backdrop-blur-sm border border-theme-border/70 rounded-sm overflow-hidden hover:border-theme-accent/50 transition-all duration-150 disabled:opacity-50"
                 aria-label="Refresh data"
-                disabled={isRefreshing || isLoading}
+                disabled={isRefreshing || loading.isWalletDataLoading || loading.isPositionsLoading}
               >
                 <div className="px-1.5 sm:px-2 py-1.5 sm:py-2 bg-theme-accent/10 border-r border-theme-accent/20">
-                  <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-theme-accent ${isRefreshing || isLoading ? "animate-spin" : ""}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-theme-accent ${isRefreshing || loading.isWalletDataLoading || loading.isPositionsLoading ? "animate-spin" : ""}`} />
                 </div>
                 <span className="font-mono text-[9px] sm:text-[10px] text-theme-text-muted px-1.5 sm:px-2 hidden sm:inline">--sync</span>
               </button>
@@ -170,7 +170,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
           <div className="max-w-4xl space-y-3 sm:space-y-6 md:space-y-8">
             {/* Portfolio Value - Inline skeleton when loading */}
             <div className="font-mono tracking-tight leading-none min-h-[3rem] sm:min-h-[5rem] md:min-h-[6rem] lg:min-h-[8rem]">
-              {isLoading && displayData.value === 0 ? (
+              {loading.isWalletDataLoading && displayData.value === 0 ? (
                 <div className="h-16 sm:h-20 md:h-24 lg:h-32 w-[80%] sm:w-[70%] max-w-lg bg-secondary rounded-xl animate-pulse" />
               ) : (
                 <>
@@ -185,11 +185,11 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 </>
               )}
             </div>
-            
+
             {/* Terminal-style loading/streaming indicator - fixed height to prevent layout shift */}
             <div className="h-5 sm:h-6">
               <div className={`font-mono text-xs sm:text-sm text-theme-text-muted flex items-center gap-1.5 transition-opacity duration-200 ${
-                (isLoading || isRefreshing || streaming.isStreaming) ? 'opacity-100' : 'opacity-0'
+                (loading.isWalletDataLoading || loading.isPositionsLoading || isRefreshing || streaming.isStreaming) ? 'opacity-100' : 'opacity-0'
               }`}>
                 <span className="text-theme-accent">&gt;</span>
                 {streaming.isStreaming && streaming.streamProgress.total > 0 ? (
@@ -205,10 +205,10 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                 <span className="animate-pulse">_</span>
               </div>
             </div>
-            
+
             {/* Stats Pills */}
             <StatPills
-              isLoading={isLoading}
+              isLoading={loading.isWalletDataLoading}
               hasData={displayData.value !== 0}
               isPositive={isPositive}
               change24h={displayData.change24h}

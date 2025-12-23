@@ -22,6 +22,7 @@ export default function Home() {
   const {
     wallets,
     isLoading,
+    loading,
     aggregateData,
     error,
     addWallet,
@@ -170,6 +171,8 @@ export default function Home() {
               activeSection={activeSection}
               isLoading={isLoading}
               isDataVisible={isDataVisible}
+              isWalletDataLoading={loading.isWalletDataLoading}
+              isPositionsLoading={loading.isPositionsLoading}
             />
           </div>
         )}

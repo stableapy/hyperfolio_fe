@@ -40,8 +40,14 @@ export interface StickyNavHeaderProps {
 
 export interface SectionContentProps {
   activeSection: string
-  isLoading: boolean
+  isLoading: boolean // Legacy - kept for backwards compatibility
   isDataVisible: boolean
+  isWalletDataLoading?: boolean // Granular: wallet data loading state
+  isPositionsLoading?: boolean // Granular: positions loading state
 }
+
+
+
+
 
 

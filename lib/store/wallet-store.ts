@@ -28,14 +28,23 @@ interface StreamingState {
   streamError: string | null
 }
 
+// Granular loading states for each data source
+interface LoadingStates {
+  isWalletDataLoading: boolean  // For aggregate + individual wallet data (composition, history, tokens, NFTs, etc.)
+  isPositionsLoading: boolean    // For SSE positions streaming (DeFi positions)
+}
+
 interface WalletState {
   wallets: Wallet[]
   selectedWalletId: string | null
+  // Legacy: kept for backwards compatibility
   isLoading: boolean
+  // Granular loading states
+  loading: LoadingStates
   error: string | null
   aggregateData: AggregateData | null
   walletData: Record<string, WalletData> // Store raw data per wallet address
-  
+
   // Streaming state
   streaming: StreamingState
 
@@ -45,6 +54,8 @@ interface WalletState {
   updateWallet: (walletId: string, updates: Partial<Wallet>) => void
   selectWallet: (walletId: string | null) => void
   setLoading: (loading: boolean) => void
+  setWalletDataLoading: (loading: boolean) => void
+  setPositionsLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   setAggregateData: (data: AggregateData | null) => void
   setWalletData: (address: string, data: WalletData) => void
@@ -77,6 +88,10 @@ export const useWalletStore = create<WalletState>()(
       wallets: [],
       selectedWalletId: null,
       isLoading: false,
+      loading: {
+        isWalletDataLoading: false,
+        isPositionsLoading: false,
+      },
       error: null,
       aggregateData: null,
       walletData: {},
@@ -111,6 +126,20 @@ export const useWalletStore = create<WalletState>()(
 
       setLoading: (loading) => {
         set({ isLoading: loading })
+      },
+
+      setWalletDataLoading: (loading) => {
+        set((state) => ({
+          loading: { ...state.loading, isWalletDataLoading: loading },
+          // Also update legacy isLoading for backwards compatibility
+          isLoading: loading,
+        }))
+      },
+
+      setPositionsLoading: (loading) => {
+        set((state) => ({
+          loading: { ...state.loading, isPositionsLoading: loading },
+        }))
       },
 
       setError: (error) => {
@@ -161,7 +190,9 @@ export const useWalletStore = create<WalletState>()(
         const { wallets } = get()
         if (wallets.length === 0) return
 
-        set({ isLoading: true, error: null })
+        // Set wallet data loading state (not positions loading - that's separate)
+        get().setWalletDataLoading(true)
+        set({ error: null })
 
         try {
           const addresses = wallets.map((w) => w.address)
@@ -191,7 +222,7 @@ export const useWalletStore = create<WalletState>()(
             }
             const data = await walletResponse.json()
             get().setWalletData(wallet.address, data)
-            
+
             if (data.composition) {
               get().updateWallet(wallet.id, {
                 composition: data.composition,
@@ -202,7 +233,7 @@ export const useWalletStore = create<WalletState>()(
           })
 
           const results = await Promise.allSettled(walletUpdatePromises)
-          
+
           // Log any failures but don't throw - we still have aggregate data
           results.forEach((result, index) => {
             if (result.status === 'rejected') {
@@ -210,13 +241,18 @@ export const useWalletStore = create<WalletState>()(
             }
           })
 
-          set({ isLoading: false })
+          get().setWalletDataLoading(false)
+
+          // Emit custom event for DefiStreamProvider to listen
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('wallet-sync-complete'))
+          }
         } catch (error) {
           console.error('Error syncing all wallets:', error)
           set({
             error: error instanceof Error ? error.message : 'Failed to sync wallets',
-            isLoading: false,
           })
+          get().setWalletDataLoading(false)
         }
       },
 
@@ -228,6 +264,10 @@ export const useWalletStore = create<WalletState>()(
             isStreaming: true,
             streamedProtocols: new Map(),
           },
+          loading: {
+            isWalletDataLoading: false,
+            isPositionsLoading: true,
+          },
         })
       },
 
@@ -236,6 +276,10 @@ export const useWalletStore = create<WalletState>()(
           streaming: {
             ...state.streaming,
             isStreaming: false,
+          },
+          loading: {
+            ...state.loading,
+            isPositionsLoading: false,
           },
         }))
       },
@@ -270,6 +314,10 @@ export const useWalletStore = create<WalletState>()(
             isStreamComplete: true,
             streamPortfolioStats: stats,
           },
+          loading: {
+            ...state.loading,
+            isPositionsLoading: false,
+          },
         }))
       },
 
@@ -280,13 +328,21 @@ export const useWalletStore = create<WalletState>()(
             streamError: error,
             isStreaming: false,
           },
+          loading: {
+            ...state.loading,
+            isPositionsLoading: false,
+          },
         }))
       },
 
       clearStreamedData: () => {
-        set({
+        set((state) => ({
           streaming: { ...initialStreamingState },
-        })
+          loading: {
+            ...state.loading,
+            isPositionsLoading: false,
+          },
+        }))
       },
     }),
     {

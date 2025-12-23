@@ -8,12 +8,13 @@ import { usePositionsStream, type StreamedProtocol } from "@/hooks/use-positions
  * Provider component that initiates DeFi position streaming at the page level.
  * This ensures streaming only happens once on page load or when sync is triggered,
  * not on every tab navigation.
+ *
+ * Uses granular loading state - positions stream independently from wallet data.
  */
 export function DefiStreamProvider() {
   const {
     wallets,
     selectedWalletId,
-    isLoading,
     streaming,
     startStreaming,
     updateStreamedProtocol,
@@ -23,10 +24,12 @@ export function DefiStreamProvider() {
     clearStreamedData,
   } = useWalletStore()
 
-  // Track previous isLoading state to detect sync trigger
-  const prevIsLoadingRef = useRef(isLoading)
   // Track if we've already started streaming to prevent duplicate streams
-  const hasStartedRef = useRef(false)
+  const isStreamingRef = useRef(false)
+  // Track previous selected wallet to detect wallet changes
+  const prevSelectedWalletIdRef = useRef<string | null>(selectedWalletId)
+  // Track if we've processed the current sync
+  const syncProcessedRef = useRef(false)
 
   // Get addresses based on selection
   const addresses = selectedWalletId
@@ -40,15 +43,17 @@ export function DefiStreamProvider() {
 
   const handleComplete = (stats: Parameters<NonNullable<Parameters<typeof usePositionsStream>[0]['onComplete']>>[0]) => {
     setStreamComplete(stats)
-    hasStartedRef.current = false // Allow restart on next sync
+    isStreamingRef.current = false
+    syncProcessedRef.current = false // Allow restart on next sync
   }
 
   const handleError = (error: string) => {
     setStreamError(error)
-    hasStartedRef.current = false // Allow restart on error
+    isStreamingRef.current = false
+    syncProcessedRef.current = false
   }
 
-  // Use the SSE stream - skipCache when isLoading (sync triggered)
+  // Use the SSE stream - disabled by default, we manually start it
   const {
     isStreaming: streamHookIsStreaming,
     progress,
@@ -56,9 +61,8 @@ export function DefiStreamProvider() {
     stopStream,
   } = usePositionsStream({
     addresses,
-    skipCache: isLoading,
-    // Only enable on initial mount if not already streaming and we have addresses
-    enabled: addresses.length > 0 && !hasStartedRef.current && !streaming.isStreamComplete,
+    skipCache: false,
+    enabled: false, // Disabled - we manually control start
     onProtocolReceived: handleProtocolReceived,
     onComplete: handleComplete,
     onError: handleError,
@@ -68,7 +72,7 @@ export function DefiStreamProvider() {
   useEffect(() => {
     if (streamHookIsStreaming && !streaming.isStreaming) {
       startStreaming()
-      hasStartedRef.current = true
+      isStreamingRef.current = true
     }
   }, [streamHookIsStreaming, streaming.isStreaming, startStreaming])
 
@@ -76,37 +80,65 @@ export function DefiStreamProvider() {
     setStreamProgress(progress)
   }, [progress, setStreamProgress])
 
-  // Restart streaming when sync is triggered (isLoading becomes true)
+  // Handle wallet changes - restart stream
   useEffect(() => {
-    if (isLoading && !prevIsLoadingRef.current && addresses.length > 0) {
-      // Sync was triggered, restart streaming with cache bypass
-      clearStreamedData()
-      stopStream()
-      hasStartedRef.current = false
-      setTimeout(() => {
-        startStream()
-        hasStartedRef.current = true
-      }, 100)
-    }
-    prevIsLoadingRef.current = isLoading
-  }, [isLoading, addresses.length, clearStreamedData, stopStream, startStream])
+    const walletChanged = selectedWalletId !== prevSelectedWalletIdRef.current
 
-  // Restart streaming when selected wallet changes
-  useEffect(() => {
-    if (addresses.length > 0 && streaming.isStreamComplete) {
-      // Wallet selection changed after completion, restart stream
+    if (walletChanged && addresses.length > 0 && !isStreamingRef.current) {
+      // Clear and restart stream
       clearStreamedData()
       stopStream()
-      hasStartedRef.current = false
+      isStreamingRef.current = false
+
       setTimeout(() => {
         startStream()
-        hasStartedRef.current = true
+        isStreamingRef.current = true
       }, 100)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWalletId])
+
+    prevSelectedWalletIdRef.current = selectedWalletId
+  }, [selectedWalletId, addresses.length, clearStreamedData, stopStream, startStream])
+
+  // Listen for sync completion events to restart stream with fresh data
+  useEffect(() => {
+    const handleSyncComplete = () => {
+      if (addresses.length === 0 || isStreamingRef.current || syncProcessedRef.current) {
+        return
+      }
+
+      // Clear and restart stream with cache bypass
+      clearStreamedData()
+      stopStream()
+
+      setTimeout(() => {
+        startStream()
+        isStreamingRef.current = true
+        syncProcessedRef.current = true
+      }, 100)
+    }
+
+    // Listen for custom sync complete event
+    window.addEventListener('wallet-sync-complete', handleSyncComplete)
+
+    return () => {
+      window.removeEventListener('wallet-sync-complete', handleSyncComplete)
+    }
+  }, [addresses.length, clearStreamedData, stopStream, startStream])
+
+  // Auto-start on initial mount
+  useEffect(() => {
+    if (addresses.length > 0 && !isStreamingRef.current) {
+      startStream()
+      isStreamingRef.current = true
+    }
+    // Only run on mount - eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // This is a provider component - renders nothing
   return null
 }
+
+
+
+
 

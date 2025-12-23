@@ -50,3 +50,7 @@ trap cleanup SIGTERM SIGINT SIGQUIT
 # Execute the main command (node server.js)
 exec "$@"
 
+
+
+
+

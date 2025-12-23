@@ -40,16 +40,27 @@ const SECTION_CONFIG = {
  * Section content component that renders the appropriate section
  * based on the active section selection
  * Includes proper H2 headings for SEO
+ *
+ * Each section uses granular loading states:
+ * - Tokens, NFTs, Hypercore, Transactions: use isWalletDataLoading
+ * - DeFi: uses isPositionsLoading (positions stream independently)
  */
-export function SectionContent({ 
-  activeSection, 
-  isLoading, 
-  isDataVisible 
+export function SectionContent({
+  activeSection,
+  isLoading, // Legacy - kept for backwards compatibility
+  isDataVisible,
+  isWalletDataLoading = isLoading,
+  isPositionsLoading = false,
 }: SectionContentProps) {
   const config = SECTION_CONFIG[activeSection as keyof typeof SECTION_CONFIG]
-  
+
+  // Determine which loading state to use based on active section
+  const sectionIsLoading = activeSection === 'defi'
+    ? isPositionsLoading // DeFi uses positions loading state
+    : isWalletDataLoading // All other sections use wallet data loading state
+
   return (
-    <section 
+    <section
       id={config?.id}
       role="tabpanel"
       aria-labelledby={`${activeSection}-tab`}
@@ -60,12 +71,12 @@ export function SectionContent({
       {/* SEO-friendly section heading - visually hidden but accessible */}
       <h2 className="sr-only">{config?.heading}</h2>
       <p className="sr-only">{config?.description}</p>
-      
-      {activeSection === "tokens" && <TokensSection isLoading={isLoading} />}
-      {activeSection === "nfts" && <NFTsSection isLoading={isLoading} />}
-      {activeSection === "defi" && <DeFiSection isLoading={isLoading} />}
-      {activeSection === "hypercore" && <HypercoreSection isLoading={isLoading} />}
-      {activeSection === "transactions" && <TransactionsSection isLoading={isLoading} />}
+
+      {activeSection === "tokens" && <TokensSection isLoading={sectionIsLoading} />}
+      {activeSection === "nfts" && <NFTsSection isLoading={sectionIsLoading} />}
+      {activeSection === "defi" && <DeFiSection isLoading={sectionIsLoading} />}
+      {activeSection === "hypercore" && <HypercoreSection isLoading={sectionIsLoading} />}
+      {activeSection === "transactions" && <TransactionsSection isLoading={sectionIsLoading} />}
     </section>
   )
 }

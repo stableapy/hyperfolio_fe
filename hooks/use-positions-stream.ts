@@ -311,17 +311,25 @@ export function usePositionsStream({
     fetchStream()
   }, [addresses, skipCache, stopStream, onProtocolReceived, onComplete, onError])
 
+  // Track if we've already started streaming to prevent duplicates
+  const hasStartedRef = useRef(false)
+
   // Auto-start stream when enabled and addresses change
   useEffect(() => {
-    if (enabled && addresses.length > 0) {
+    // Only auto-start on initial mount when enabled
+    // Don't restart when enabled changes (use startStream() manually for restarts)
+    if (enabled && addresses.length > 0 && !hasStartedRef.current) {
       startStream()
+      hasStartedRef.current = true
     }
 
     return () => {
       stopStream()
+      hasStartedRef.current = false
     }
+    // Only depend on addressesKey to trigger on address changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addressesKey, enabled, skipCache])
+  }, [addressesKey])
 
   return {
     protocols,
