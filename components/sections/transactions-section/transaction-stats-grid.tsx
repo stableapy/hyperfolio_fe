@@ -46,7 +46,7 @@ export function TransactionStatsGrid({
         ) : (
           <StatPill
             icon="#"
-            color="amber"
+            color="cyan"
             label="showing:"
             value={filteredCount}
           />

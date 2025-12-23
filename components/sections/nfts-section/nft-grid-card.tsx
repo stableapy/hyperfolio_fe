@@ -31,7 +31,7 @@ export function NFTGridCard({ nft }: NFTGridCardProps) {
           className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 p-1.5 sm:p-2 bg-theme-card-bg/80 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-[#ffb000]" />
+          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-theme-cyan" />
         </a>
       </div>
       <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">

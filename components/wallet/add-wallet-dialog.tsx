@@ -76,17 +76,9 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
       <div className="relative bg-theme-card-bg border border-theme-border/70 rounded-sm w-full max-w-md shadow-2xl backdrop-blur-md overflow-hidden">
         {/* Terminal window header */}
         <div className="flex items-center justify-between px-3 py-2 bg-theme-bg/50 border-b border-theme-border/50">
-          <div className="flex items-center gap-2">
-            {/* Window control dots */}
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-            </div>
-            <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider ml-2">
-              wallet --add
-            </span>
-          </div>
+          <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">
+            wallet --add
+          </span>
           <EscCloseButton onClick={handleClose} />
         </div>
         

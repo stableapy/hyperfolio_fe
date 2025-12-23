@@ -5,36 +5,37 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 // Predefined color themes for consistency across the app
+// Uses CSS custom properties for theme-aware colors (light/dark mode)
 const STAT_PILL_COLORS = {
   accent: {
     bg: "bg-theme-accent/10",
     border: "border-theme-accent/20",
     text: "text-theme-accent",
   },
-  amber: {
-    bg: "bg-[#ffb000]/10",
-    border: "border-[#ffb000]/20",
-    text: "text-[#ffb000]",
+  cyan: {
+    bg: "bg-theme-cyan/10",
+    border: "border-theme-cyan/20",
+    text: "text-theme-cyan",
   },
-  lime: {
-    bg: "bg-[#b4ff00]/10",
-    border: "border-[#b4ff00]/20",
-    text: "text-[#b4ff00]",
+  purple: {
+    bg: "bg-theme-purple/10",
+    border: "border-theme-purple/20",
+    text: "text-theme-purple",
   },
   red: {
-    bg: "bg-[#ff4444]/10",
-    border: "border-[#ff4444]/20",
-    text: "text-[#ff4444]",
+    bg: "bg-theme-red/10",
+    border: "border-theme-red/20",
+    text: "text-theme-red",
   },
   orange: {
-    bg: "bg-[#ffaa00]/10",
-    border: "border-[#ffaa00]/20",
-    text: "text-[#ffaa00]",
+    bg: "bg-theme-orange/10",
+    border: "border-theme-orange/20",
+    text: "text-theme-orange",
   },
   magenta: {
-    bg: "bg-[#ff00ff]/10",
-    border: "border-[#ff00ff]/20",
-    text: "text-[#ff00ff]",
+    bg: "bg-theme-magenta/10",
+    border: "border-theme-magenta/20",
+    text: "text-theme-magenta",
   },
   muted: {
     bg: "bg-theme-text-muted/10",
@@ -126,13 +127,14 @@ export function StatPill({
   }
 
   // Get color classes - support both predefined and custom colors
+  // Fallback to accent if color not found in predefined colors
   const colorClasses = customColor
     ? {
         bg: "",
         border: "",
         text: "",
       }
-    : STAT_PILL_COLORS[color]
+    : (STAT_PILL_COLORS[color] || STAT_PILL_COLORS.accent)
 
   // Custom color styles
   const customColorStyles = customColor

@@ -9,9 +9,10 @@ export { ProtocolCard } from "./protocol-card"
 export { PositionItem } from "./position-item"
 export { ProtocolSkeleton } from "./protocol-skeleton"
 export { DefiEmptyState } from "./defi-empty-state"
+export { StreamingProgress } from "./streaming-progress"
 
 // Hooks
-export { useDefiPositions, useDefiStats } from "./hooks"
+export { useDefiPositions, useDefiStats, useStreamingPositions } from "./hooks"
 
 // Types
 export type {

@@ -6,15 +6,26 @@ import { persist } from 'zustand/middleware'
 
 import type { Wallet, AggregateData } from '@/lib/types/api'
 import { secureFetch } from '@/lib/api/fetch'
+import type { StreamedProtocol, StreamProgress, StreamPortfolioStats } from '@/hooks/use-positions-stream'
 
 interface WalletData {
-  composition: any
-  compositionRaw?: any
-  transactions: any[]
-  nfts: any
-  positions: any
-  userData: any
-  history: any[]
+  composition: unknown
+  compositionRaw?: unknown
+  transactions: unknown[]
+  nfts: unknown
+  positions: unknown
+  userData: unknown
+  history: unknown[]
+}
+
+// Streaming positions state
+interface StreamingState {
+  isStreaming: boolean
+  isStreamComplete: boolean
+  streamProgress: StreamProgress
+  streamedProtocols: Map<string, StreamedProtocol>
+  streamPortfolioStats: StreamPortfolioStats | null
+  streamError: string | null
 }
 
 interface WalletState {
@@ -24,6 +35,9 @@ interface WalletState {
   error: string | null
   aggregateData: AggregateData | null
   walletData: Record<string, WalletData> // Store raw data per wallet address
+  
+  // Streaming state
+  streaming: StreamingState
 
   // Actions
   addWallet: (wallet: Omit<Wallet, 'id'>) => void
@@ -36,6 +50,25 @@ interface WalletState {
   setWalletData: (address: string, data: WalletData) => void
   syncWalletData: (walletId: string, skipCache?: boolean) => Promise<void>
   syncAllWallets: (skipCache?: boolean) => Promise<void>
+  
+  // Streaming actions
+  startStreaming: () => void
+  stopStreaming: () => void
+  updateStreamedProtocol: (protocol: StreamedProtocol) => void
+  setStreamProgress: (progress: StreamProgress) => void
+  setStreamComplete: (stats: StreamPortfolioStats) => void
+  setStreamError: (error: string | null) => void
+  clearStreamedData: () => void
+}
+
+// Initial streaming state
+const initialStreamingState: StreamingState = {
+  isStreaming: false,
+  isStreamComplete: false,
+  streamProgress: { completed: 0, total: 0 },
+  streamedProtocols: new Map(),
+  streamPortfolioStats: null,
+  streamError: null,
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -47,6 +80,7 @@ export const useWalletStore = create<WalletState>()(
       error: null,
       aggregateData: null,
       walletData: {},
+      streaming: { ...initialStreamingState },
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
@@ -184,6 +218,75 @@ export const useWalletStore = create<WalletState>()(
             isLoading: false,
           })
         }
+      },
+
+      // Streaming actions
+      startStreaming: () => {
+        set({
+          streaming: {
+            ...initialStreamingState,
+            isStreaming: true,
+            streamedProtocols: new Map(),
+          },
+        })
+      },
+
+      stopStreaming: () => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            isStreaming: false,
+          },
+        }))
+      },
+
+      updateStreamedProtocol: (protocol: StreamedProtocol) => {
+        set((state) => {
+          const newProtocols = new Map(state.streaming.streamedProtocols)
+          newProtocols.set(protocol.id, protocol)
+          return {
+            streaming: {
+              ...state.streaming,
+              streamedProtocols: newProtocols,
+            },
+          }
+        })
+      },
+
+      setStreamProgress: (progress: StreamProgress) => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            streamProgress: progress,
+          },
+        }))
+      },
+
+      setStreamComplete: (stats: StreamPortfolioStats) => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            isStreaming: false,
+            isStreamComplete: true,
+            streamPortfolioStats: stats,
+          },
+        }))
+      },
+
+      setStreamError: (error: string | null) => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            streamError: error,
+            isStreaming: false,
+          },
+        }))
+      },
+
+      clearStreamedData: () => {
+        set({
+          streaming: { ...initialStreamingState },
+        })
       },
     }),
     {

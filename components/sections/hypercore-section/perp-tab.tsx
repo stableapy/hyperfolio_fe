@@ -15,17 +15,17 @@ export function PerpTab({ marginBalance }: PerpTabProps) {
         NO PERP POSITIONS
       </div>
       <div className="font-mono text-xs sm:text-sm text-theme-text-muted mb-4">
-        <span className="text-[#ffb000]">&gt;</span> hypercore --perp returns empty
+        <span className="text-theme-cyan">&gt;</span> hypercore --perp returns empty
       </div>
       
       {/* Margin Balance - Terminal style badge */}
       <div className="inline-flex items-center bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden">
-        <div className="px-2 py-1.5 bg-[#ffb000]/10 border-r border-[#ffb000]/20">
-          <span className="font-mono text-[10px] sm:text-xs font-bold text-[#ffb000]">$</span>
+        <div className="px-2 py-1.5 bg-theme-cyan/10 border-r border-theme-cyan/20">
+          <span className="font-mono text-[10px] sm:text-xs font-bold text-theme-cyan">$</span>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1.5">
           <span className="font-mono text-[10px] text-theme-text-muted">--margin</span>
-          <span className="font-mono text-xs sm:text-sm font-bold text-[#ffb000] tabular-nums">
+          <span className="font-mono text-xs sm:text-sm font-bold text-theme-cyan tabular-nums">
             ${margin.toFixed(2)}
           </span>
         </div>

@@ -8,17 +8,17 @@ import type { StakingTabProps, Delegation } from "./types"
  */
 function DelegationRow({ delegation }: { delegation: Delegation }) {
   return (
-    <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group hover:bg-theme-accent/5 border-l-2 border-l-transparent hover:border-l-[#ff00ff]">
+    <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group hover:bg-theme-accent/5 border-l-2 border-l-transparent hover:border-l-theme-magenta">
       <div className="flex items-center justify-between gap-2">
         {/* Terminal Prompt */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="font-mono text-sm font-bold text-[#ff00ff] select-none">&gt;</span>
+          <span className="font-mono text-sm font-bold text-theme-magenta select-none">&gt;</span>
         </div>
         
         {/* Validator Address */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="font-mono text-[10px] text-theme-text-muted">validator:</span>
-          <span className="font-mono text-xs sm:text-sm text-[#ff00ff] truncate">
+          <span className="font-mono text-xs sm:text-sm text-theme-magenta truncate">
             {formatAddress(delegation.address || "")}
           </span>
         </div>
@@ -43,12 +43,12 @@ function StakingSummary({ totalHype, totalStakedUsd }: { totalHype: number; tota
     <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 border-b border-theme-border/30">
       {/* Total HYPE - Terminal style */}
       <div className="flex items-center bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden">
-        <div className="px-2 py-1.5 bg-[#ff00ff]/10 border-r border-[#ff00ff]/20">
-          <span className="font-mono text-[10px] sm:text-xs font-bold text-[#ff00ff]">⚡</span>
+        <div className="px-2 py-1.5 bg-theme-magenta/10 border-r border-theme-magenta/20">
+          <span className="font-mono text-[10px] sm:text-xs font-bold text-theme-magenta">⚡</span>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1.5">
           <span className="font-mono text-[10px] text-theme-text-muted">--total</span>
-          <span className="font-mono text-xs sm:text-sm font-bold text-[#ff00ff] tabular-nums">
+          <span className="font-mono text-xs sm:text-sm font-bold text-theme-magenta tabular-nums">
             {formatCompactValue(totalHype)} HYPE
           </span>
         </div>
@@ -90,7 +90,7 @@ export function StakingTab({ stakingInfo }: StakingTabProps) {
           <div className="px-3 sm:px-4 py-2 bg-theme-bg/30">
             <div className="flex items-center gap-1.5">
               <span className="font-mono text-[9px] text-theme-text-muted">#</span>
-              <span className="font-mono text-[9px] sm:text-[10px] text-[#ff00ff] uppercase tracking-wider">
+              <span className="font-mono text-[9px] sm:text-[10px] text-theme-magenta uppercase tracking-wider">
                 DELEGATIONS
               </span>
               <span className="font-mono text-[9px] sm:text-[10px] text-theme-text-muted">
@@ -109,7 +109,7 @@ export function StakingTab({ stakingInfo }: StakingTabProps) {
             NO DELEGATIONS
           </div>
           <div className="font-mono text-xs sm:text-sm text-theme-text-muted">
-            <span className="text-[#ff00ff]">&gt;</span> staking --delegations returns empty
+            <span className="text-theme-magenta">&gt;</span> staking --delegations returns empty
           </div>
         </div>
       )}

@@ -50,7 +50,7 @@ export function TokenRowMobile({
         <div className="font-mono text-[9px] text-theme-text-secondary mt-0.5 flex items-center gap-1">
           <span className="text-theme-text-muted">bal:</span>
           <span className="tabular-nums">{formatBalance(token.balance)}</span>
-          <span className="text-[#ffb000]/60">{token.symbol}</span>
+          <span className="text-theme-cyan/60">{token.symbol}</span>
         </div>
       </div>
       

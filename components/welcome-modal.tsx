@@ -78,13 +78,13 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[#ffb000] font-mono text-sm">•</span>
+              <span className="text-theme-cyan font-mono text-sm">•</span>
               <p className="font-mono text-sm text-[#708090]">
                 <span className="text-white">Real-time data</span> — Tokens, NFTs, DeFi positions
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[#b4ff00] font-mono text-sm">•</span>
+              <span className="text-theme-purple font-mono text-sm">•</span>
               <p className="font-mono text-sm text-[#708090]">
                 <span className="text-white">Integrated swap</span> — Trade directly via KyberSwap
               </p>

@@ -73,7 +73,7 @@ export function TokenRow({
         <span className="font-mono text-xs text-theme-text-secondary tabular-nums">
           {formatBalance(token.balance)}
         </span>
-        <span className="font-mono text-[10px] text-[#ffb000]/70">{token.symbol}</span>
+        <span className="font-mono text-[10px] text-theme-cyan/70">{token.symbol}</span>
       </div>
 
       {/* Right: Value + Swap */}

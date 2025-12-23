@@ -19,7 +19,7 @@ import { formatValue, calculateWalletTotalValue } from "./utils"
 import type { PortfolioHeroProps } from "./types"
 
 export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefresh, onAddWallet, onScrollToContent }: PortfolioHeroProps) {
-  const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet } = useWalletStore()
+  const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet, streaming } = useWalletStore()
   
   // Local state
   const [privacyMode] = useState(false)
@@ -58,12 +58,13 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
   
-  // Show chart as soon as chart data is available (no artificial delay)
+  // Show chart as soon as chart data is available
+  // Don't hide chart on refetch - only hide when there's no data at all
   useEffect(() => {
-    // Chart only depends on history data, not main portfolio loading state
-    if (!isLoadingHistory && chartData.length > 0) {
+    if (chartData.length > 0) {
       setShowChart(true)
-    } else if (isLoadingHistory) {
+    } else if (!isLoadingHistory && chartData.length === 0) {
+      // Only hide if we're done loading AND have no data (empty state)
       setShowChart(false)
     }
   }, [isLoadingHistory, chartData.length])
@@ -183,6 +184,26 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
                   )}
                 </>
               )}
+            </div>
+            
+            {/* Terminal-style loading/streaming indicator - fixed height to prevent layout shift */}
+            <div className="h-5 sm:h-6">
+              <div className={`font-mono text-xs sm:text-sm text-theme-text-muted flex items-center gap-1.5 transition-opacity duration-200 ${
+                (isLoading || isRefreshing || streaming.isStreaming) ? 'opacity-100' : 'opacity-0'
+              }`}>
+                <span className="text-theme-accent">&gt;</span>
+                {streaming.isStreaming && streaming.streamProgress.total > 0 ? (
+                  <>
+                    <span>scanning protocols</span>
+                    <span className="text-theme-accent tabular-nums">
+                      [{streaming.streamProgress.completed}/{streaming.streamProgress.total}]
+                    </span>
+                  </>
+                ) : (
+                  <span>fetching portfolio data</span>
+                )}
+                <span className="animate-pulse">_</span>
+              </div>
             </div>
             
             {/* Stats Pills */}

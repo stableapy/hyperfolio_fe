@@ -64,7 +64,7 @@ export function TransactionRow({ transaction: tx }: TransactionRowProps) {
             <div className="flex items-center gap-1.5 flex-wrap mb-1">
               <span className="font-mono text-xs text-theme-accent font-bold">{displayLabel}</span>
               {tx.protocol?.name && tx.protocol.name !== 'Unknown' && tx.protocol.name !== 'Approve' && (
-                <span className="font-mono text-[9px] text-[#ffb000] bg-[#ffb000]/10 border border-[#ffb000]/20 px-1 py-0.5 rounded">
+                <span className="font-mono text-[9px] text-theme-cyan bg-theme-cyan/10 border border-theme-cyan/20 px-1 py-0.5 rounded">
                   {tx.protocol.name}
                 </span>
               )}
@@ -125,7 +125,7 @@ export function TransactionRow({ transaction: tx }: TransactionRowProps) {
             <div className="flex items-center gap-2 mb-1">
               <span className="font-mono text-sm text-theme-accent font-bold tracking-wide">{displayLabel}</span>
               {tx.protocol?.name && tx.protocol.name !== 'Unknown' && tx.protocol.name !== 'Approve' && (
-                <span className="font-mono text-[10px] text-[#ffb000] bg-[#ffb000]/10 border border-[#ffb000]/20 px-1.5 py-0.5 rounded">
+                <span className="font-mono text-[10px] text-theme-cyan bg-theme-cyan/10 border border-theme-cyan/20 px-1.5 py-0.5 rounded">
                   {tx.protocol.name}
                 </span>
               )}

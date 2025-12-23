@@ -115,7 +115,7 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
 
       {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
       <div className="hidden lg:block w-[380px] flex-shrink-0">
-        <div className="sticky top-24">
+        <div className="sticky top-25">
           <SwapWidgetInline fromToken={selectedSwapToken} />
         </div>
       </div>

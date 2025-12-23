@@ -53,7 +53,7 @@ export function DefiStatsGrid({
         ) : (
           <StatPill
             icon="+"
-            color="amber"
+            color="cyan"
             label="--rewards"
             value={formatCompactValue(totalRewards)}
           />
@@ -67,7 +67,7 @@ export function DefiStatsGrid({
             <TooltipTrigger asChild>
               <StatPill
                 icon="%"
-                color="lime"
+                color="purple"
                 label="--apy"
                 value={`${weightedApy.toFixed(1)}%`}
                 interactive
@@ -76,8 +76,8 @@ export function DefiStatsGrid({
             </TooltipTrigger>
             <TooltipContent side="bottom" className="bg-theme-bg border border-theme-border p-3 max-w-xs">
               <div className="space-y-2">
-                <div className="font-mono text-xs text-[#b4ff00] font-bold">
-                  <span className="text-[#b4ff00]">&gt;</span> yield --estimate
+                <div className="font-mono text-xs text-theme-purple font-bold">
+                  <span className="text-theme-purple">&gt;</span> yield --estimate
                 </div>
                 <div className="grid grid-cols-3 gap-3 pt-1">
                   <div>

@@ -34,7 +34,7 @@ export function SummaryCards({ data, showSkeleton }: SummaryCardsProps) {
       ) : (
         <StatPill
           icon="~"
-          color="amber"
+          color="cyan"
           label="--perp"
           value={perpValue}
         />

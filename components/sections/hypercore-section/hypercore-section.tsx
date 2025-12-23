@@ -17,9 +17,9 @@ import type { HypercoerSectionProps, TabId, TabConfig } from "./types"
 // Note: spot uses CSS variable to respect light/dark theme accent
 const TABS: TabConfig[] = [
   { id: "spot", label: "Spot", icon: DollarSign, color: "var(--theme-accent)" },
-  { id: "perp", label: "Perp", icon: TrendingUp, color: "#ffb000" },
-  { id: "staking", label: "Staking", icon: Lock, color: "#ff00ff" },
-  { id: "vaults", label: "Vaults", icon: Vault, color: "#ffaa00" },
+  { id: "perp", label: "Perp", icon: TrendingUp, color: "var(--theme-cyan)" },
+  { id: "staking", label: "Staking", icon: Lock, color: "var(--theme-magenta)" },
+  { id: "vaults", label: "Vaults", icon: Vault, color: "var(--theme-orange)" },
 ]
 
 /**
