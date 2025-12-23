@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformTransactions } from "@/lib/utils/data-transformers"
 import { secureFetch } from "@/lib/api/fetch"
@@ -20,8 +20,11 @@ interface TransactionsState {
  * Only fetches when fetchTransactions() is called (lazy loading)
  */
 export function useTransactions() {
-  const { wallets, selectedWalletId } = useWalletStore()
-  
+  const { wallets, selectedWalletId, syncTrigger } = useWalletStore()
+
+  // Track previous sync trigger to detect changes
+  const prevSyncTriggerRef = useRef(syncTrigger)
+
   const [state, setState] = useState<TransactionsState>({
     transactions: [],
     isLoading: false,
@@ -89,6 +92,27 @@ export function useTransactions() {
       fetchTransactions(state.page + 1, false)
     }
   }, [fetchTransactions, state.isLoading, state.hasMore, state.page])
+
+  // Clear transactions when sync is triggered (global refresh)
+  useEffect(() => {
+    if (syncTrigger !== prevSyncTriggerRef.current) {
+      // Sync was triggered - clear transactions and trigger a refetch
+      setState({
+        transactions: [],
+        isLoading: true,
+        error: null,
+        page: 1,
+        hasMore: false,
+        total: 0,
+      })
+      prevSyncTriggerRef.current = syncTrigger
+
+      // Trigger refetch after clearing (if we have an address)
+      if (currentAddress) {
+        fetchTransactions(1, true)
+      }
+    }
+  }, [syncTrigger, currentAddress, fetchTransactions])
 
   // Refresh transactions (reset to page 1)
   const refresh = useCallback(() => {

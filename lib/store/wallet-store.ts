@@ -199,6 +199,7 @@ export const useWalletStore = create<WalletState>()(
         if (wallets.length === 0) return
 
         // Set wallet data loading state (not positions loading - that's separate)
+        console.log('[WalletStore] syncAllWallets: Setting isWalletDataLoading = true')
         get().setWalletDataLoading(true)
         set({ error: null })
 
@@ -249,6 +250,7 @@ export const useWalletStore = create<WalletState>()(
             }
           })
 
+          console.log('[WalletStore] syncAllWallets: Setting isWalletDataLoading = false')
           get().setWalletDataLoading(false)
 
         } catch (error) {
@@ -260,10 +262,14 @@ export const useWalletStore = create<WalletState>()(
         }
       },
 
-      // Trigger a full sync - clears streamed data and increments trigger to restart stream
+      // Trigger a full sync - clears streamed data and wallet data to show skeletons, then restarts stream
       triggerSync: (skipCache = false) => {
-        // Clear streamed data first so UI shows loading state immediately
+        // Clear ALL data first so UI shows loading skeletons immediately
         set((state) => ({
+          // Clear wallet and aggregate data - forces sections to show skeletons
+          walletData: {},
+          aggregateData: null,
+          // Clear streaming data
           streaming: {
             ...initialStreamingState,
             isStreaming: true, // Mark as streaming immediately for UI feedback
@@ -271,6 +277,7 @@ export const useWalletStore = create<WalletState>()(
           },
           loading: {
             ...state.loading,
+            isWalletDataLoading: true,
             isPositionsLoading: true,
           },
           // Increment trigger to signal stream restart
