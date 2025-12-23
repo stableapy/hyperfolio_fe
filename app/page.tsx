@@ -14,7 +14,8 @@ import {
   FloatingSwapButton, 
   EmptyState, 
   StickyNavHeader, 
-  SectionContent 
+  SectionContent,
+  DefiStreamProvider,
 } from "@/components/home"
 
 export default function Home() {
@@ -95,6 +96,9 @@ export default function Home() {
 
       {/* Welcome Modal - Shows on first visit */}
       <WelcomeModal />
+
+      {/* DeFi Streaming Provider - Initiates position streaming at page level */}
+      {wallets.length > 0 && <DefiStreamProvider />}
 
       {/* Floating Swap Button - Mobile: always visible in content section, Desktop: visible except on tokens section */}
       {wallets.length > 0 && (

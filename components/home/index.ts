@@ -6,6 +6,7 @@ export { WalletDropdown } from "./wallet-dropdown"
 export { EmptyState } from "./empty-state"
 export { StickyNavHeader } from "./sticky-nav-header"
 export { SectionContent } from "./section-content"
+export { DefiStreamProvider } from "./defi-stream-provider"
 
 // Types
 export type {
