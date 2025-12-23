@@ -194,10 +194,33 @@ const data2 = await fetchData2(data1.id);
 - Sanitize user input
 
 ### API Protection
-- Authenticate requests
-- Rate limit endpoints
-- Validate request data
-- Handle errors gracefully
+
+The application implements a multi-layer security approach to protect internal API routes:
+
+#### 1. Middleware Protection (`middleware.ts`)
+- **Rate Limiting**: 100 requests per minute per IP
+- **Origin Validation**: Requests must come from trusted origins
+- **HMAC Token Verification**: Optional signed tokens for programmatic requests
+- **Security Headers**: X-Content-Type-Options, X-Frame-Options
+
+#### 2. Internal Token System (`lib/api/security.ts`)
+- HMAC-SHA256 signed tokens with timestamps
+- 5-minute token validity to prevent replay attacks
+- Timing-safe comparison to prevent timing attacks
+- Graceful fallback to origin validation in development
+
+#### 3. Client-Side Secure Fetch (`lib/api/fetch.ts`)
+- `secureFetch()` wrapper adds security headers automatically
+- `x-requested-with: hyperfolio-internal` marker
+- Optional token-based authentication
+
+#### 4. Configuration
+Set `INTERNAL_API_SECRET` in environment for production:
+```env
+INTERNAL_API_SECRET=your_strong_random_secret_32chars
+```
+
+If not set, the system runs in "development mode" with origin validation only.
 
 ## Performance
 

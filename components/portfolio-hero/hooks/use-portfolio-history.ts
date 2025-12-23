@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { secureFetch } from "@/lib/api/fetch"
 import type { HistorySnapshot, PortfolioHistory, ChartDataPoint, ModalChartDataPoint, ChartTimeRange } from "../types"
 
 interface Wallet {
@@ -49,11 +50,11 @@ export function usePortfolioHistory({
         let data: PortfolioHistory
 
         if (addresses.length === 1) {
-          const response = await fetch(`/api/portfolio-history?address=${addresses[0]}`)
+          const response = await secureFetch(`/api/portfolio-history?address=${addresses[0]}`)
           if (!response.ok) throw new Error('Failed to fetch portfolio history')
           data = await response.json()
         } else {
-          const response = await fetch('/api/portfolio-history-aggregate', {
+          const response = await secureFetch('/api/portfolio-history-aggregate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ addresses }),

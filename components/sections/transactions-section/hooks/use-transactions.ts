@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react"
 import { useWalletStore } from "@/lib/store/wallet-store"
 import { transformTransactions } from "@/lib/utils/data-transformers"
+import { secureFetch } from "@/lib/api/fetch"
 import type { Transaction } from "../types"
 
 const TRANSACTIONS_PER_PAGE = 15
@@ -51,7 +52,7 @@ export function useTransactions() {
 
     try {
       // Call our API route which will forward to the external API
-      const response = await fetch(
+      const response = await secureFetch(
         `/api/wallet/transactions?address=${currentAddress}&page=${page}&offset=${TRANSACTIONS_PER_PAGE}`
       )
 

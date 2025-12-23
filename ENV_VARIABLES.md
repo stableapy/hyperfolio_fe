@@ -30,6 +30,11 @@ HYPEREVM_API_KEY=statuspage_aCMuCwVdKbV0T0M6qc_Pots9LS4GLlVgHfpKXTKcxjU
 DATABASE_URL=postgresql://user:password@localhost:5432/hyperfolio
 JWT_SECRET=your_jwt_secret_here
 
+# Internal API Security - HMAC signing for API route protection
+# Generate a strong random string (32+ characters recommended)
+# If not set, API routes will rely on origin validation only (development mode)
+INTERNAL_API_SECRET=your_strong_random_secret_here_32chars
+
 # Internal API URL for Docker/Coolify deployments (faster server-side calls)
 # Uses Docker internal networking instead of going through public internet
 #

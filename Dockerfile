@@ -77,6 +77,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy custom entrypoint and health check scripts for rolling deployment workaround
+# These scripts handle startup delay to prevent Traefik router name conflicts
+COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=nextjs:nodejs healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/healthcheck.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -84,10 +90,19 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check for zero-downtime deployments
-# Coolify uses curl internally for health checks
-HEALTHCHECK --interval=5s --timeout=5s --start-period=40s --retries=5 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+# Rolling deployment configuration (configurable via Coolify environment variables)
+# STARTUP_DELAY: seconds to wait before starting (default: 10)
+# ENABLE_STARTUP_DELAY: set to "false" to disable (default: true)
+ENV STARTUP_DELAY=10
+ENV ENABLE_STARTUP_DELAY=true
 
+# Health check for zero-downtime deployments
+# Uses custom script that checks both startup completion and server health
+# Increased start-period to account for startup delay + server boot time
+HEALTHCHECK --interval=5s --timeout=5s --start-period=60s --retries=5 \
+  CMD /usr/local/bin/healthcheck.sh
+
+# Use custom entrypoint for rolling deployment handling
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
 
