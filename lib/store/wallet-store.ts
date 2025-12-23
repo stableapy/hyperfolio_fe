@@ -283,17 +283,17 @@ export const useWalletStore = create<WalletState>()(
 
       // Streaming actions
       startStreaming: () => {
-        set({
+        set((state) => ({
           streaming: {
             ...initialStreamingState,
             isStreaming: true,
             streamedProtocols: new Map(),
           },
           loading: {
-            isWalletDataLoading: false,
+            ...state.loading, // Preserve wallet data loading state - they're independent
             isPositionsLoading: true,
           },
-        })
+        }))
       },
 
       stopStreaming: () => {
