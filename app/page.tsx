@@ -27,6 +27,7 @@ export default function Home() {
     error,
     addWallet,
     syncAllWallets,
+    triggerSync,
     selectedWalletId,
     selectWallet,
     removeWallet,
@@ -82,8 +83,8 @@ export default function Home() {
   }
 
   const handleRefresh = () => {
-    // Pass true to skip cache and get fresh data from backend
-    syncAllWallets(true)
+    // Use triggerSync to clear streamed data and restart stream with fresh data
+    triggerSync(true)
   }
 
   // Calculate aggregate values from data

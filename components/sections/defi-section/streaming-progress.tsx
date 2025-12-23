@@ -6,6 +6,7 @@ interface StreamingProgressProps {
   completed: number
   total: number
   isComplete: boolean
+  isInitializing?: boolean
 }
 
 /**
@@ -16,8 +17,10 @@ export function StreamingProgress({
   completed,
   total,
   isComplete,
+  isInitializing = false,
 }: StreamingProgressProps) {
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+  const showProgress = total > 0
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 bg-theme-bg/50 border border-theme-border/50 rounded-lg">
@@ -38,23 +41,34 @@ export function StreamingProgress({
               <>
                 <span className="text-theme-accent">&gt;</span> scan complete
               </>
+            ) : isInitializing ? (
+              <>
+                <span className="text-theme-accent">&gt;</span> initializing scan<span className="animate-pulse">_</span>
+              </>
             ) : (
               <>
                 <span className="text-theme-accent">&gt;</span> scanning protocols...
               </>
             )}
           </span>
-          <span className="font-mono text-xs text-theme-text-primary tabular-nums flex-shrink-0">
-            {completed}/{total}
-          </span>
+          {showProgress && (
+            <span className="font-mono text-xs text-theme-text-primary tabular-nums flex-shrink-0">
+              {completed}/{total}
+            </span>
+          )}
         </div>
 
         {/* Progress Bar */}
         <div className="mt-1.5 h-1 bg-theme-border/30 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-theme-accent transition-all duration-300 ease-out rounded-full"
-            style={{ width: `${percentage}%` }}
-          />
+          {showProgress ? (
+            <div
+              className="h-full bg-theme-accent transition-all duration-300 ease-out rounded-full"
+              style={{ width: `${percentage}%` }}
+            />
+          ) : (
+            // Indeterminate progress bar when initializing
+            <div className="h-full bg-theme-accent/60 rounded-full animate-pulse w-1/3" />
+          )}
         </div>
       </div>
     </div>

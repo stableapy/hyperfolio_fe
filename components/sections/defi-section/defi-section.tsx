@@ -11,7 +11,7 @@ import { DefiEmptyState } from "./defi-empty-state"
 import { StreamingProgress } from "./streaming-progress"
 
 // Hooks
-import { useDefiPositions, useDefiStats } from "./hooks"
+import { useDefiStats } from "./hooks"
 
 // Types
 import type { DefiSectionProps, ProtocolGroup } from "./types"
@@ -19,10 +19,11 @@ import type { DeFiPositionDisplay } from "@/lib/utils/data-transformers"
 
 /**
  * Main DeFi Section component displaying portfolio positions grouped by protocol
- * Reads streamed positions from wallet store - streaming is initiated by DefiStreamProvider at page level
+ * Uses streamed positions from wallet store as single source of truth.
+ * Streaming is initiated by DefiStreamProvider at page level.
  */
 export function DeFiSection({ isLoading = false }: DefiSectionProps) {
-  const { wallets, walletData, selectedWalletId, streaming } = useWalletStore()
+  const { wallets, selectedWalletId, streaming, loading } = useWalletStore()
   const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set())
 
   // Get wallet info map for position enrichment
@@ -35,7 +36,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
   }, [wallets])
 
   // Get streamed protocol groups from the store and enrich with wallet info
-  const streamedGroups: ProtocolGroup[] = useMemo(() => {
+  const protocolGroups: ProtocolGroup[] = useMemo(() => {
     const protocols = Array.from(streaming.streamedProtocols.values())
     return protocols
       .filter(p => p.positions && p.positions.length > 0)
@@ -73,23 +74,11 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
   }, [streaming.streamedProtocols, walletInfoMap])
 
   // Flatten positions from streamed data
-  const streamedPositions: DeFiPositionDisplay[] = useMemo(() => {
-    return streamedGroups.flatMap(group => group.positions)
-  }, [streamedGroups])
+  const positions: DeFiPositionDisplay[] = useMemo(() => {
+    return protocolGroups.flatMap(group => group.positions)
+  }, [protocolGroups])
 
-  const hasStreamedData = streamedGroups.length > 0
-
-  // Fallback: Get positions from walletData (traditional approach)
-  const { positions: fallbackPositions, protocolGroups: fallbackGroups, hasData: hasFallbackData } = useDefiPositions({
-    selectedWalletId,
-    wallets,
-    walletData,
-  })
-
-  // Use streamed data if available, otherwise fall back to traditional data
-  const positions = hasStreamedData ? streamedPositions : fallbackPositions
-  const protocolGroups = hasStreamedData ? streamedGroups : fallbackGroups
-  const hasData = hasStreamedData || hasFallbackData
+  const hasData = protocolGroups.length > 0
 
   // Calculate stats from positions
   const stats = useDefiStats({ positions })
@@ -105,17 +94,19 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
     setExpandedProtocols(newExpanded)
   }
 
-  // Show skeleton when loading and no data yet
-  const showSkeleton = (isLoading || (streaming.isStreaming && !hasStreamedData)) && !hasData
+  // Show skeleton when streaming is active but no data yet
+  const isStreamingActive = streaming.isStreaming || loading.isPositionsLoading
+  const showSkeleton = (isLoading || isStreamingActive) && !hasData
   
-  // Show streaming indicator while streaming is in progress
-  const showStreamingIndicator = streaming.isStreaming && streaming.streamProgress.total > 0
+  // Show streaming indicator while streaming is in progress (even before we have total)
+  const showStreamingIndicator = isStreamingActive && !streaming.isStreamComplete
+  const isInitializingStream = isStreamingActive && streaming.streamProgress.total === 0
 
   return (
     <div className="space-y-4">
-      {/* Stats Grid */}
+      {/* Stats Grid - shows loading state or actual stats */}
       <DefiStatsGrid
-        isLoading={isLoading || (streaming.isStreaming && !hasStreamedData)}
+        isLoading={isStreamingActive && !hasData}
         hasData={hasData}
         totalDeposited={stats.totalDeposited}
         totalRewards={stats.totalRewards}
@@ -125,12 +116,13 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
         totalPositions={stats.totalPositions}
       />
 
-      {/* Streaming Progress */}
+      {/* Streaming Progress - shows protocol scan progress */}
       {showStreamingIndicator && (
         <StreamingProgress
           completed={streaming.streamProgress.completed}
           total={streaming.streamProgress.total}
           isComplete={streaming.isStreamComplete}
+          isInitializing={isInitializingStream}
         />
       )}
 
@@ -144,7 +136,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
           </>
         )}
         
-        {/* Protocol Cards - Render progressively as they arrive */}
+        {/* Protocol Cards - Render progressively as they arrive from stream */}
         {protocolGroups.map((protocol) => (
           <ProtocolCard
             key={protocol.id}
@@ -156,7 +148,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
         ))}
       </div>
 
-      {/* Empty State - Only show when complete and no data */}
+      {/* Empty State - Only show when stream is complete and no positions found */}
       {protocolGroups.length === 0 && !showSkeleton && streaming.isStreamComplete && <DefiEmptyState />}
     </div>
   )

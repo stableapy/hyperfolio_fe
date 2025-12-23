@@ -26,6 +26,7 @@ interface StreamingState {
   streamedProtocols: Map<string, StreamedProtocol>
   streamPortfolioStats: StreamPortfolioStats | null
   streamError: string | null
+  skipCache: boolean  // Whether the current/next stream should skip cache
 }
 
 // Granular loading states for each data source
@@ -48,6 +49,9 @@ interface WalletState {
   // Streaming state
   streaming: StreamingState
 
+  // Sync trigger counter - incremented to signal stream restart needed
+  syncTrigger: number
+
   // Actions
   addWallet: (wallet: Omit<Wallet, 'id'>) => void
   removeWallet: (walletId: string) => void
@@ -61,6 +65,8 @@ interface WalletState {
   setWalletData: (address: string, data: WalletData) => void
   syncWalletData: (walletId: string, skipCache?: boolean) => Promise<void>
   syncAllWallets: (skipCache?: boolean) => Promise<void>
+  // Trigger a full sync (clears streamed data and restarts stream)
+  triggerSync: (skipCache?: boolean) => void
   
   // Streaming actions
   startStreaming: () => void
@@ -80,6 +86,7 @@ const initialStreamingState: StreamingState = {
   streamedProtocols: new Map(),
   streamPortfolioStats: null,
   streamError: null,
+  skipCache: false,
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -96,6 +103,7 @@ export const useWalletStore = create<WalletState>()(
       aggregateData: null,
       walletData: {},
       streaming: { ...initialStreamingState },
+      syncTrigger: 0,
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
@@ -243,10 +251,6 @@ export const useWalletStore = create<WalletState>()(
 
           get().setWalletDataLoading(false)
 
-          // Emit custom event for DefiStreamProvider to listen
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('wallet-sync-complete'))
-          }
         } catch (error) {
           console.error('Error syncing all wallets:', error)
           set({
@@ -254,6 +258,27 @@ export const useWalletStore = create<WalletState>()(
           })
           get().setWalletDataLoading(false)
         }
+      },
+
+      // Trigger a full sync - clears streamed data and increments trigger to restart stream
+      triggerSync: (skipCache = false) => {
+        // Clear streamed data first so UI shows loading state immediately
+        set((state) => ({
+          streaming: {
+            ...initialStreamingState,
+            isStreaming: true, // Mark as streaming immediately for UI feedback
+            skipCache, // Store skipCache flag for the stream to use
+          },
+          loading: {
+            ...state.loading,
+            isPositionsLoading: true,
+          },
+          // Increment trigger to signal stream restart
+          syncTrigger: state.syncTrigger + 1,
+        }))
+
+        // Then trigger wallet data sync
+        get().syncAllWallets(skipCache)
       },
 
       // Streaming actions
