@@ -30,8 +30,17 @@ HYPEREVM_API_KEY=statuspage_aCMuCwVdKbV0T0M6qc_Pots9LS4GLlVgHfpKXTKcxjU
 DATABASE_URL=postgresql://user:password@localhost:5432/hyperfolio
 JWT_SECRET=your_jwt_secret_here
 
-# Internal API Security - HMAC signing for API route protection
-# Generate a strong random string (32+ characters recommended)
+# Internal API Security - Signed Token Authentication
+# 
+# This secret is used for HMAC signing of API tokens. The authentication flow:
+# 1. Server generates a signed token on page load (with User-Agent fingerprint + 10min expiry)
+# 2. Token is passed to client via TokenProvider component
+# 3. Client includes token in x-api-token header for all API requests
+# 4. Middleware validates: signature, expiration, and fingerprint match
+#
+# Generate a strong random string (32+ characters recommended):
+#   openssl rand -hex 32
+#
 # If not set, API routes will rely on origin validation only (development mode)
 INTERNAL_API_SECRET=your_strong_random_secret_here_32chars
 

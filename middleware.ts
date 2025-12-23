@@ -1,4 +1,4 @@
-// Middleware to protect API routes from unauthorized external access
+// Middleware to protect API routes with signed token authentication
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -6,6 +6,9 @@ import type { NextRequest } from 'next/server'
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 100 // 100 requests per minute per IP
+
+// Token configuration
+const TOKEN_LIFETIME_MS = 10 * 60 * 1000 // 10 minutes
 
 /**
  * Get client IP from request headers
@@ -46,29 +49,14 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 }
 
 /**
- * Verify HMAC token (simplified version for Edge runtime)
- * Note: Full crypto verification happens in the route handlers
+ * Generate fingerprint from User-Agent using Web Crypto API
  */
-async function verifyToken(token: string, secret: string): Promise<boolean> {
-  if (!secret || !token) {
-    return !secret // Allow if no secret configured (dev mode)
+async function generateFingerprint(userAgent: string | null, secret: string): Promise<string> {
+  if (!userAgent || !secret) {
+    return 'default'
   }
 
   try {
-    const decoded = JSON.parse(atob(token))
-    const { t: timestamp, s: signature } = decoded
-
-    if (!timestamp || !signature) {
-      return false
-    }
-
-    // Check token age (5 minutes)
-    const tokenAge = Date.now() - parseInt(timestamp, 10)
-    if (tokenAge > 5 * 60 * 1000 || tokenAge < 0) {
-      return false
-    }
-
-    // Verify signature using Web Crypto API (Edge runtime compatible)
     const encoder = new TextEncoder()
     const key = await crypto.subtle.importKey(
       'raw',
@@ -81,16 +69,129 @@ async function verifyToken(token: string, secret: string): Promise<boolean> {
     const signatureBytes = await crypto.subtle.sign(
       'HMAC',
       key,
-      encoder.encode(timestamp)
+      encoder.encode(userAgent)
     )
 
-    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+    // Return first 12 hex chars as fingerprint
+    return Array.from(new Uint8Array(signatureBytes))
+      .slice(0, 6)
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
+  } catch {
+    return 'default'
+  }
+}
 
-    return signature === expectedSignature
+/**
+ * Sign a payload using Web Crypto API (for fingerprint comparison)
+ */
+async function signPayload(data: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+
+  const signatureBytes = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(data)
+  )
+
+  return Array.from(new Uint8Array(signatureBytes))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * Verify the new signed token format
+ * Token structure: { iat, exp, fp, sig }
+ */
+async function verifySignedToken(
+  token: string,
+  userAgent: string | null,
+  secret: string
+): Promise<{ valid: boolean; reason?: string }> {
+  if (!secret) {
+    // Development mode - allow all
+    return { valid: true }
+  }
+
+  if (!token) {
+    return { valid: false, reason: 'Missing token' }
+  }
+
+  try {
+    // Decode base64 token
+    const decoded = JSON.parse(atob(token))
+    const { iat, exp, fp, sig } = decoded
+
+    // Validate required fields
+    if (!iat || !exp || !fp || !sig) {
+      return { valid: false, reason: 'Malformed token' }
+    }
+
+    const now = Date.now()
+
+    // Check expiration
+    if (now > exp) {
+      return { valid: false, reason: 'Token expired' }
+    }
+
+    // Check if token was issued in the future (with 5s clock skew allowance)
+    if (iat > now + 5000) {
+      return { valid: false, reason: 'Token issued in future' }
+    }
+
+    // Verify fingerprint matches current User-Agent
+    const expectedFp = await generateFingerprint(userAgent, secret)
+    if (fp !== expectedFp) {
+      return { valid: false, reason: 'Fingerprint mismatch' }
+    }
+
+    // Verify signature
+    const expectedSig = await signPayload(`${iat}:${exp}:${fp}`, secret)
+    if (sig !== expectedSig) {
+      return { valid: false, reason: 'Invalid signature' }
+    }
+
+    return { valid: true }
   } catch (error) {
     console.error('[Middleware] Token verification error:', error)
+    return { valid: false, reason: 'Token decode error' }
+  }
+}
+
+/**
+ * Legacy token verification (for backwards compatibility during transition)
+ * Token structure: { t: timestamp, s: signature }
+ */
+async function verifyLegacyToken(token: string, secret: string): Promise<boolean> {
+  if (!secret || !token) {
+    return !secret // Allow if no secret configured (dev mode)
+  }
+
+  try {
+    const decoded = JSON.parse(atob(token))
+    const { t: timestamp, s: signature } = decoded
+
+    if (!timestamp || !signature) {
+      return false
+    }
+
+    // Check token age (5 minutes for legacy tokens)
+    const tokenAge = Date.now() - parseInt(timestamp, 10)
+    if (tokenAge > 5 * 60 * 1000 || tokenAge < 0) {
+      return false
+    }
+
+    // Verify signature
+    const expectedSignature = await signPayload(timestamp, secret)
+    return signature === expectedSignature
+  } catch {
     return false
   }
 }
@@ -137,11 +238,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Allow token refresh endpoint (it has its own origin validation)
+  if (pathname === '/api/auth/token') {
+    return NextResponse.next()
+  }
+
   // Get request info
   const clientIP = getClientIP(request)
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
-  const internalToken = request.headers.get('x-internal-token')
+  const userAgent = request.headers.get('user-agent')
+  const apiToken = request.headers.get('x-api-token')
+  const legacyToken = request.headers.get('x-internal-token')
   const requestedWith = request.headers.get('x-requested-with')
   const secret = process.env.INTERNAL_API_SECRET || ''
 
@@ -161,35 +269,64 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  // Check if this is an internal request with valid token
-  if (requestedWith === 'hyperfolio-internal' && internalToken) {
-    const isValidToken = await verifyToken(internalToken, secret)
-    if (isValidToken) {
-      const response = NextResponse.next()
-      response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-      return response
-    }
+  // Development mode - allow all if no secret configured
+  if (!secret) {
+    const response = NextResponse.next()
+    response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+    return response
   }
 
-  // Check origin for browser requests
-  if (!isValidOrigin(origin, referer)) {
-    console.warn(`[Middleware] Blocked request from unauthorized origin: ${origin || referer || 'unknown'}`)
+  // ALL requests to /api/ routes MUST have x-requested-with: hyperfolio-internal
+  // This is because:
+  // - SSR uses lib/api/client.ts which calls the external API directly
+  // - Client requests use secureFetch which adds this header
+  // - Any request without this header is external/unauthorized
+  
+  if (requestedWith !== 'hyperfolio-internal') {
+    console.warn(`[Middleware] Blocked request without internal marker. Origin: ${origin || 'none'}, UA: ${userAgent?.substring(0, 50) || 'none'}`)
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 403 }
     )
   }
 
-  // Add security headers to response
-  const response = NextResponse.next()
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+  // Request has x-requested-with: hyperfolio-internal - now verify the token
+  
+  // Try new signed token format
+  if (apiToken) {
+    const verification = await verifySignedToken(apiToken, userAgent, secret)
+    if (verification.valid) {
+      const response = NextResponse.next()
+      response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+      response.headers.set('X-Content-Type-Options', 'nosniff')
+      response.headers.set('X-Frame-Options', 'DENY')
+      return response
+    }
+    
+    // Log why token was rejected
+    console.warn(`[Middleware] Token rejected: ${verification.reason}`)
+  }
 
-  return response
+  // Fall back to legacy token format (for backwards compatibility)
+  if (legacyToken) {
+    const isValidLegacy = await verifyLegacyToken(legacyToken, secret)
+    if (isValidLegacy) {
+      const response = NextResponse.next()
+      response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+      response.headers.set('X-Content-Type-Options', 'nosniff')
+      response.headers.set('X-Frame-Options', 'DENY')
+      return response
+    }
+  }
+
+  // Has internal marker but no valid token - BLOCK
+  console.warn(`[Middleware] Invalid/missing token. Origin: ${origin || 'none'}`)
+  return NextResponse.json(
+    { error: 'Invalid or expired token' },
+    { status: 401 }
+  )
 }
 
 export const config = {
   matcher: '/api/:path*',
 }
-

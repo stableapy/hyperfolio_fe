@@ -9,6 +9,8 @@ import "./globals.css"
 import { Geist, Geist_Mono, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 import { Providers } from "./providers"
 import { config } from "@/lib/wagmi/config"
+import { generatePageToken } from "@/lib/api/token"
+import { TokenProvider } from "@/components/token-provider"
 
 // Initialize fonts
 const _geist = V0_Font_Geist({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
@@ -209,7 +211,11 @@ export default async function RootLayout({
 }) {
   const headersList = await headers()
   const cookie = headersList.get("cookie")
+  const userAgent = headersList.get("user-agent")
   const initialState = cookieToInitialState(config, cookie)
+  
+  // Generate signed API token for client-side requests
+  const apiToken = generatePageToken(userAgent)
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -266,6 +272,7 @@ export default async function RootLayout({
           />
         </noscript>
         <Providers initialState={initialState}>
+          <TokenProvider initialToken={apiToken} />
           {children}
         </Providers>
       </body>

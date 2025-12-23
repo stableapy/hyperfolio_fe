@@ -1,71 +1,110 @@
-// Client-side fetch wrapper with security headers
-// This wrapper automatically adds security headers to all API requests
+// Client-side fetch wrapper with signed token authentication
+// This wrapper automatically adds the pre-signed API token to all requests
 
 type FetchOptions = Omit<RequestInit, 'headers'> & {
   headers?: Record<string, string>
 }
 
 /**
- * Generate a signed internal token for API requests (client-side version)
- * Uses Web Crypto API for HMAC signing
+ * Declare the global API token on the window object
  */
-async function generateClientToken(): Promise<string> {
-  // Get the secret from a secure cookie or skip if not available
-  // For client-side, we rely on origin verification as the primary security
-  // The token provides additional security for programmatic requests
-  const secret = typeof window !== 'undefined' 
-    ? (window as unknown as { __INTERNAL_API_SECRET?: string }).__INTERNAL_API_SECRET 
-    : undefined
+declare global {
+  interface Window {
+    __API_TOKEN?: string
+    __API_TOKEN_EXP?: number
+  }
+}
 
-  if (!secret) {
+/**
+ * Get the current API token
+ * The token is set by the TokenProvider component on page load
+ */
+function getApiToken(): string {
+  if (typeof window === 'undefined') {
+    // Server-side - no token available
     return ''
   }
 
+  return window.__API_TOKEN || ''
+}
+
+/**
+ * Check if the current token is expired or close to expiry
+ */
+function isTokenExpired(): boolean {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  const exp = window.__API_TOKEN_EXP || 0
+  const now = Date.now()
+  
+  // Consider expired if less than 30 seconds remaining
+  return exp < (now + 30000)
+}
+
+/**
+ * Attempt to refresh the token if it's expired
+ * Returns true if refresh was successful
+ */
+async function tryRefreshToken(): Promise<boolean> {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
   try {
-    const timestamp = Date.now().toString()
-    const encoder = new TextEncoder()
-    
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
+    const response = await fetch('/api/auth/token', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'x-api-token': getApiToken(),
+      },
+    })
 
-    const signatureBytes = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      encoder.encode(timestamp)
-    )
+    if (!response.ok) {
+      return false
+    }
 
-    const signature = Array.from(new Uint8Array(signatureBytes))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
+    const data = await response.json()
+    if (data.token) {
+      window.__API_TOKEN = data.token
+      // Parse expiration from token
+      try {
+        const decoded = JSON.parse(atob(data.token))
+        window.__API_TOKEN_EXP = decoded.exp || 0
+      } catch {
+        window.__API_TOKEN_EXP = Date.now() + (data.expiresIn * 1000)
+      }
+      return true
+    }
 
-    return btoa(JSON.stringify({ t: timestamp, s: signature }))
-  } catch (error) {
-    console.error('[API Fetch] Token generation error:', error)
-    return ''
+    return false
+  } catch {
+    return false
   }
 }
 
 /**
  * Secure fetch wrapper for internal API calls
- * Automatically adds security headers for origin verification
+ * Automatically adds the signed API token for authentication
  */
 export async function secureFetch(
   url: string,
   options: FetchOptions = {}
 ): Promise<Response> {
-  const token = await generateClientToken()
+  // Check if token needs refresh before making the request
+  if (isTokenExpired()) {
+    await tryRefreshToken()
+  }
+
+  const token = getApiToken()
   
   const securityHeaders: Record<string, string> = {
     'x-requested-with': 'hyperfolio-internal',
   }
 
   if (token) {
-    securityHeaders['x-internal-token'] = token
+    securityHeaders['x-api-token'] = token
   }
 
   const headers = {
@@ -117,4 +156,3 @@ export async function secureJsonFetch<T>(
   
   return response.json()
 }
-

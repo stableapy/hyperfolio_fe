@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import type { Wallet, AggregateData } from '@/lib/types/api'
+import { secureFetch } from '@/lib/api/fetch'
 
 interface WalletData {
   composition: any
@@ -104,7 +105,7 @@ export const useWalletStore = create<WalletState>()(
         try {
           // Fetch data from API with optional cache bypass
           const cacheParam = skipCache ? '?cache=false' : ''
-          const response = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
+          const response = await secureFetch(`/api/wallet/${wallet.address}${cacheParam}`)
           if (!response.ok) throw new Error('Failed to fetch wallet data')
 
           const data = await response.json()
@@ -131,7 +132,7 @@ export const useWalletStore = create<WalletState>()(
         try {
           const addresses = wallets.map((w) => w.address)
           // Add cache=false to body when skipping cache
-          const response = await fetch('/api/wallet/aggregate', {
+          const response = await secureFetch('/api/wallet/aggregate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ addresses, cache: skipCache ? false : undefined }),
@@ -150,7 +151,7 @@ export const useWalletStore = create<WalletState>()(
           // This ensures all requests run concurrently and we track completion properly
           const cacheParam = skipCache ? '?cache=false' : ''
           const walletUpdatePromises = wallets.map(async (wallet) => {
-            const walletResponse = await fetch(`/api/wallet/${wallet.address}${cacheParam}`)
+            const walletResponse = await secureFetch(`/api/wallet/${wallet.address}${cacheParam}`)
             if (!walletResponse.ok) {
               throw new Error(`Failed to fetch wallet ${wallet.address}`)
             }
