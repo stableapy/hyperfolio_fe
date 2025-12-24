@@ -48,6 +48,8 @@ export function formatAddress(address: string): string {
 
 /**
  * Calculate total value from wallet data
+ * This calculates tokens + NFTs + cached positions (from walletData)
+ * Streaming positions are calculated separately and added via calculateStreamingTotalValue
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function calculateWalletTotalValue(data: any): number {
@@ -57,8 +59,6 @@ export function calculateWalletTotalValue(data: any): number {
   const tokens = (data.compositionRaw || data.composition)?.data?.tokens || []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nftsData = (data.nfts as any)?.data?.nfts || []
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const positionsData = (data.positions as any)?.data?.protocols || []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const spotValue = tokens.filter((t: any) => t.type === 'spot').reduce((sum: number, t: any) => sum + safeParseFloat(t.usdValue), 0)
@@ -76,18 +76,36 @@ export function calculateWalletTotalValue(data: any): number {
   }, 0)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const defiValue = positionsData.reduce((sum: number, protocol: any) => {
-    if (!Array.isArray(protocol.positions)) return sum
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return sum + protocol.positions.reduce((posSum: number, pos: any) => {
-      const value = safeParseFloat(pos.totalValueUSD)
-      return posSum + value
-    }, 0)
-  }, 0)
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hypercoreValue = safeParseFloat((data.userData as any)?.data?.portfolioSummary?.totalValue)
 
-  return spotValue + perpValue + stakingValue + vaultsValue + nftValue + defiValue + hypercoreValue
+  return spotValue + perpValue + stakingValue + vaultsValue + nftValue + hypercoreValue
+}
+
+/**
+ * Calculate total value from streaming DeFi positions
+ * This sums up all protocol values that have streamed in so far
+ */
+export function calculateStreamingTotalValue(
+  streamedProtocols: Map<string, unknown>,
+  walletAddresses?: string[]
+): number {
+  let total = 0
+  streamedProtocols.forEach((protocol) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const proto = protocol as any
+    // Filter by wallet addresses if provided
+    if (walletAddresses && walletAddresses.length > 0) {
+      const protocolPositions = proto.positions
+      if (Array.isArray(protocolPositions)) {
+        const filteredValue = protocolPositions
+          .filter((pos: unknown) => walletAddresses.includes((pos as any).walletAddress))
+          .reduce((sum: number, pos: unknown) => sum + safeParseFloat((pos as any).totalValueUSD), 0)
+        total += filteredValue
+      }
+    } else {
+      total += safeParseFloat(proto.totalValueUSD)
+    }
+  })
+  return total
 }
 

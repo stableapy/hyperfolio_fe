@@ -1,9 +1,7 @@
 // Types for Portfolio Hero components
 
 export interface PortfolioHeroProps {
-  totalValue: number
   change24h: number
-  isLoading?: boolean
   onRefresh?: () => void
   onAddWallet?: () => void
   onScrollToContent?: () => void

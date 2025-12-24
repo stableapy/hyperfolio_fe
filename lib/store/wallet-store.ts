@@ -116,10 +116,41 @@ export const useWalletStore = create<WalletState>()(
       },
 
       removeWallet: (walletId) => {
-        set((state) => ({
-          wallets: state.wallets.filter((w) => w.id !== walletId),
-          selectedWalletId: state.selectedWalletId === walletId ? null : state.selectedWalletId,
-        }))
+        set((state) => {
+          const walletToRemove = state.wallets.find((w) => w.id === walletId)
+          const walletAddress = walletToRemove?.address
+
+          // Clean up streamed protocols: remove positions belonging to the removed wallet
+          const cleanedProtocols = new Map<string, StreamedProtocol>()
+          state.streaming.streamedProtocols.forEach((protocol, protocolId) => {
+            const filteredPositions = protocol.positions.filter(
+              (pos) => pos.walletAddress !== walletAddress
+            )
+            // Only keep protocols that still have positions after filtering
+            if (filteredPositions.length > 0) {
+              cleanedProtocols.set(protocolId, {
+                ...protocol,
+                positions: filteredPositions,
+              })
+            }
+          })
+
+          // Clean up wallet data for the removed wallet address
+          const cleanedWalletData = { ...state.walletData }
+          if (walletAddress && cleanedWalletData[walletAddress]) {
+            delete cleanedWalletData[walletAddress]
+          }
+
+          return {
+            wallets: state.wallets.filter((w) => w.id !== walletId),
+            selectedWalletId: state.selectedWalletId === walletId ? null : state.selectedWalletId,
+            walletData: cleanedWalletData,
+            streaming: {
+              ...state.streaming,
+              streamedProtocols: cleanedProtocols,
+            },
+          }
+        })
       },
 
       updateWallet: (walletId, updates) => {

@@ -118,10 +118,8 @@ export default function Home() {
       />
 
       {/* Hero Section - Full width, no padding */}
-      <PortfolioHero 
-        totalValue={totalValue} 
-        change24h={totalChange24h} 
-        isLoading={isLoading} 
+      <PortfolioHero
+        change24h={totalChange24h}
         onRefresh={handleRefresh}
         onAddWallet={() => setIsAddWalletOpen(true)}
         onScrollToContent={handleScrollToContent}

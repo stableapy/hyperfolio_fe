@@ -12,13 +12,13 @@ import { ChartModal } from "./chart-modal"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 // Hooks
-import { usePortfolioHistory, usePortfolioBreakdown, useApyData } from "./hooks"
+import { usePortfolioHistory, usePortfolioBreakdown, useApyData, useAnimatedValue } from "./hooks"
 
 // Utils and Types
-import { formatValue, calculateWalletTotalValue } from "./utils"
+import { formatValue, calculateWalletTotalValue, calculateStreamingTotalValue } from "./utils"
 import type { PortfolioHeroProps } from "./types"
 
-export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefresh, onAddWallet, onScrollToContent }: PortfolioHeroProps) {
+export function PortfolioHero({ change24h, onRefresh, onAddWallet, onScrollToContent }: PortfolioHeroProps) {
   const { selectedWalletId, wallets, walletData, aggregateData, selectWallet, removeWallet, streaming, loading } = useWalletStore()
   
   // Local state
@@ -71,24 +71,53 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
 
   // Get display data from selected wallet or aggregate
   const displayData = useMemo(() => {
+    // Calculate streaming DeFi value (grows as protocols stream in)
+    const streamingDeFiValue = calculateStreamingTotalValue(
+      streaming.streamedProtocols,
+      selectedWalletId
+        ? [wallets.find(w => w.id === selectedWalletId)?.address].filter(Boolean) as string[]
+        : undefined
+    )
+
     if (selectedWalletId) {
       const selectedWallet = wallets.find(w => w.id === selectedWalletId)
       if (selectedWallet && walletData[selectedWallet.address]) {
         const data = walletData[selectedWallet.address]
+        // calculateWalletTotalValue includes: tokens + NFTs + Hypercore (NOT DeFi positions from walletData)
+        // streamingDeFiValue adds the streaming DeFi positions
+        const walletValue = calculateWalletTotalValue(data)
         return {
-          value: calculateWalletTotalValue(data),
+          value: walletValue + streamingDeFiValue,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           change24h: (data.composition as any)?.total_change_24h || change24h,
           walletName: selectedWallet.name
         }
       }
     }
+
+    // Aggregate view: sum all wallet token/NFT/Hypercore values + streaming DeFi
+    // We don't use totalValue here because it includes DeFi from the non-streamed source,
+    // which would double count with streamingDeFiValue
+    let aggregateWalletValue = 0
+    wallets.forEach(wallet => {
+      if (walletData[wallet.address]) {
+        aggregateWalletValue += calculateWalletTotalValue(walletData[wallet.address])
+      }
+    })
+
     return {
-      value: totalValue,
+      value: aggregateWalletValue + streamingDeFiValue,
       change24h,
       walletName: null
     }
-  }, [selectedWalletId, wallets, walletData, totalValue, change24h])
+  }, [selectedWalletId, wallets, walletData, change24h, streaming.streamedProtocols])
+
+  // Animate the value with a terminal-style counting effect
+  // Duration is shorter for smaller changes, longer for large jumps
+  const animationDuration = Math.min(1500, Math.max(500, Math.abs(displayData.value) / 100))
+  const { animatedValue, isAnimating } = useAnimatedValue(displayData.value, {
+    duration: animationDuration,
+  })
 
   const handleRefresh = () => {
     setIsRefreshing(true)
@@ -97,7 +126,7 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
   }
 
   const isPositive = displayData.change24h >= 0
-  const formattedValue = formatValue(displayData.value, privacyMode)
+  const formattedValue = formatValue(animatedValue, privacyMode)
 
   return (
     <section className="relative min-h-[calc(100svh-44px)] overflow-hidden flex flex-col bg-theme-bg">
@@ -168,21 +197,15 @@ export function PortfolioHero({ totalValue, change24h, isLoading = false, onRefr
         <div className="flex-1 flex flex-col justify-center pb-16 sm:pb-36 md:pb-52 lg:pb-64">
           {/* Content with granular loading states - show UI immediately, skeleton only data */}
           <div className="max-w-4xl space-y-3 sm:space-y-6 md:space-y-8">
-            {/* Portfolio Value - Inline skeleton when loading */}
+            {/* Portfolio Value - Shows actual value with animation as data loads */}
             <div className="font-mono tracking-tight leading-none min-h-[3rem] sm:min-h-[5rem] md:min-h-[6rem] lg:min-h-[8rem]">
-              {loading.isWalletDataLoading && displayData.value === 0 ? (
-                <div className="h-16 sm:h-20 md:h-24 lg:h-32 w-[80%] sm:w-[70%] max-w-lg bg-secondary rounded-xl animate-pulse" />
-              ) : (
-                <>
-                  <span className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-theme-text-primary transition-all duration-300">
-                    {privacyMode ? "••••••" : `$${formattedValue.intPart}`}
-                  </span>
-                  {!privacyMode && (
-                    <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-text-secondary transition-all duration-300">
-                      {formattedValue.decPart}
-                    </span>
-                  )}
-                </>
+              <span className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-theme-text-primary transition-all duration-300">
+                {privacyMode ? "••••••" : `$${formattedValue.intPart}`}
+              </span>
+              {!privacyMode && (
+                <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-text-secondary transition-all duration-300">
+                  {formattedValue.decPart}
+                </span>
               )}
             </div>
 
