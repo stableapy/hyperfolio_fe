@@ -224,41 +224,37 @@ export default async function RootLayout({
         <Script
           id="gtm"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-K8ZG67BR');`,
-          }}
-        />
+        >
+          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-K8ZG67BR');`}
+        </Script>
         {/* Google Analytics */}
         <Script
           id="ga"
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=G-TCD5G3MPGQ"
         />
-        <Script
-          id="ga-config"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-TCD5G3MPGQ', {
-                send_page_view: true
-              });
-            `,
-          }}
-        />
+        <Script id="ga-config" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-TCD5G3MPGQ', {
+              send_page_view: true
+            });
+          `}
+        </Script>
         {/* JSON-LD Structured Data for rich snippets */}
         <Script
           id="json-ld"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           strategy="beforeInteractive"
-        />
+        >
+          {JSON.stringify(jsonLd)}
+        </Script>
       </head>
       <body className={`${geistSans.className} bg-background text-foreground antialiased`}>
         {/* Google Tag Manager (noscript) */}

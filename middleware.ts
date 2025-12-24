@@ -11,6 +11,64 @@ const RATE_LIMIT_MAX = 100 // 100 requests per minute per IP
 const TOKEN_LIFETIME_MS = 10 * 60 * 1000 // 10 minutes
 
 /**
+ * Generate a nonce for inline script security
+ * @returns Base64-encoded nonce
+ */
+function generateNonce(): string {
+  return Buffer.from(crypto.randomUUID()).toString('base64')
+}
+
+/**
+ * Get CSP headers for the response
+ * @param nonce - Nonce for inline scripts (if needed)
+ * @returns Headers object with security values
+ */
+function getSecurityHeaders(nonce?: string): Record<string, string> {
+  // Determine if we need to include GTM (Google Tag Manager)
+  const allowGTM = typeof nonce === 'string'
+
+  const cspHeader = [
+    "default-src 'self'",
+    // Scripts: self, nonce for inline scripts, GTM if allowed
+    allowGTM
+      ? `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com`
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    // Styles: allow inline for Tailwind/CSS-in-JS
+    "style-src 'self' 'unsafe-inline'",
+    // Images: self, data URLs, and common image CDNs
+    "img-src 'self' data: https: blob:",
+    // Fonts: self only
+    "font-src 'self'",
+    // Connect: self, analytics, API
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com",
+    // Media: self only
+    "media-src 'self'",
+    // Objects: none (prevent plugins)
+    "object-src 'none'",
+    // Base URI: self only
+    "base-uri 'self'",
+    // Form actions: self only
+    "form-action 'self'",
+    // Frame ancestors: prevent clickjacking
+    "frame-ancestors 'none'",
+    // Upgrade insecure requests
+    "upgrade-insecure-requests",
+  ].join('; ')
+
+  return {
+    'Content-Security-Policy': cspHeader,
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-XSS-Protection': '1; mode=block',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': 'same-origin',
+  }
+}
+
+/**
  * Get client IP from request headers
  */
 function getClientIP(request: NextRequest): string {
@@ -225,22 +283,42 @@ function isValidOrigin(origin: string | null, referer: string | null): boolean {
   return false
 }
 
+/**
+ * Apply security headers to a response
+ * @param response - The NextResponse to modify
+ * @param nonce - Optional nonce for inline scripts
+ */
+function applySecurityHeaders(response: NextResponse, nonce?: string): NextResponse {
+  const headers = getSecurityHeaders(nonce)
+  for (const [key, value] of Object.entries(headers)) {
+    response.headers.set(key, value)
+  }
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Only apply to API routes
+  // Generate nonce for page requests (for CSP)
+  const nonce = pathname.startsWith('/api/') ? undefined : generateNonce()
+
+  // For non-API routes, just apply security headers and continue
   if (!pathname.startsWith('/api/')) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    return applySecurityHeaders(response, nonce)
   }
 
+  // API routes - apply authentication
   // Allow health check endpoint without authentication
   if (pathname === '/api/health') {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    return applySecurityHeaders(response)
   }
 
   // Allow token refresh endpoint (it has its own origin validation)
   if (pathname === '/api/auth/token') {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    return applySecurityHeaders(response)
   }
 
   // Get request info
@@ -256,24 +334,25 @@ export async function middleware(request: NextRequest) {
   // Apply rate limiting
   const rateLimit = checkRateLimit(clientIP)
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Too many requests' },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': '60',
           'X-RateLimit-Limit': RATE_LIMIT_MAX.toString(),
           'X-RateLimit-Remaining': '0',
-        }
+        },
       }
     )
+    return applySecurityHeaders(response)
   }
 
   // Development mode - allow all if no secret configured
   if (!secret) {
     const response = NextResponse.next()
     response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-    return response
+    return applySecurityHeaders(response)
   }
 
   // ALL requests to /api/ routes MUST have x-requested-with: hyperfolio-internal
@@ -281,28 +360,24 @@ export async function middleware(request: NextRequest) {
   // - SSR uses lib/api/client.ts which calls the external API directly
   // - Client requests use secureFetch which adds this header
   // - Any request without this header is external/unauthorized
-  
+
   if (requestedWith !== 'hyperfolio-internal') {
     console.warn(`[Middleware] Blocked request without internal marker. Origin: ${origin || 'none'}, UA: ${userAgent?.substring(0, 50) || 'none'}`)
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 403 }
-    )
+    const response = NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    return applySecurityHeaders(response)
   }
 
   // Request has x-requested-with: hyperfolio-internal - now verify the token
-  
+
   // Try new signed token format
   if (apiToken) {
     const verification = await verifySignedToken(apiToken, userAgent, secret)
     if (verification.valid) {
       const response = NextResponse.next()
       response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-      response.headers.set('X-Content-Type-Options', 'nosniff')
-      response.headers.set('X-Frame-Options', 'DENY')
-      return response
+      return applySecurityHeaders(response)
     }
-    
+
     // Log why token was rejected
     console.warn(`[Middleware] Token rejected: ${verification.reason}`)
   }
@@ -313,20 +388,25 @@ export async function middleware(request: NextRequest) {
     if (isValidLegacy) {
       const response = NextResponse.next()
       response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-      response.headers.set('X-Content-Type-Options', 'nosniff')
-      response.headers.set('X-Frame-Options', 'DENY')
-      return response
+      return applySecurityHeaders(response)
     }
   }
 
   // Has internal marker but no valid token - BLOCK
   console.warn(`[Middleware] Invalid/missing token. Origin: ${origin || 'none'}`)
-  return NextResponse.json(
-    { error: 'Invalid or expired token' },
-    { status: 401 }
-  )
+  const response = NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
+  return applySecurityHeaders(response)
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    // Apply to all routes except static files and Next.js internals
+    {
+      source: '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ico)).*)',
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
+  ],
 }
