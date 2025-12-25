@@ -42,6 +42,23 @@ const nextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self';",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'nonce-*' https://www.googletagmanager.com https://www.google-analytics.com;",
+              "style-src 'self' 'unsafe-inline';",
+              "img-src 'self' data: https: blob:;",
+              "font-src 'self' data:;",
+              "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.googletagmanager.com https://www.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*;",
+              "frame-src 'self' https://www.googletagmanager.com;",
+              "object-src 'none';",
+              "base-uri 'self';",
+              "form-action 'self';",
+              "frame-ancestors 'self';",
+              "upgrade-insecure-requests;",
+            ].join(' '),
+          },
         ],
       },
       // Cache static assets aggressively

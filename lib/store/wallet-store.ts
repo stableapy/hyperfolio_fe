@@ -4,14 +4,23 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { Wallet, AggregateData } from '@/lib/types/api'
+import type {
+  Wallet,
+  AggregateData,
+  WalletCompositionResponse,
+  WalletDataType,
+} from '@/lib/types/api'
 import { secureFetch } from '@/lib/api/fetch'
-import type { StreamedProtocol, StreamProgress, StreamPortfolioStats } from '@/hooks/use-positions-stream'
+import type {
+  StreamedProtocol,
+  StreamProgress,
+  StreamPortfolioStats
+} from '@/hooks/use-positions-stream'
 
 interface WalletData {
-  composition: unknown
-  compositionRaw?: unknown
-  transactions: unknown[]
+  composition: WalletCompositionResponse | null  // Raw API response with { data: { tokens: [...] } }
+  compositionRaw?: WalletCompositionResponse | null  // Alias for composition
+  // Note: transactions removed - loaded independently via /api/wallet/transactions
   nfts: unknown
   positions: unknown
   userData: unknown
@@ -27,6 +36,13 @@ interface StreamingState {
   streamPortfolioStats: StreamPortfolioStats | null
   streamError: string | null
   skipCache: boolean  // Whether the current/next stream should skip cache
+
+  // Wallet data streaming state (for progressive wallet data loading)
+  walletDataStreaming: {
+    isStreaming: boolean
+    isComplete: boolean
+    errors: Array<{ address?: string; endpoint?: string; error: string }>
+  }
 }
 
 // Granular loading states for each data source
@@ -76,6 +92,12 @@ interface WalletState {
   setStreamComplete: (stats: StreamPortfolioStats) => void
   setStreamError: (error: string | null) => void
   clearStreamedData: () => void
+
+  // Wallet data streaming actions
+  setWalletDataStreaming: (isStreaming: boolean) => void
+  setWalletDataStreamingComplete: () => void
+  setWalletDataStreamingError: (error: { address?: string; endpoint?: string; error: string }) => void
+  updatePartialWalletData: (address: string, dataType: WalletDataType, data: unknown) => void
 }
 
 // Initial streaming state
@@ -87,6 +109,11 @@ const initialStreamingState: StreamingState = {
   streamPortfolioStats: null,
   streamError: null,
   skipCache: false,
+  walletDataStreaming: {
+    isStreaming: false,
+    isComplete: false,
+    errors: [],
+  },
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -128,9 +155,19 @@ export const useWalletStore = create<WalletState>()(
             )
             // Only keep protocols that still have positions after filtering
             if (filteredPositions.length > 0) {
+              // Recalculate totalValueUSD from remaining positions to avoid stale values
+              const recalculatedTotalValue = filteredPositions.reduce(
+                (sum, pos) => sum + parseFloat(pos.totalValueUSD || '0'), 0
+              )
               cleanedProtocols.set(protocolId, {
                 ...protocol,
                 positions: filteredPositions,
+                totalValueUSD: recalculatedTotalValue.toString(),
+                // Also update protocolStats.totalPositions to reflect actual count
+                protocolStats: {
+                  ...protocol.protocolStats,
+                  totalPositions: filteredPositions.length,
+                },
               })
             }
           })
@@ -236,6 +273,7 @@ export const useWalletStore = create<WalletState>()(
 
         try {
           const addresses = wallets.map((w) => w.address)
+          console.log('[WalletStore] Fetching aggregate data for addresses:', addresses)
           // Add cache=false to body when skipping cache
           const response = await secureFetch('/api/wallet/aggregate', {
             method: 'POST',
@@ -243,12 +281,16 @@ export const useWalletStore = create<WalletState>()(
             body: JSON.stringify({ addresses, cache: skipCache ? false : undefined }),
           })
 
+          console.log('[WalletStore] Aggregate response status:', response.status)
+
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
+            console.error('[WalletStore] Aggregate fetch failed:', errorData)
             throw new Error(errorData.error || 'Failed to fetch aggregate data')
           }
 
           const aggregateData = await response.json()
+          console.log('[WalletStore] Aggregate data received:', aggregateData)
 
           set({ aggregateData })
 
@@ -261,6 +303,9 @@ export const useWalletStore = create<WalletState>()(
               throw new Error(`Failed to fetch wallet ${wallet.address}`)
             }
             const data = await walletResponse.json()
+            console.log('[WalletStore] Fetched data for', wallet.address, ':', data)
+            console.log('[WalletStore] data.composition:', data.composition)
+            console.log('[WalletStore] data.composition?.data?.tokens:', data.composition?.data?.tokens)
             get().setWalletData(wallet.address, data)
 
             if (data.composition) {
@@ -300,7 +345,7 @@ export const useWalletStore = create<WalletState>()(
           // Clear wallet and aggregate data - forces sections to show skeletons
           walletData: {},
           aggregateData: null,
-          // Clear streaming data
+          // Clear streaming data and set skipCache flag
           streaming: {
             ...initialStreamingState,
             isStreaming: true, // Mark as streaming immediately for UI feedback
@@ -315,8 +360,8 @@ export const useWalletStore = create<WalletState>()(
           syncTrigger: state.syncTrigger + 1,
         }))
 
-        // Then trigger wallet data sync
-        get().syncAllWallets(skipCache)
+        // Note: syncAllWallets is NOT called here - the streaming providers (DefiStreamProvider and WalletDataStreamProvider)
+        // will detect the syncTrigger change and restart their streams automatically
       },
 
       // Streaming actions
@@ -406,6 +451,86 @@ export const useWalletStore = create<WalletState>()(
             isPositionsLoading: false,
           },
         }))
+      },
+
+      // Wallet data streaming actions
+      setWalletDataStreaming: (isStreaming: boolean) => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            walletDataStreaming: {
+              ...state.streaming.walletDataStreaming,
+              isStreaming,
+            },
+          },
+          loading: {
+            ...state.loading,
+            isWalletDataLoading: isStreaming,
+          },
+        }))
+      },
+
+      setWalletDataStreamingComplete: () => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            walletDataStreaming: {
+              ...state.streaming.walletDataStreaming,
+              isStreaming: false,
+              isComplete: true,
+            },
+          },
+          loading: {
+            ...state.loading,
+            isWalletDataLoading: false,
+          },
+        }))
+      },
+
+      setWalletDataStreamingError: (error: { address?: string; endpoint?: string; error: string }) => {
+        set((state) => ({
+          streaming: {
+            ...state.streaming,
+            walletDataStreaming: {
+              ...state.streaming.walletDataStreaming,
+              errors: [...state.streaming.walletDataStreaming.errors, error],
+            },
+          },
+        }))
+      },
+
+      updatePartialWalletData: (address: string, dataType: WalletDataType, data: unknown) => {
+        set((state) => {
+          const existing = state.walletData[address] || {
+            composition: null,
+            compositionRaw: null,
+            // Note: transactions removed - loaded independently via /api/wallet/transactions
+            nfts: { data: { nfts: [], totalNftValue: 0 }, cache: {} },
+            userData: null,
+            history: [],
+            positions: null,
+          }
+
+          // Map dataType to the correct field in walletData
+          const updatedWalletData = { ...existing }
+          if (dataType === 'composition') {
+            updatedWalletData.compositionRaw = data as WalletCompositionResponse
+            updatedWalletData.composition = data as WalletCompositionResponse
+          } else if (dataType === 'nfts') {
+            updatedWalletData.nfts = data
+          } else if (dataType === 'hypercore') {
+            updatedWalletData.userData = data
+          } else if (dataType === 'history') {
+            updatedWalletData.history = data as never[]
+          }
+
+          return {
+            walletData: {
+              ...state.walletData,
+              [address]: updatedWalletData,
+            },
+          }
+        })
       },
     }),
     {

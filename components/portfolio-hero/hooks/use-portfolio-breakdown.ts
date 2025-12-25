@@ -2,7 +2,8 @@
 
 import { useMemo } from "react"
 import type { AssetBreakdown } from "../types"
-import { safeParseFloat } from "../utils"
+import { safeParseFloat, calculateStreamingTotalValue } from "../utils"
+import { useWalletStore } from "@/lib/store/wallet-store"
 
 interface Wallet {
   id: string
@@ -25,6 +26,7 @@ interface UsePortfolioBreakdownOptions {
 
 /**
  * Custom hook for calculating portfolio breakdown by asset category
+ * Uses streaming data for DeFi positions to avoid duplicate fetching
  */
 export function usePortfolioBreakdown({
   selectedWalletId,
@@ -32,9 +34,18 @@ export function usePortfolioBreakdown({
   walletData,
   aggregateData,
 }: UsePortfolioBreakdownOptions): AssetBreakdown[] {
+  // Get streaming DeFi positions from wallet store
+  const { streaming } = useWalletStore()
+
   return useMemo((): AssetBreakdown[] => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let data: any = aggregateData
+
+    // Calculate DeFi value from streaming data (single source of truth)
+    const streamingAddresses = selectedWalletId
+      ? [wallets.find(w => w.id === selectedWalletId)?.address].filter(Boolean) as string[]
+      : undefined
+    const defiValue = calculateStreamingTotalValue(streaming.streamedProtocols, streamingAddresses)
 
     if (selectedWalletId) {
       const selectedWallet = wallets.find(w => w.id === selectedWalletId)
@@ -44,8 +55,6 @@ export function usePortfolioBreakdown({
         const tokens = ((rawData as any).compositionRaw || (rawData as any).composition)?.data?.tokens || []
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nftsData = (rawData.nfts as any)?.data?.nfts || []
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const positionsData = (rawData.positions as any)?.data?.protocols || []
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const spotValue = tokens.filter((t: any) => t.type === 'spot').reduce((sum: number, t: any) => sum + safeParseFloat(t.usdValue), 0)
@@ -57,12 +66,6 @@ export function usePortfolioBreakdown({
         const vaultsValue = tokens.filter((t: any) => t.type === 'vault').reduce((sum: number, t: any) => sum + safeParseFloat(t.usdValue), 0)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nftValue = nftsData.reduce((sum: number, nft: any) => sum + safeParseFloat(nft.usdValue || nft.fxValue), 0)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const defiValue = positionsData.reduce((sum: number, protocol: any) => {
-          if (!Array.isArray(protocol.positions)) return sum
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return sum + protocol.positions.reduce((posSum: number, pos: any) => posSum + safeParseFloat(pos.totalValueUSD), 0)
-        }, 0)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hypercoreValue = safeParseFloat((rawData.userData as any)?.data?.portfolioSummary?.totalValue)
 
@@ -81,9 +84,8 @@ export function usePortfolioBreakdown({
 
     const totalVal = data.total_value
 
-    // Calculate NFT, DeFi and Staking values from all wallets or selected wallet
+    // Calculate NFT and Staking values from all wallets or selected wallet
     let nftValue = 0
-    let defiValue = 0
     let stakingValue = data.total_staking || 0
 
     if (selectedWalletId) {
@@ -94,15 +96,7 @@ export function usePortfolioBreakdown({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nftsData = (rawData.nfts as any)?.data?.nfts || []
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const positionsData = (rawData.positions as any)?.data?.protocols || []
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         nftValue = nftsData.reduce((sum: number, nft: any) => sum + safeParseFloat(nft.usdValue || nft.fxValue), 0)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        defiValue = positionsData.reduce((sum: number, protocol: any) => {
-          if (!Array.isArray(protocol.positions)) return sum
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return sum + protocol.positions.reduce((posSum: number, pos: any) => posSum + safeParseFloat(pos.totalValueUSD), 0)
-        }, 0)
       }
     } else {
       // All wallets - aggregate from all
@@ -112,21 +106,11 @@ export function usePortfolioBreakdown({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const nftsData = (rawData.nfts as any)?.data?.nfts || []
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const positionsData = (rawData.positions as any)?.data?.protocols || []
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const tokens = ((rawData as any).compositionRaw || (rawData as any).composition)?.data?.tokens || []
           
           // NFTs
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           nftValue += nftsData.reduce((sum: number, nft: any) => sum + safeParseFloat(nft.usdValue || nft.fxValue), 0)
-          
-          // DeFi positions
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          defiValue += positionsData.reduce((sum: number, protocol: any) => {
-            if (!Array.isArray(protocol.positions)) return sum
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return sum + protocol.positions.reduce((posSum: number, pos: any) => posSum + safeParseFloat(pos.totalValueUSD), 0)
-          }, 0)
           
           // Staking from tokens
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,6 +126,6 @@ export function usePortfolioBreakdown({
       { category: "NFTs", value: nftValue, percentage: (nftValue / totalVal) * 100, color: "#ff7f00" },
       { category: "Hypercore", value: data.total_hypercore || 0, percentage: ((data.total_hypercore || 0) / totalVal) * 100, color: "#b4ff00" },
     ].filter(item => item.value > 0)
-  }, [aggregateData, selectedWalletId, wallets, walletData])
+  }, [aggregateData, selectedWalletId, wallets, walletData, streaming.streamedProtocols])
 }
 

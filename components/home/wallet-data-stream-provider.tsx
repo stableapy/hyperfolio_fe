@@ -2,27 +2,26 @@
 
 import { useEffect, useRef, useMemo } from "react"
 import { useWalletStore } from "@/lib/store/wallet-store"
-import { usePositionsStream, type StreamedProtocol } from "@/hooks/use-positions-stream"
+import { useWalletDataStream, type WalletDataType } from "@/hooks/use-wallet-data-stream"
 
 /**
- * Provider component that initiates DeFi position streaming at the page level.
- * This ensures streaming only happens once on page load or when sync is triggered,
- * not on every tab navigation.
+ * Provider component that initiates wallet data streaming at the page level.
+ * Streams wallet data (composition, transactions, NFTs, hypercore, history) progressively
+ * as each API endpoint completes, without waiting for all wallets/endpoints.
  *
- * Uses granular loading state - positions stream independently from wallet data.
  * Responds to syncTrigger changes from the wallet store to restart streaming.
  */
-export function DefiStreamProvider() {
+export function WalletDataStreamProvider() {
   const {
     wallets,
     selectedWalletId,
     syncTrigger,
     streaming,
-    updateStreamedProtocol,
-    setStreamProgress,
-    setStreamComplete,
-    setStreamError,
-    startStreaming,
+    updatePartialWalletData,
+    setAggregateData,
+    setWalletDataStreaming,
+    setWalletDataStreamingComplete,
+    setWalletDataStreamingError,
   } = useWalletStore()
 
   // Track the last processed sync trigger to detect changes
@@ -39,32 +38,45 @@ export function DefiStreamProvider() {
       : wallets.map(w => w.address)
   }, [selectedWalletId, wallets])
 
-  // Callbacks for stream events - update the wallet store
-  const handleProtocolReceived = (protocol: StreamedProtocol) => {
-    updateStreamedProtocol(protocol)
+  // Debug: log render
+  console.log('[WalletDataStreamProvider] Render:', {
+    walletsCount: wallets.length,
+    selectedWalletId,
+    addressesLength: addresses.length,
+    addresses,
+    syncTrigger,
+    skipCache: streaming.skipCache
+  })
+
+  // Callback when data is received - update wallet store incrementally
+  const handleDataReceived = (address: string, dataType: WalletDataType, data: unknown) => {
+    updatePartialWalletData(address, dataType, data)
   }
 
-  const handleComplete = (stats: Parameters<NonNullable<Parameters<typeof usePositionsStream>[0]['onComplete']>>[0]) => {
-    setStreamComplete(stats)
+  // Callback when stream completes with final aggregate
+  const handleComplete = (aggregate: Parameters<NonNullable<Parameters<typeof useWalletDataStream>[0]['onComplete']>>[0]) => {
+    setAggregateData(aggregate)
+    setWalletDataStreamingComplete()
   }
 
-  const handleError = (error: string) => {
-    setStreamError(error)
+  // Callback on error
+  const handleError = (error: { address?: string; endpoint?: string; error: string }) => {
+    setWalletDataStreamingError(error)
   }
 
   // Use the SSE stream - disabled by default, we manually start it
   // Pass streaming.skipCache directly - when syncTrigger changes, we start a new stream with this value
   const {
-    progress,
+    errors,
     startStream,
     stopStream,
-  } = usePositionsStream({
+  } = useWalletDataStream({
     addresses,
     skipCache: streaming.skipCache,
     enabled: false, // Disabled - we manually control start
-    onProtocolReceived: handleProtocolReceived,
+    onDataReceived: handleDataReceived,
     onComplete: handleComplete,
-    onError: handleError,
+    onError: (error) => handleError({ error }),
   })
 
   // Keep stable refs to avoid effect cleanup race conditions
@@ -77,27 +89,30 @@ export function DefiStreamProvider() {
     stopStreamRef.current = stopStream
   }, [startStream, stopStream])
 
-  // Sync progress to store
+  // Sync individual errors to store
   useEffect(() => {
-    setStreamProgress(progress)
-  }, [progress, setStreamProgress])
+    errors.forEach(err => {
+      setWalletDataStreamingError(err)
+    })
+  }, [errors, setWalletDataStreamingError])
 
   // Handle sync trigger changes - restart stream when triggerSync is called
   // Use refs to avoid cleanup race condition when startStream function reference changes
   useEffect(() => {
     if (syncTrigger > lastSyncTriggerRef.current && addresses.length > 0) {
+      console.log('[WalletDataStreamProvider] Sync triggered, restarting stream...')
       // Sync was triggered - restart stream
       stopStreamRef.current()
       // Small delay to ensure cleanup before starting new stream
       const timer = setTimeout(() => {
-        startStreaming() // Update store state
+        setWalletDataStreaming(true)
         startStreamRef.current()
       }, 50)
-      
+
       lastSyncTriggerRef.current = syncTrigger
       return () => clearTimeout(timer)
     }
-  }, [syncTrigger, addresses.length, startStreaming])
+  }, [syncTrigger, addresses.length, setWalletDataStreaming])
 
   // Handle wallet selection changes - restart stream for new wallet
   // Use refs to avoid cleanup race condition
@@ -108,7 +123,7 @@ export function DefiStreamProvider() {
       // Wallet selection changed - restart stream
       stopStreamRef.current()
       const timer = setTimeout(() => {
-        startStreaming()
+        setWalletDataStreaming(true)
         startStreamRef.current()
       }, 50)
 
@@ -117,13 +132,20 @@ export function DefiStreamProvider() {
     }
 
     prevSelectedWalletIdRef.current = selectedWalletId
-  }, [selectedWalletId, addresses.length, startStreaming])
+  }, [selectedWalletId, addresses.length, setWalletDataStreaming])
 
   // Auto-start on initial mount
   // Use refs to get latest function references in cleanup
   useEffect(() => {
+    console.log('[WalletDataStreamProvider] Auto-start effect:', {
+      addressesLength: addresses.length,
+      addresses,
+      hasInitialized: hasInitializedRef.current
+    })
+
     if (addresses.length > 0 && !hasInitializedRef.current) {
-      startStreaming()
+      console.log('[WalletDataStreamProvider] Starting stream...')
+      setWalletDataStreaming(true)
       startStreamRef.current()
       hasInitializedRef.current = true
     }
@@ -131,9 +153,8 @@ export function DefiStreamProvider() {
     return () => {
       stopStreamRef.current()
     }
-    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []) // Empty dependency array - only run on mount, sync trigger handles restarts
 
   // This is a provider component - renders nothing
   return null

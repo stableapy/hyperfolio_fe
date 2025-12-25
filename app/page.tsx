@@ -10,13 +10,14 @@ import { SeoFooter } from "@/components/seo-footer"
 import { useWalletStore } from "@/lib/store/wallet-store"
 
 // Home page components
-import { 
-  FloatingSwapButton, 
-  EmptyState, 
-  StickyNavHeader, 
+import {
+  FloatingSwapButton,
+  EmptyState,
+  StickyNavHeader,
   SectionContent,
   DefiStreamProvider,
 } from "@/components/home"
+import { WalletDataStreamProvider } from "@/components/home/wallet-data-stream-provider"
 
 export default function Home() {
   const {
@@ -26,7 +27,6 @@ export default function Home() {
     aggregateData,
     error,
     addWallet,
-    syncAllWallets,
     triggerSync,
     selectedWalletId,
     selectWallet,
@@ -71,12 +71,8 @@ export default function Home() {
     return () => observer.disconnect()
   }, [])
 
-  // Sync wallets data on mount and when wallets change
-  useEffect(() => {
-    if (wallets.length > 0) {
-      syncAllWallets()
-    }
-  }, [wallets.length, syncAllWallets])
+  // Note: Wallet data and DeFi positions are now loaded via streaming providers
+  // DefiStreamProvider and WalletDataStreamProvider handle fetching data progressively
 
   const handleAddWallet = (wallet: { name: string; address: string; color: string }) => {
     addWallet(wallet)
@@ -101,6 +97,9 @@ export default function Home() {
 
       {/* DeFi Streaming Provider - Initiates position streaming at page level */}
       {wallets.length > 0 && <DefiStreamProvider />}
+
+      {/* Wallet Data Streaming Provider - Initiates wallet data streaming at page level */}
+      {wallets.length > 0 && <WalletDataStreamProvider />}
 
       {/* Floating Swap Button - Mobile: always visible in content section, Desktop: visible except on tokens section */}
       {wallets.length > 0 && (

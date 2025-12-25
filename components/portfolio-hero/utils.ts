@@ -98,7 +98,10 @@ export function calculateStreamingTotalValue(
       const protocolPositions = proto.positions
       if (Array.isArray(protocolPositions)) {
         const filteredValue = protocolPositions
-          .filter((pos: unknown) => walletAddresses.includes((pos as any).walletAddress))
+          .filter((pos: unknown) => {
+            const address = (pos as any).walletAddress
+            return address && walletAddresses.includes(address)
+          })
           .reduce((sum: number, pos: unknown) => sum + safeParseFloat((pos as any).totalValueUSD), 0)
         total += filteredValue
       }

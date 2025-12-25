@@ -23,7 +23,7 @@ const getHyperEVMChain = () => {
     },
     rpcUrls: {
       default: {
-        http: [process.env.NEXT_PUBLIC_API_URL?.replace("api.", "rpc.") || "https://rpc.hyperevm.com"],
+        http: [process.env.NEXT_PUBLIC_API_URL?.replace("api.", "rpc.") || "https://rpc.hyperlend.finance"],
       },
     },
     blockExplorers: {
@@ -52,7 +52,7 @@ export const config = createConfig({
     [sepolia.id]: http(),
     [arbitrum.id]: http(),
     [optimism.id]: http(),
-    [999]: http(process.env.NEXT_PUBLIC_API_URL?.replace("api.", "rpc.") || "https://rpc.hyperevm.com"),
+    [999]: http(process.env.NEXT_PUBLIC_API_URL?.replace("api.", "rpc.") || "https://rpc.hyperlend.finance"),
   },
 })
 

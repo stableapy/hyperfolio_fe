@@ -45,7 +45,6 @@ export function PortfolioHero({ change24h, onRefresh, onAddWallet, onScrollToCon
   const apyData = useApyData({
     selectedWalletId,
     wallets,
-    walletData,
   })
   
   // Hide scroll indicator when user scrolls, show when back at top

@@ -7,7 +7,6 @@ import type {
   Transaction,
   TransactionsResponse,
   NFT,
-  DeFiPosition,
   PositionsResponse,
   PortfolioHistoryPoint,
   PortfolioHistoryResponse,
@@ -100,10 +99,10 @@ export async function getWalletComposition(address: string): Promise<WalletCompo
 
 export async function getWalletTransactions(
   address: string,
-  page = 1,
-  offset = 25
+  limit = 50,
+  offset = 0
 ): Promise<Transaction[]> {
-  const response = await fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&page=${page}&offset=${offset}`)
+  const response = await fetchAPI<TransactionsResponse>(`/wallet/transactions?address=${address}&limit=${limit}&offset=${offset}`)
   return response.transactions || []
 }
 
@@ -155,12 +154,11 @@ export async function getSwapStats(address: string): Promise<SwapStats> {
 
 export async function getWalletData(address: string, skipCache = false) {
   try {
-    // NOTE: Transactions are NOT fetched here to preserve Etherscan API rate limits
-    // Transactions are lazy-loaded via /api/wallet/transactions when the History section is viewed
-    const [compositionRaw, nfts, positions, userData, history] = await Promise.all([
+    // Note: positions are fetched separately via SSE streaming for progressive loading
+    // Note: transactions are fetched independently via /api/wallet/transactions
+    const [compositionRaw, nfts, userData, history] = await Promise.all([
       fetchAPI<WalletCompositionResponse>(`/wallet/composition?address=${address}`, { skipCache }).catch(() => null),
       fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(`/nfts?address=${address}`, { skipCache }).catch(() => ({ data: { nfts: [], totalNftValue: 0 }, cache: {} })),
-      fetchAPI<PositionsResponse>(`/positions?address=${address}`, { skipCache }).catch(() => ({ data: { protocols: [] } })),
       fetchAPI<UserData>(`/hypercore/user/${address}`, { skipCache }).catch(() => null),
       getPortfolioHistory(address, 30).catch(() => []),
     ])
@@ -178,9 +176,7 @@ export async function getWalletData(address: string, skipCache = false) {
     return {
       compositionRaw, // Keep raw data for tokens extraction
       composition,
-      transactions: [], // Empty - lazy loaded via dedicated endpoint
       nfts,
-      positions,
       userData,
       history,
     }
@@ -191,6 +187,207 @@ export async function getWalletData(address: string, skipCache = false) {
 }
 
 // Multi-wallet aggregate functions
+
+// Type for accumulated data during streaming (used by SSE endpoint)
+interface StreamAccumulator {
+  composition: Map<string, WalletCompositionResponse>
+  nfts: Map<string, { data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>
+  hypercore: Map<string, UserData>
+  history: Map<string, PortfolioHistoryPoint[]>
+}
+
+// Helper to compute aggregate from accumulated data (used by streaming endpoint)
+export function computeAggregate(accumulator: StreamAccumulator): AggregateData {
+  // Build data array in the same format as getMultiWalletData
+  const data = Array.from(accumulator.composition.keys()).map((address) => ({
+    address,
+    data: {
+      compositionRaw: accumulator.composition.get(address) || null,
+      composition: accumulator.composition.get(address),
+      // Note: transactions removed - loaded independently via /api/wallet/transactions
+      nfts: accumulator.nfts.get(address) || { data: { nfts: [], totalNftValue: 0 }, cache: {} },
+      userData: accumulator.hypercore.get(address) || null,
+      history: accumulator.history.get(address) || [],
+    },
+    error: null,
+  }))
+
+  // Aggregate compositions
+  const compositions = data
+    .map((d) => {
+      if (!d.data?.compositionRaw?.data?.tokens) return null
+      const tokens = d.data.compositionRaw.data.tokens
+      return {
+        spot: tokens.filter(t => t.type === 'spot').reduce((sum, t) => sum + parseFloat(t.usdValue || '0'), 0),
+        perp: tokens.filter(t => t.type === 'perp').reduce((sum, t) => sum + parseFloat(t.usdValue || '0'), 0),
+        staking: tokens.filter(t => t.type === 'staking').reduce((sum, t) => sum + parseFloat(t.usdValue || '0'), 0),
+        vaults: tokens.filter(t => t.type === 'vault').reduce((sum, t) => sum + parseFloat(t.usdValue || '0'), 0),
+        total_value: tokens.reduce((sum, t) => sum + parseFloat(t.usdValue || '0'), 0),
+      }
+    })
+    .filter((c): c is WalletComposition => c !== null && c !== undefined)
+
+  const aggregateComposition = compositions.reduce(
+    (acc, comp) => ({
+      spot: acc.spot + comp.spot,
+      perp: acc.perp + comp.perp,
+      staking: acc.staking + comp.staking,
+      vaults: acc.vaults + comp.vaults,
+      total_value: acc.total_value + comp.total_value,
+    }),
+    { spot: 0, perp: 0, staking: 0, vaults: 0, total_value: 0 }
+  )
+
+  // Calculate NFT value
+  const nftValue = data.reduce((sum, d) => {
+    const nftsData = d.data?.nfts as any
+    if (!nftsData || !nftsData.data) return sum
+
+    if (Array.isArray(nftsData.data.nfts)) {
+      return sum + nftsData.data.nfts.reduce((nftSum: number, nft: any) => {
+        const value = nft.usdValue || nft.fxValue || 0
+        const numValue = typeof value === 'number' ? value : parseFloat(value.toString()) || 0
+        return nftSum + (Math.abs(numValue) > 1e15 ? 0 : numValue)
+      }, 0)
+    }
+
+    return sum
+  }, 0)
+
+  // Calculate Hypercore value from userData
+  const hypercoreValue = data.reduce((sum, d) => {
+    const userData = d.data?.userData as any
+    if (!userData?.data?.portfolioSummary) return sum
+
+    const value = userData.data.portfolioSummary.totalValue || 0
+    const numValue = typeof value === 'number' ? value : parseFloat(value.toString()) || 0
+    return sum + (Math.abs(numValue) > 1e15 ? 0 : numValue)
+  }, 0)
+
+  const baseValue = aggregateComposition.spot + aggregateComposition.perp + aggregateComposition.staking + aggregateComposition.vaults
+  const totalValueWithAllAssets = baseValue + nftValue + hypercoreValue
+
+  // Aggregate NFTs
+  const aggregatedNFTs = data.flatMap((d) => {
+    const nftsData = d.data?.nfts as any
+    if (nftsData?.data?.nfts && Array.isArray(nftsData.data.nfts)) {
+      return nftsData.data.nfts
+    }
+    return []
+  })
+
+  // Aggregate history by DATE
+  const walletDateMap = new Map<number, Map<string, { timestamp: number; value: number }>>()
+
+  data.forEach((d, walletIndex) => {
+    const history = d.data?.history
+    if (!Array.isArray(history)) {
+      return
+    }
+
+    const dateMap = new Map<string, { timestamp: number; value: number }>()
+
+    history.forEach((point) => {
+      const date = new Date(point.timestamp)
+      const dateKey = date.toISOString().split('T')[0]
+
+      const existing = dateMap.get(dateKey)
+      if (!existing || point.timestamp > existing.timestamp) {
+        dateMap.set(dateKey, {
+          timestamp: point.timestamp,
+          value: point.value
+        })
+      }
+    })
+
+    walletDateMap.set(walletIndex, dateMap)
+  })
+
+  const aggregatedMap = new Map<string, { timestamp: number; value: number }>()
+
+  const allDates = new Set<string>()
+  walletDateMap.forEach(dateMap => {
+    dateMap.forEach((_, date) => {
+      allDates.add(date)
+    })
+  })
+
+  allDates.forEach(date => {
+    let totalValue = 0
+    let earliestTimestamp = Infinity
+
+    walletDateMap.forEach(dateMap => {
+      const point = dateMap.get(date)
+      if (point) {
+        totalValue += point.value
+        earliestTimestamp = Math.min(earliestTimestamp, point.timestamp)
+      }
+    })
+
+    if (totalValue > 0) {
+      aggregatedMap.set(date, {
+        timestamp: earliestTimestamp,
+        value: totalValue
+      })
+    }
+  })
+
+  const aggregatedHistory = Array.from(aggregatedMap.values())
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  // Calculate 24h change
+  const currentValue = totalValueWithAllAssets || 0
+  const yesterdayValue = aggregatedHistory.length >= 2
+    ? aggregatedHistory[aggregatedHistory.length - 2]?.value
+    : aggregatedHistory[aggregatedHistory.length - 1]?.value
+
+  const pastValue = yesterdayValue || currentValue
+  const totalChange24h = pastValue > 0 && !Number.isNaN(currentValue) && !Number.isNaN(pastValue)
+    ? ((currentValue - pastValue) / pastValue) * 100
+    : 0
+
+  // Aggregate tokens from raw composition data
+  const tokenMap = new Map<string, Token>()
+  data.forEach((d) => {
+    if (d.data?.compositionRaw?.data?.tokens) {
+      d.data.compositionRaw.data.tokens.forEach((token) => {
+        const existing = tokenMap.get(token.address)
+        if (existing) {
+          const newBalance = parseFloat(existing.balance) + parseFloat(token.balance)
+          const newValue = parseFloat(existing.usdValue || '0') + parseFloat(token.usdValue || '0')
+          tokenMap.set(token.address, {
+            ...existing,
+            balance: newBalance.toString(),
+            usdValue: newValue.toString(),
+          })
+        } else {
+          tokenMap.set(token.address, token)
+        }
+      })
+    }
+  })
+
+  const aggregatedSpotPositions: SpotPosition[] = Array.from(tokenMap.values()).map(token => ({
+    token: token.symbol || '',
+    balance: token.balance || '0',
+    value_usd: Number(parseFloat(token.usdValue || '0')) || 0,
+    price: Number(parseFloat(token.usdPrice || '0')) || 0,
+  }))
+
+  return {
+    total_value: Number(totalValueWithAllAssets) || 0,
+    total_change_24h: Number(totalChange24h) || 0,
+    total_spot: Number(aggregateComposition.spot) || 0,
+    total_perp: Number(aggregateComposition.perp) || 0,
+    total_staking: Number(aggregateComposition.staking) || 0,
+    total_vaults: Number(aggregateComposition.vaults) || 0,
+    total_hypercore: Number(hypercoreValue) || 0,
+    tokens: aggregatedSpotPositions,
+    nfts: aggregatedNFTs,
+    // Note: transactions removed - loaded independently via /api/wallet/transactions
+    history: aggregatedHistory,
+  }
+}
 
 export async function getMultiWalletData(addresses: string[], skipCache = false): Promise<AggregateData> {
   try {
@@ -239,24 +436,8 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
       return sum
     }, 0)
 
-    const defiValue = data.reduce((sum, d) => {
-      // Check if positions exists and has data structure
-      const positionsData = d.data?.positions as PositionsResponse | undefined
-      if (!positionsData?.data?.protocols) return sum
-      
-      // Sum all positions from all protocols
-      const positionSum = positionsData.data.protocols.reduce((protocolAcc: number, protocol) => {
-        if (!Array.isArray(protocol.positions)) return protocolAcc
-        return protocolAcc + protocol.positions.reduce((posAcc: number, pos: any) => {
-          const value = pos.totalValueUSD || 0
-          const numValue = typeof value === 'number' ? value : parseFloat(value.toString()) || 0
-          // Filter out absurd values
-          return posAcc + (Math.abs(numValue) > 1e15 ? 0 : numValue)
-        }, 0)
-      }, 0)
-      
-      return sum + positionSum
-    }, 0)
+    // Note: DeFi positions value is now calculated from SSE streaming data
+    // This provides progressive loading and avoids blocking on slow /positions endpoint
 
     // Calculate Hypercore value from userData
     const hypercoreValue = data.reduce((sum, d) => {
@@ -270,13 +451,11 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
       return sum + (Math.abs(numValue) > 1e15 ? 0 : numValue)
     }, 0)
 
-    // Total value = sum of all token categories + NFTs + DeFi positions + Hypercore
+    // Total value = sum of all token categories + NFTs + Hypercore
+    // Note: DeFi positions value is added on the client side from SSE streaming data
     // Don't use aggregateComposition.total_value as it might be incomplete
     const baseValue = aggregateComposition.spot + aggregateComposition.perp + aggregateComposition.staking + aggregateComposition.vaults
-    const totalValueWithAllAssets = baseValue + nftValue + defiValue + hypercoreValue
-
-    // NOTE: Transactions are NOT aggregated here to preserve Etherscan API rate limits
-    // Transactions are lazy-loaded via /api/wallet/transactions when the History section is viewed
+    const totalValueWithAllAssets = baseValue + nftValue + hypercoreValue
 
     // Aggregate NFTs
     const aggregatedNFTs = data.flatMap((d) => {
@@ -287,19 +466,8 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
       return []
     })
 
-    // Aggregate positions from all protocols
-    const aggregatedPositions = data.flatMap((d) => {
-      const positionsData = d.data?.positions as PositionsResponse | undefined
-      if (positionsData?.data?.protocols && Array.isArray(positionsData.data.protocols)) {
-        return positionsData.data.protocols.flatMap((protocol) => {
-          if (Array.isArray(protocol.positions)) {
-            return protocol.positions
-          }
-          return []
-        })
-      }
-      return []
-    })
+    // Note: DeFi positions are now loaded progressively via SSE streaming
+    // See: hooks/use-positions-stream.ts and components/sections/defi-section/
 
     // Aggregate history by DATE
     // Step 1: For each wallet, get only ONE value per day (latest snapshot)
@@ -420,8 +588,7 @@ export async function getMultiWalletData(addresses: string[], skipCache = false)
       total_hypercore: Number(hypercoreValue) || 0,
       tokens: aggregatedSpotPositions,
       nfts: aggregatedNFTs,
-      positions: aggregatedPositions,
-      transactions: [], // Empty - lazy loaded via dedicated endpoint
+      // Note: transactions removed - loaded independently via /api/wallet/transactions
       history: aggregatedHistory,
     }
   } catch (error) {

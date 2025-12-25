@@ -1,7 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import { transformDeFiPositions, groupPositionsByProtocol, type DeFiPositionDisplay } from "@/lib/utils/data-transformers"
+import { useWalletStore } from "@/lib/store/wallet-store"
+import type { DeFiPositionDisplay } from "@/lib/utils/data-transformers"
 import type { ProtocolGroup } from "../types"
 
 interface Wallet {
@@ -11,13 +12,9 @@ interface Wallet {
   color: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type WalletDataMap = Record<string, any>
-
 interface UseDefiPositionsOptions {
   selectedWalletId: string | null
   wallets: Wallet[]
-  walletData: WalletDataMap
 }
 
 interface UseDefiPositionsResult {
@@ -28,58 +25,137 @@ interface UseDefiPositionsResult {
 
 /**
  * Custom hook for fetching and transforming DeFi positions
+ * Uses streaming data from wallet store as single source of truth
  * Handles both single wallet and aggregate views
  */
 export function useDefiPositions({
   selectedWalletId,
   wallets,
-  walletData,
 }: UseDefiPositionsOptions): UseDefiPositionsResult {
-  // Get positions from selected wallet or all wallets
-  const { positions, protocolsData } = useMemo(() => {
-    if (wallets.length === 0) return { positions: [], protocolsData: [] }
-    
-    if (selectedWalletId) {
-      const wallet = wallets.find(w => w.id === selectedWalletId)
-      if (wallet && walletData[wallet.address]?.positions) {
-        return {
-          positions: transformDeFiPositions(
-            walletData[wallet.address].positions,
-            { address: wallet.address, name: wallet.name, color: wallet.color }
-          ),
-          protocolsData: walletData[wallet.address].positions?.data?.protocols || []
-        }
-      }
-      return { positions: [], protocolsData: [] }
-    } else {
-      // Aggregate positions from all wallets with wallet info
-      const allPositions: DeFiPositionDisplay[] = []
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allProtocolsData: any[] = []
-      wallets.forEach(wallet => {
-        if (walletData[wallet.address]?.positions) {
-          allPositions.push(...transformDeFiPositions(
-            walletData[wallet.address].positions,
-            { address: wallet.address, name: wallet.name, color: wallet.color }
-          ))
-          if (walletData[wallet.address].positions?.data?.protocols) {
-            allProtocolsData.push(...walletData[wallet.address].positions.data.protocols)
-          }
-        }
-      })
-      return { positions: allPositions, protocolsData: allProtocolsData }
-    }
-  }, [wallets, walletData, selectedWalletId])
+  // Get streaming DeFi positions from wallet store
+  const { streaming } = useWalletStore()
 
-  // Group positions by protocol
-  const protocolGroups = useMemo(() => {
-    return groupPositionsByProtocol(positions, protocolsData) as ProtocolGroup[]
-  }, [positions, protocolsData])
+  // Get wallet info map for position enrichment
+  const walletInfoMap = useMemo(() => {
+    const map = new Map<string, { name: string; color: string }>()
+    wallets.forEach(w => {
+      map.set(w.address, { name: w.name, color: w.color })
+    })
+    return map
+  }, [wallets])
+
+  // Get addresses to filter by
+  const filterAddresses = useMemo(() => {
+    if (!selectedWalletId) return undefined
+    const wallet = wallets.find(w => w.id === selectedWalletId)
+    return wallet ? [wallet.address] : undefined
+  }, [selectedWalletId, wallets])
+
+  // Convert streamed protocols to protocol groups and positions
+  const { positions, protocolGroups } = useMemo(() => {
+    const streamedProtocols = Array.from(streaming.streamedProtocols.values())
+    
+    const allPositions: DeFiPositionDisplay[] = []
+    const groups: ProtocolGroup[] = []
+    
+    streamedProtocols
+      .filter(p => p.positions && p.positions.length > 0)
+      .forEach(protocol => {
+        const filteredPositions = protocol.positions.filter(pos => {
+          if (!filterAddresses) return true
+          return pos.walletAddress && filterAddresses.includes(pos.walletAddress)
+        })
+        
+        if (filteredPositions.length === 0) return
+        
+        const positionsForGroup: DeFiPositionDisplay[] = filteredPositions.map(pos => {
+          const walletInfo = pos.walletAddress ? walletInfoMap.get(pos.walletAddress) : undefined
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const details = pos.details as any
+          
+          return {
+            id: pos.id,
+            protocol: protocol.name,
+            type: mapPositionType(pos.type),
+            assets: extractAssets(details),
+            deposited: parseFloat(pos.totalValueUSD || '0'),
+            current: parseFloat(pos.totalValueUSD || '0'),
+            apy: details?.apy ? (typeof details.apy === 'string' ? parseFloat(details.apy) : details.apy) : 0,
+            rewards: extractRewards(details),
+            logo: protocol.logo,
+            positionDetails: details,
+            protocolUrl: protocol.url,
+            estimatedYield: details?.estimatedYield ? {
+              daily: String(details.estimatedYield.daily || '0.00'),
+              weekly: String(details.estimatedYield.weekly || '0.00'),
+              monthly: String(details.estimatedYield.monthly || '0.00'),
+            } : undefined,
+            walletAddress: pos.walletAddress,
+            walletName: walletInfo?.name,
+            walletColor: walletInfo?.color,
+          }
+        })
+        
+        allPositions.push(...positionsForGroup)
+        
+        groups.push({
+          id: protocol.id,
+          name: protocol.name,
+          logo: protocol.logo || null,
+          totalValue: positionsForGroup.reduce((sum, p) => sum + p.current, 0),
+          positions: positionsForGroup,
+          stats: protocol.protocolStats ? {
+            weightedApyPercent: protocol.protocolStats.weightedApyPercent ?? undefined,
+            estimatedYield: protocol.protocolStats.estimatedYield,
+          } : undefined,
+        })
+      })
+    
+    // Sort groups by total value
+    groups.sort((a, b) => b.totalValue - a.totalValue)
+    
+    return { positions: allPositions, protocolGroups: groups }
+  }, [streaming.streamedProtocols, filterAddresses, walletInfoMap])
 
   return {
     positions,
     protocolGroups,
     hasData: positions.length > 0,
   }
+}
+
+// Helper functions
+function mapPositionType(type: string): 'lending' | 'liquidity' | 'staking' | 'farming' {
+  const typeMap: Record<string, 'lending' | 'liquidity' | 'staking' | 'farming'> = {
+    lending: 'lending',
+    liquidity: 'liquidity',
+    staking: 'staking',
+    farming: 'farming',
+    options: 'lending',
+    spot: 'staking',
+  }
+  return typeMap[type] || 'lending'
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractAssets(details: any): string[] {
+  if (!details) return []
+  const assets: string[] = []
+  
+  if (details.token?.symbol) assets.push(String(details.token.symbol))
+  if (details.token0?.symbol) assets.push(String(details.token0.symbol))
+  if (details.token1?.symbol) assets.push(String(details.token1.symbol))
+  if (details.pair) return String(details.pair).split('/').map(s => s.trim())
+  
+  return assets
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractRewards(details: any): number {
+  if (!details?.uncollectedFees?.usdValue) return 0
+  const value = typeof details.uncollectedFees.usdValue === 'string' 
+    ? parseFloat(details.uncollectedFees.usdValue) 
+    : Number(details.uncollectedFees.usdValue)
+  return Number.isNaN(value) ? 0 : value
 }
 

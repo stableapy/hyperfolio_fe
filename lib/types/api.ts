@@ -273,8 +273,34 @@ export interface AggregateData {
   total_hypercore: number
   tokens: SpotPosition[]
   nfts: NFT[]
-  positions: DeFiPosition[]
-  transactions: Transaction[]
+  // Note: DeFi positions are now loaded via SSE streaming for progressive loading
+  // See: hooks/use-positions-stream.ts
+  // Note: Transactions are loaded independently via /api/wallet/transactions endpoint
+  // See: components/sections/transactions-section/hooks/use-transactions.ts
   history: PortfolioHistoryPoint[]
 }
+
+// Stream events for individual wallet API responses (fine-grained progressive loading)
+// Note: 'transactions' removed - loaded independently via /api/wallet/transactions
+export type WalletDataType = 'composition' | 'nfts' | 'hypercore' | 'history'
+
+export interface WalletDataStreamMessage {
+  type: WalletDataType | 'complete' | 'error'
+  address?: string
+  endpoint?: string  // For error messages
+  data?: unknown  // Varies by type
+  aggregate?: AggregateData  // Only for 'complete' type
+  error?: string  // Only for 'error' type
+}
+
+// Partial wallet data (each wallet gets filled in incrementally as data arrives)
+export interface PartialWalletData {
+  composition?: WalletCompositionResponse
+  compositionRaw?: WalletCompositionResponse
+  // Note: transactions removed - loaded independently via /api/wallet/transactions
+  nfts?: { data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }
+  hypercore?: UserData
+  history?: PortfolioHistoryPoint[]
+}
+
 
