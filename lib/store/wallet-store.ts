@@ -65,8 +65,10 @@ interface WalletState {
   // Streaming state
   streaming: StreamingState
 
-  // Sync trigger counter - incremented to signal stream restart needed
+  // Sync trigger counter - incremented to signal full stream restart (clears data)
   syncTrigger: number
+  // Wallets changed trigger - incremented when wallets are added/removed (preserves data)
+  walletsChangedTrigger: number
 
   // Actions
   addWallet: (wallet: Omit<Wallet, 'id'>) => void
@@ -131,6 +133,7 @@ export const useWalletStore = create<WalletState>()(
       walletData: {},
       streaming: { ...initialStreamingState },
       syncTrigger: 0,
+      walletsChangedTrigger: 0,
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
@@ -139,6 +142,9 @@ export const useWalletStore = create<WalletState>()(
         }
         set((state) => ({
           wallets: [...state.wallets, newWallet],
+          // Increment walletsChangedTrigger to trigger streaming providers to fetch data for new wallet
+          // This does NOT clear existing data, unlike syncTrigger
+          walletsChangedTrigger: state.walletsChangedTrigger + 1,
         }))
       },
 

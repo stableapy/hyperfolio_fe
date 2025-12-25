@@ -35,43 +35,106 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
     return map
   }, [wallets])
 
+  // Get the selected wallet's address for filtering (or undefined for all wallets)
+  const selectedWalletAddress = useMemo(() => {
+    if (selectedWalletId) {
+      const wallet = wallets.find(w => w.id === selectedWalletId)
+      return wallet?.address
+    }
+    return undefined
+  }, [selectedWalletId, wallets])
+
   // Get streamed protocol groups from the store and enrich with wallet info
   const protocolGroups: ProtocolGroup[] = useMemo(() => {
     const protocols = Array.from(streaming.streamedProtocols.values())
     return protocols
       .filter(p => p.positions && p.positions.length > 0)
-      .map(protocol => ({
-        id: protocol.id,
-        name: protocol.name,
-        logo: protocol.logo || null,
-        totalValue: parseFloat(protocol.totalValueUSD || '0'),
-        positions: protocol.positions.map(pos => {
-          const walletInfo = pos.walletAddress ? walletInfoMap.get(pos.walletAddress) : undefined
-          return {
-            id: pos.id,
-            protocol: protocol.name,
-            type: mapPositionType(pos.type),
-            assets: extractAssets(pos.details),
-            deposited: parseFloat(pos.totalValueUSD || '0'),
-            current: parseFloat(pos.totalValueUSD || '0'),
-            apy: extractApy(pos.details),
-            rewards: extractRewards(pos.details),
-            logo: protocol.logo,
-            positionDetails: pos.details,
-            protocolUrl: protocol.url,
-            estimatedYield: extractEstimatedYield(pos.details),
-            walletAddress: pos.walletAddress,
-            walletName: walletInfo?.name,
-            walletColor: walletInfo?.color,
-          } as DeFiPositionDisplay
-        }),
-        stats: protocol.protocolStats ? {
-          weightedApyPercent: protocol.protocolStats.weightedApyPercent ?? undefined,
-          estimatedYield: protocol.protocolStats.estimatedYield,
-        } : undefined,
-      }))
+      .map(protocol => {
+        // Filter positions by selected wallet (if any wallet is selected)
+        const filteredPositions = selectedWalletAddress
+          ? protocol.positions.filter(pos => pos.walletAddress === selectedWalletAddress)
+          : protocol.positions
+
+        // Recalculate total value from filtered positions
+        const totalValue = filteredPositions.reduce(
+          (sum, pos) => sum + (parseFloat(pos.totalValueUSD || '0')),
+          0
+        )
+
+        // Recalculate stats from filtered positions
+        let stats: { weightedApyPercent?: number; estimatedYield?: { daily: string; weekly: string; monthly: string } } | undefined
+        if (filteredPositions.length > 0) {
+          // Calculate weighted APY
+          let totalWeightedApy = 0
+          let totalValueForApy = 0
+          let dailyYield = 0
+          let weeklyYield = 0
+          let monthlyYield = 0
+
+          filteredPositions.forEach(pos => {
+            const posValue = parseFloat(pos.totalValueUSD || '0')
+            const posApy = extractApy(pos.details)
+            const posYield = extractEstimatedYield(pos.details)
+
+            if (posApy > 0 && posValue > 0) {
+              totalWeightedApy += posApy * posValue
+              totalValueForApy += posValue
+            }
+
+            if (posYield) {
+              dailyYield += parseFloat(posYield.daily) || 0
+              weeklyYield += parseFloat(posYield.weekly) || 0
+              monthlyYield += parseFloat(posYield.monthly) || 0
+            }
+          })
+
+          const weightedApyPercent = totalValueForApy > 0 ? totalWeightedApy / totalValueForApy : undefined
+
+          // Only include stats if we have meaningful data
+          if (weightedApyPercent !== undefined && weightedApyPercent > 0) {
+            stats = {
+              weightedApyPercent,
+              estimatedYield: (dailyYield > 0 || weeklyYield > 0 || monthlyYield > 0) ? {
+                daily: dailyYield.toFixed(2),
+                weekly: weeklyYield.toFixed(2),
+                monthly: monthlyYield.toFixed(2),
+              } : undefined,
+            }
+          }
+        }
+
+        return {
+          id: protocol.id,
+          name: protocol.name,
+          logo: protocol.logo || null,
+          url: protocol.url || '',
+          totalValue,
+          positions: filteredPositions.map(pos => {
+            const walletInfo = pos.walletAddress ? walletInfoMap.get(pos.walletAddress) : undefined
+            return {
+              id: pos.id,
+              protocol: protocol.name,
+              type: mapPositionType(pos.type),
+              assets: extractAssets(pos.details),
+              deposited: parseFloat(pos.totalValueUSD || '0'),
+              current: parseFloat(pos.totalValueUSD || '0'),
+              apy: extractApy(pos.details),
+              rewards: extractRewards(pos.details),
+              logo: protocol.logo,
+              positionDetails: pos.details,
+              protocolUrl: protocol.url,
+              estimatedYield: extractEstimatedYield(pos.details),
+              walletAddress: pos.walletAddress,
+              walletName: walletInfo?.name,
+              walletColor: walletInfo?.color,
+            } as DeFiPositionDisplay
+          }),
+          stats,
+        }
+      })
+      .filter(p => p.positions.length > 0) // Filter out protocols with no positions after wallet filtering
       .sort((a, b) => b.totalValue - a.totalValue)
-  }, [streaming.streamedProtocols, walletInfoMap])
+  }, [streaming.streamedProtocols, walletInfoMap, selectedWalletAddress])
 
   // Flatten positions from streamed data
   const positions: DeFiPositionDisplay[] = useMemo(() => {

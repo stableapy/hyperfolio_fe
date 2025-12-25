@@ -9,6 +9,14 @@ import type {
   PortfolioHistoryPoint,
 } from '@/lib/types/api'
 
+import {
+  createTimeoutController,
+  clearTimeoutController,
+  isTimeoutError,
+  getTimeoutErrorMessage,
+} from '@/lib/utils/timeout'
+import { REQUEST_TIMEOUTS, STREAM_TIMEOUTS } from '@/lib/config/api'
+
 const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
 const API_KEY = process.env.HYPEREVM_API_KEY || ''
 
@@ -53,6 +61,12 @@ export async function GET(request: NextRequest) {
     history: new Map<string, PortfolioHistoryPoint[]>(),
   }
 
+  // Overall stream timeout controller
+  const overallStreamController = createTimeoutController(
+    STREAM_TIMEOUTS.WALLET_AGGREGATE,
+    'wallet aggregate stream'
+  )
+
   // Helper to write SSE message
   const writeSSE = async (data: unknown) => {
     try {
@@ -64,32 +78,54 @@ export async function GET(request: NextRequest) {
   }
 
   // Helper to fetch from API
-  async function fetchAPI<T>(endpoint: string, options: { skipCache?: boolean } = {}): Promise<T> {
-    const { skipCache = false } = options
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
+  async function fetchAPI<T>(
+    endpoint: string,
+    options: { skipCache?: boolean; timeout?: number } = {}
+  ): Promise<T> {
+    const { skipCache = false, timeout = REQUEST_TIMEOUTS.DEFAULT } = options
+    const controller = createTimeoutController(timeout, `API call to ${endpoint}`)
+
+    try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      }
+
+      const separator = endpoint.includes('?') ? '&' : '?'
+      const url = skipCache
+        ? `${API_BASE_URL}${endpoint}${separator}cache=false`
+        : `${API_BASE_URL}${endpoint}`
+
+      const response = await fetch(url, { headers, signal: controller.signal })
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+
+      clearTimeoutController(controller)
+      return response.json()
+    } catch (error) {
+      clearTimeoutController(controller)
+
+      if (isTimeoutError(error)) {
+        throw new Error(getTimeoutErrorMessage(endpoint))
+      }
+      throw error
     }
-
-    const separator = endpoint.includes('?') ? '&' : '?'
-    const url = skipCache
-      ? `${API_BASE_URL}${endpoint}${separator}cache=false`
-      : `${API_BASE_URL}${endpoint}`
-
-    const response = await fetch(url, { headers })
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
-    }
-
-    return response.json()
   }
 
   // Helper to fetch portfolio history (has special handling)
-  async function getPortfolioHistory(address: string, days = 30, options: { skipCache?: boolean } = {}): Promise<PortfolioHistoryPoint[]> {
+  async function getPortfolioHistory(
+    address: string,
+    days = 30,
+    options: { skipCache?: boolean; timeout?: number } = {}
+  ): Promise<PortfolioHistoryPoint[]> {
     const response = await fetchAPI<{
       snapshots: Array<{ snapshot_timestamp: number; total_value_usd: number }>
-    }>(`/portfolio-history?address=${address}&days=${days}`, options)
+    }>(
+      `/portfolio-history?address=${address}&days=${days}`,
+      options
+    )
 
     // Transform snapshots to PortfolioHistoryPoint format
     return response.snapshots.map(snapshot => ({
@@ -100,6 +136,14 @@ export async function GET(request: NextRequest) {
 
   // Start streaming in the background
   const streamPromise = (async () => {
+    // Handle overall stream timeout
+    overallStreamController.signal.addEventListener('abort', async () => {
+      await writeSSE({
+        type: 'error',
+        error: 'Stream timeout: Loading took too long. Please try again.'
+      })
+    })
+
     try {
       // Fire ALL API requests immediately, stream each as it completes
       const allPromises: Promise<void>[] = []
@@ -110,7 +154,10 @@ export async function GET(request: NextRequest) {
 
         // 1. Composition
         allPromises.push(
-          fetchAPI<WalletCompositionResponse>(`/wallet/composition?address=${address}`, { skipCache })
+          fetchAPI<WalletCompositionResponse>(
+            `/wallet/composition?address=${address}`,
+            { skipCache, timeout: REQUEST_TIMEOUTS.WALLET_COMPOSITION }
+          )
             .then(data => {
               accumulator.composition.set(address, data)
               return writeSSE({ type: 'composition', address, data })
@@ -125,7 +172,10 @@ export async function GET(request: NextRequest) {
 
         // 2. NFTs (Note: Transactions loaded independently via /api/wallet/transactions)
         allPromises.push(
-          fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(`/nfts?address=${address}`, { skipCache })
+          fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(
+            `/nfts?address=${address}`,
+            { skipCache, timeout: REQUEST_TIMEOUTS.WALLET_NFTS }
+          )
             .then(data => {
               accumulator.nfts.set(address, data)
               return writeSSE({ type: 'nfts', address, data })
@@ -140,7 +190,10 @@ export async function GET(request: NextRequest) {
 
         // 3. Hypercore user data
         allPromises.push(
-          fetchAPI<UserData>(`/hypercore/user/${address}`, { skipCache })
+          fetchAPI<UserData>(
+            `/hypercore/user/${address}`,
+            { skipCache, timeout: REQUEST_TIMEOUTS.HYPERCORE_USER_DATA }
+          )
             .then(data => {
               accumulator.hypercore.set(address, data)
               return writeSSE({ type: 'hypercore', address, data })
@@ -155,7 +208,7 @@ export async function GET(request: NextRequest) {
 
         // 4. Portfolio history
         allPromises.push(
-          getPortfolioHistory(address, 30, { skipCache })
+          getPortfolioHistory(address, 30, { skipCache, timeout: REQUEST_TIMEOUTS.PORTFOLIO_HISTORY })
             .then(data => {
               accumulator.history.set(address, data)
               return writeSSE({ type: 'history', address, data })
@@ -186,6 +239,7 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Stream error'
       })
     } finally {
+      clearTimeoutController(overallStreamController)
       try {
         await writer.close()
       } catch {

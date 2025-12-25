@@ -54,9 +54,14 @@ export function TokenRow({
         
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-sm text-theme-accent font-bold truncate tracking-wide">
+            <a
+              href={`https://hyperevmscan.io/address/${token.address}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-sm text-theme-accent font-bold truncate tracking-wide hover:underline hover:text-theme-accent/80 transition-colors"
+            >
               {token.symbol}
-            </span>
+            </a>
             <span className="font-mono text-[10px] text-theme-text-muted bg-theme-bg/50 border border-theme-border/50 px-1.5 py-0.5 rounded">
               @${formatPriceDesktop(token.price)}
             </span>

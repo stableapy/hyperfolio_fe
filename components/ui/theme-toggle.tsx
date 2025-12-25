@@ -34,7 +34,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
     return (
       <button
         type="button"
-        className={`relative p-1.5 rounded-sm border border-theme-border/70 bg-theme-card-bg ${className}`}
+        className={`relative px-1.5 sm:px-2 py-1.5 sm:py-2 rounded-sm border border-theme-border/70 bg-theme-card-bg ${className}`}
         aria-label="Toggle theme"
         disabled
       >
@@ -50,7 +50,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       type="button"
       onClick={toggleTheme}
       className={`
-        relative p-1.5 rounded-sm 
+        relative px-1.5 sm:px-2 py-1.5 sm:py-2 rounded-sm
         border border-theme-border/70 hover:border-theme-accent/50
         bg-theme-card-bg hover:bg-theme-accent/10
         transition-all duration-200 ease-out

@@ -14,8 +14,8 @@ import { useWalletDataStream, type WalletDataType } from "@/hooks/use-wallet-dat
 export function WalletDataStreamProvider() {
   const {
     wallets,
-    selectedWalletId,
     syncTrigger,
+    walletsChangedTrigger,
     streaming,
     updatePartialWalletData,
     setAggregateData,
@@ -24,24 +24,21 @@ export function WalletDataStreamProvider() {
     setWalletDataStreamingError,
   } = useWalletStore()
 
-  // Track the last processed sync trigger to detect changes
+  // Track the last processed triggers to detect changes
   const lastSyncTriggerRef = useRef(syncTrigger)
-  // Track previous selected wallet to detect wallet changes
-  const prevSelectedWalletIdRef = useRef<string | null>(selectedWalletId)
+  const lastWalletsChangedTriggerRef = useRef(walletsChangedTrigger)
   // Track if initial stream has started
   const hasInitializedRef = useRef(false)
 
   // Memoize addresses to prevent unnecessary recreations that cause startStream to change
+  // Always fetch ALL wallets - components will filter locally by selectedWalletId
   const addresses = useMemo(() => {
-    return selectedWalletId
-      ? wallets.filter(w => w.id === selectedWalletId).map(w => w.address)
-      : wallets.map(w => w.address)
-  }, [selectedWalletId, wallets])
+    return wallets.map(w => w.address)
+  }, [wallets])
 
   // Debug: log render
   console.log('[WalletDataStreamProvider] Render:', {
     walletsCount: wallets.length,
-    selectedWalletId,
     addressesLength: addresses.length,
     addresses,
     syncTrigger,
@@ -96,43 +93,34 @@ export function WalletDataStreamProvider() {
     })
   }, [errors, setWalletDataStreamingError])
 
-  // Handle sync trigger changes - restart stream when triggerSync is called
+  // Handle sync trigger changes - restart stream when triggerSync is called (clears data)
+  // Handle wallets changed trigger - restart stream when wallets are added/removed (preserves data)
   // Use refs to avoid cleanup race condition when startStream function reference changes
   useEffect(() => {
-    if (syncTrigger > lastSyncTriggerRef.current && addresses.length > 0) {
-      console.log('[WalletDataStreamProvider] Sync triggered, restarting stream...')
-      // Sync was triggered - restart stream
+    const isFullSync = syncTrigger > lastSyncTriggerRef.current
+    const isWalletsChanged = walletsChangedTrigger > lastWalletsChangedTriggerRef.current
+
+    if ((isFullSync || isWalletsChanged) && addresses.length > 0) {
+      console.log('[WalletDataStreamProvider] Stream restart triggered:', { isFullSync, isWalletsChanged })
+      // Stop current stream
       stopStreamRef.current()
+
       // Small delay to ensure cleanup before starting new stream
       const timer = setTimeout(() => {
-        setWalletDataStreaming(true)
+        // Only clear data and update store state for full sync, not for wallet changes
+        if (isFullSync) {
+          setWalletDataStreaming(true)
+        }
         startStreamRef.current()
       }, 50)
 
-      lastSyncTriggerRef.current = syncTrigger
+      // Update refs
+      if (isFullSync) lastSyncTriggerRef.current = syncTrigger
+      if (isWalletsChanged) lastWalletsChangedTriggerRef.current = walletsChangedTrigger
+
       return () => clearTimeout(timer)
     }
-  }, [syncTrigger, addresses.length, setWalletDataStreaming])
-
-  // Handle wallet selection changes - restart stream for new wallet
-  // Use refs to avoid cleanup race condition
-  useEffect(() => {
-    const walletChanged = selectedWalletId !== prevSelectedWalletIdRef.current
-
-    if (walletChanged && addresses.length > 0 && hasInitializedRef.current) {
-      // Wallet selection changed - restart stream
-      stopStreamRef.current()
-      const timer = setTimeout(() => {
-        setWalletDataStreaming(true)
-        startStreamRef.current()
-      }, 50)
-
-      prevSelectedWalletIdRef.current = selectedWalletId
-      return () => clearTimeout(timer)
-    }
-
-    prevSelectedWalletIdRef.current = selectedWalletId
-  }, [selectedWalletId, addresses.length, setWalletDataStreaming])
+  }, [syncTrigger, walletsChangedTrigger, addresses.length, setWalletDataStreaming])
 
   // Auto-start on initial mount
   // Use refs to get latest function references in cleanup

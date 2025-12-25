@@ -2,6 +2,14 @@
 // This route proxies the SSE stream from the backend API to the client
 import { NextRequest } from 'next/server'
 
+import {
+  createTimeoutController,
+  clearTimeoutController,
+  isTimeoutError,
+  getTimeoutErrorMessage,
+} from '@/lib/utils/timeout'
+import { REQUEST_TIMEOUTS, STREAM_TIMEOUTS, CONNECTION_TIMEOUT } from '@/lib/config/api'
+
 const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
 const API_KEY = process.env.HYPEREVM_API_KEY || ''
 
@@ -60,6 +68,12 @@ export async function GET(request: NextRequest) {
     errors: [] as { address: string; error: string }[],
   }
 
+  // Overall stream timeout controller
+  const overallStreamController = createTimeoutController(
+    STREAM_TIMEOUTS.POSITIONS_STREAM,
+    'positions stream'
+  )
+
   // Helper to write SSE message
   const writeSSE = async (data: unknown) => {
     try {
@@ -72,13 +86,37 @@ export async function GET(request: NextRequest) {
 
   // Start streaming in the background
   const streamPromise = (async () => {
+    // Handle overall stream timeout
+    overallStreamController.signal.addEventListener('abort', async () => {
+      await writeSSE({
+        type: 'error',
+        error: 'Stream timeout: Loading positions took too long. Please try again.'
+      })
+    })
+
     try {
       // For each address, create a fetch request to the SSE endpoint
       const abortControllers: AbortController[] = []
-      
+
       const streamPromises = addresses.map(async (address) => {
         const abortController = new AbortController()
         abortControllers.push(abortController)
+
+        // Create connection timeout for initial fetch
+        const connectionController = createTimeoutController(
+          CONNECTION_TIMEOUT,
+          `positions stream connection for ${address.slice(0, 8)}...`
+        )
+
+        // Combined signal handling - abort if either timeout triggers
+        const abortOnTimeout = () => {
+          if (overallStreamController.signal.aborted || connectionController.signal.aborted) {
+            abortController.abort()
+          }
+        }
+
+        overallStreamController.signal.addEventListener('abort', abortOnTimeout)
+        connectionController.signal.addEventListener('abort', abortOnTimeout)
 
         const cacheParam = skipCache ? '&cache=false' : ''
         const url = `${API_BASE_URL}/positions/stream?address=${address}${cacheParam}`
@@ -99,6 +137,9 @@ export async function GET(request: NextRequest) {
           if (!response.body) {
             throw new Error('No response body')
           }
+
+          // Clear connection timeout after successful connection
+          clearTimeoutController(connectionController)
 
           const reader = response.body.getReader()
           const decoder = new TextDecoder()
@@ -236,16 +277,33 @@ export async function GET(request: NextRequest) {
             }
           }
         } catch (error) {
+          clearTimeoutController(connectionController)
+
           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-          console.error(`[SSE] Error streaming for ${address}:`, errorMessage)
-          aggregatedState.errors.push({ address, error: errorMessage })
-          aggregatedState.completedWallets++
-          
-          await writeSSE({
-            type: 'wallet_error',
-            address,
-            error: errorMessage,
-          })
+
+          // Check for timeout errors
+          if (isTimeoutError(error) || errorMessage.includes('timeout')) {
+            const timeoutMsg = getTimeoutErrorMessage(`positions for ${address.slice(0, 8)}...`)
+            console.error(`[SSE] Timeout streaming for ${address}:`, timeoutMsg)
+            aggregatedState.errors.push({ address, error: timeoutMsg })
+            aggregatedState.completedWallets++
+
+            await writeSSE({
+              type: 'wallet_error',
+              address,
+              error: timeoutMsg,
+            })
+          } else {
+            console.error(`[SSE] Error streaming for ${address}:`, errorMessage)
+            aggregatedState.errors.push({ address, error: errorMessage })
+            aggregatedState.completedWallets++
+
+            await writeSSE({
+              type: 'wallet_error',
+              address,
+              error: errorMessage,
+            })
+          }
         }
       })
 
@@ -298,6 +356,7 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Stream error',
       })
     } finally {
+      clearTimeoutController(overallStreamController)
       try {
         await writer.close()
       } catch {

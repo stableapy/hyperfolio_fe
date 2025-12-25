@@ -27,14 +27,18 @@ export function WalletDropdown({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-sm border border-theme-border/70 bg-theme-card-bg hover:border-theme-accent/50 transition-all"
+        className="flex items-center bg-theme-card-bg/90 backdrop-blur-sm border border-theme-border/70 rounded-sm overflow-hidden hover:border-theme-accent/50 transition-all duration-150"
       >
-        <span className="font-mono text-xs text-theme-accent font-bold">&gt;</span>
-        <Wallet className="w-3.5 h-3.5 text-theme-accent shrink-0" />
-        <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary uppercase tracking-wider truncate max-w-[50px] sm:max-w-none">
-          {selectedWallet ? selectedWallet.name : 'all'}
-        </span>
-        <ChevronDown className={`w-3 h-3 text-theme-text-secondary transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="px-1.5 sm:px-2 py-1.5 sm:py-2 bg-theme-accent/10 border-r border-theme-accent/20 flex items-center gap-1 sm:gap-1.5">
+          <span className="font-mono text-[10px] sm:text-xs text-theme-accent font-bold">&gt;</span>
+          <Wallet className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-theme-accent shrink-0" />
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2">
+          <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary uppercase tracking-wider truncate max-w-[50px] sm:max-w-none">
+            {selectedWallet ? selectedWallet.name : 'all'}
+          </span>
+          <ChevronDown className={`w-3 h-3 text-theme-text-secondary transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
       </button>
       
       {/* Dropdown Menu */}

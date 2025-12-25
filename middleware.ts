@@ -37,10 +37,10 @@ function getSecurityHeaders(nonce?: string): Record<string, string> {
     "style-src 'self' 'unsafe-inline'",
     // Images: self, data URLs, and common image CDNs
     "img-src 'self' data: https: blob:",
-    // Fonts: self only
-    "font-src 'self'",
-    // Connect: self, analytics, API
-    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com",
+    // Fonts: self and data URLs
+    "font-src 'self' data:",
+    // Connect: self, analytics, API, Web3 providers, external services
+    "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.googletagmanager.com https://www.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com https://analytics.google.com ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*",
     // Media: self only
     "media-src 'self'",
     // Objects: none (prevent plugins)

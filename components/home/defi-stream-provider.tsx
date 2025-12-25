@@ -15,8 +15,8 @@ import { usePositionsStream, type StreamedProtocol } from "@/hooks/use-positions
 export function DefiStreamProvider() {
   const {
     wallets,
-    selectedWalletId,
     syncTrigger,
+    walletsChangedTrigger,
     streaming,
     updateStreamedProtocol,
     setStreamProgress,
@@ -25,19 +25,17 @@ export function DefiStreamProvider() {
     startStreaming,
   } = useWalletStore()
 
-  // Track the last processed sync trigger to detect changes
+  // Track the last processed triggers to detect changes
   const lastSyncTriggerRef = useRef(syncTrigger)
-  // Track previous selected wallet to detect wallet changes
-  const prevSelectedWalletIdRef = useRef<string | null>(selectedWalletId)
+  const lastWalletsChangedTriggerRef = useRef(walletsChangedTrigger)
   // Track if initial stream has started
   const hasInitializedRef = useRef(false)
 
   // Memoize addresses to prevent unnecessary recreations that cause startStream to change
+  // Always fetch ALL wallets - components will filter locally by selectedWalletId
   const addresses = useMemo(() => {
-    return selectedWalletId
-      ? wallets.filter(w => w.id === selectedWalletId).map(w => w.address)
-      : wallets.map(w => w.address)
-  }, [selectedWalletId, wallets])
+    return wallets.map(w => w.address)
+  }, [wallets])
 
   // Callbacks for stream events - update the wallet store
   const handleProtocolReceived = (protocol: StreamedProtocol) => {
@@ -82,42 +80,33 @@ export function DefiStreamProvider() {
     setStreamProgress(progress)
   }, [progress, setStreamProgress])
 
-  // Handle sync trigger changes - restart stream when triggerSync is called
+  // Handle sync trigger changes - restart stream when triggerSync is called (clears data)
+  // Handle wallets changed trigger - restart stream when wallets are added/removed (preserves data)
   // Use refs to avoid cleanup race condition when startStream function reference changes
   useEffect(() => {
-    if (syncTrigger > lastSyncTriggerRef.current && addresses.length > 0) {
-      // Sync was triggered - restart stream
+    const isFullSync = syncTrigger > lastSyncTriggerRef.current
+    const isWalletsChanged = walletsChangedTrigger > lastWalletsChangedTriggerRef.current
+
+    if ((isFullSync || isWalletsChanged) && addresses.length > 0) {
+      // Stop current stream
       stopStreamRef.current()
+
       // Small delay to ensure cleanup before starting new stream
       const timer = setTimeout(() => {
-        startStreaming() // Update store state
-        startStreamRef.current()
-      }, 50)
-      
-      lastSyncTriggerRef.current = syncTrigger
-      return () => clearTimeout(timer)
-    }
-  }, [syncTrigger, addresses.length, startStreaming])
-
-  // Handle wallet selection changes - restart stream for new wallet
-  // Use refs to avoid cleanup race condition
-  useEffect(() => {
-    const walletChanged = selectedWalletId !== prevSelectedWalletIdRef.current
-
-    if (walletChanged && addresses.length > 0 && hasInitializedRef.current) {
-      // Wallet selection changed - restart stream
-      stopStreamRef.current()
-      const timer = setTimeout(() => {
-        startStreaming()
+        // Only clear data and update store state for full sync, not for wallet changes
+        if (isFullSync) {
+          startStreaming() // This clears streamedProtocols
+        }
         startStreamRef.current()
       }, 50)
 
-      prevSelectedWalletIdRef.current = selectedWalletId
+      // Update refs
+      if (isFullSync) lastSyncTriggerRef.current = syncTrigger
+      if (isWalletsChanged) lastWalletsChangedTriggerRef.current = walletsChangedTrigger
+
       return () => clearTimeout(timer)
     }
-
-    prevSelectedWalletIdRef.current = selectedWalletId
-  }, [selectedWalletId, addresses.length, startStreaming])
+  }, [syncTrigger, walletsChangedTrigger, addresses.length, startStreaming])
 
   // Auto-start on initial mount
   // Use refs to get latest function references in cleanup

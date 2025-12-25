@@ -27,6 +27,7 @@ export interface ProtocolGroup {
   id: string
   name: string
   logo: string | null
+  url: string
   totalValue: number
   positions: DeFiPositionDisplay[]
   stats?: {

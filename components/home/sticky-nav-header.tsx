@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Terminal } from "lucide-react"
 import { SectionNav } from "@/components/section-nav"
-import { WalletDropdown } from "./wallet-dropdown"
+import { WalletSelector } from "@/components/portfolio-hero/wallet-selector"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { StickyNavHeaderProps } from "./types"
 
@@ -20,7 +20,7 @@ export function StickyNavHeader({
   onRemoveWallet,
   onAddWallet,
 }: StickyNavHeaderProps) {
-  const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false)
+  const [isWalletSelectorOpen, setIsWalletSelectorOpen] = useState(false)
 
   return (
     <div className="relative sticky top-0 z-40 ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] w-screen px-4 sm:px-6 pt-3 mb-6 bg-theme-bg/98 backdrop-blur-md border-b border-theme-border/70">
@@ -28,7 +28,7 @@ export function StickyNavHeader({
       <div className="flex items-center gap-2 mb-2">
         <Terminal className="w-3.5 h-3.5 text-theme-accent" />
         <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">
-          hyperfolio<span className="text-theme-accent">@</span>portfolio
+          hyperfolio<span className="text-theme-accent">_</span>portfolio
         </span>
         <span className="font-mono text-theme-accent animate-pulse">_</span>
       </div>
@@ -36,12 +36,12 @@ export function StickyNavHeader({
       {/* Theme Toggle & Wallet Selector - Positioned absolutely on the right */}
       <div className="absolute right-4 sm:right-6 top-3 flex items-center gap-2 z-10">
         <ThemeToggle />
-        <WalletDropdown
+        <WalletSelector
           wallets={wallets}
           selectedWalletId={selectedWalletId}
-          isOpen={isWalletDropdownOpen}
-          onToggle={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
-          onClose={() => setIsWalletDropdownOpen(false)}
+          isOpen={isWalletSelectorOpen}
+          onToggle={() => setIsWalletSelectorOpen(!isWalletSelectorOpen)}
+          onClose={() => setIsWalletSelectorOpen(false)}
           onSelectWallet={onSelectWallet}
           onRemoveWallet={onRemoveWallet}
           onAddWallet={onAddWallet}

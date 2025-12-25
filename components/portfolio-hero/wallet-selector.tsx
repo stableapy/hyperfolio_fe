@@ -71,7 +71,7 @@ export function WalletSelector({
       <button
         type="button"
         onClick={handleButtonClick}
-        className="flex items-center bg-theme-card-bg/90 backdrop-blur-sm border border-theme-border/70 rounded-sm overflow-hidden hover:border-theme-accent/50 transition-all duration-150"
+        className="flex items-center bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden hover:border-theme-accent/50 transition-all duration-150"
       >
         <div className="px-1.5 sm:px-2 py-1.5 sm:py-2 bg-theme-accent/10 border-r border-theme-accent/20">
           <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-theme-accent shrink-0" />

@@ -30,14 +30,22 @@ export function ProtocolCard({
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Terminal Prompt */}
             <span className="font-mono text-sm font-bold text-theme-accent select-none flex-shrink-0">&gt;</span>
-            
+
             <img
               src={protocol.logo || "/placeholder.svg"}
               alt={protocol.name}
               className="w-6 h-6 sm:w-7 sm:h-7 rounded flex-shrink-0 ring-1 ring-theme-border"
             />
             <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-              <span className="font-mono text-xs sm:text-sm text-theme-accent font-bold truncate tracking-wide">{protocol.name}</span>
+              <a
+                href={protocol.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="font-mono text-xs sm:text-sm text-theme-accent font-bold truncate tracking-wide hover:opacity-80"
+              >
+                {protocol.name}
+              </a>
               <span className="font-mono text-[9px] sm:text-[10px] text-theme-text-muted bg-theme-bg/50 border border-theme-border/50 px-1 sm:px-1.5 py-0.5 rounded">
                 [{protocol.positions.length}]
               </span>
