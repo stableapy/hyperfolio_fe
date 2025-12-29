@@ -1,64 +1,67 @@
 // Types for DeFi Section components
 
-import type { DeFiPositionDisplay } from "@/lib/utils/data-transformers"
+import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers';
 
 export interface DefiSectionProps {
-  isLoading?: boolean
+  isLoading?: boolean;
 }
 
 export interface DefiStatsGridProps {
-  isLoading: boolean
-  hasData: boolean
-  totalDeposited: number
-  totalRewards: number
-  weightedApy: number
-  portfolioYield: PortfolioYield
-  positionsWithApy: number
-  totalPositions: number
+  isLoading: boolean;
+  hasData: boolean;
+  totalDeposited: number;
+  totalRewards: number;
+  weightedApy: number;
+  portfolioYield: PortfolioYield;
+  positionsWithApy: number;
+  totalPositions: number;
 }
 
 export interface PortfolioYield {
-  daily: number
-  weekly: number
-  monthly: number
+  daily: number;
+  weekly: number;
+  monthly: number;
 }
 
 export interface ProtocolGroup {
-  id: string
-  name: string
-  logo: string | null
-  url: string
-  totalValue: number
-  positions: DeFiPositionDisplay[]
+  id: string;
+  name: string;
+  logo: string | null;
+  url: string;
+  totalValue: number;
+  positions: DeFiPositionDisplay[];
   stats?: {
-    weightedApyPercent?: number
+    weightedApyPercent?: number;
     estimatedYield?: {
-      daily: string
-      weekly: string
-      monthly: string
-    }
-  }
+      daily: string;
+      weekly: string;
+      monthly: string;
+    };
+  };
 }
 
 export interface ProtocolCardProps {
-  protocol: ProtocolGroup
-  isExpanded: boolean
-  onToggle: () => void
-  selectedWalletId: string | null
+  protocol: ProtocolGroup;
+  isExpanded: boolean;
+  onToggle: () => void;
+  selectedWalletId: string | null;
+  privacyMode: boolean;
+  totalPortfolioUSD: number;
 }
 
 export interface PositionItemProps {
-  position: DeFiPositionDisplay
-  showWalletIndicator: boolean
+  position: DeFiPositionDisplay;
+  showWalletIndicator: boolean;
+  privacyMode: boolean;
+  totalPortfolioUSD: number;
 }
 
 export interface DefiStats {
-  totalDeposited: number
-  totalCurrent: number
-  totalRewards: number
-  weightedApy: number
-  portfolioYield: PortfolioYield
-  positionsWithApy: number
-  totalPositions: number
+  totalDeposited: number;
+  totalCurrent: number;
+  totalRewards: number;
+  weightedApy: number;
+  portfolioYield: PortfolioYield;
+  positionsWithApy: number;
+  totalPositions: number;
 }
-

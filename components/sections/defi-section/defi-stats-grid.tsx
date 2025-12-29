@@ -1,20 +1,26 @@
-"use client"
+'use client';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { StatPill, StatPillSkeleton } from "@/components/ui/stat-pill"
-import type { DefiStatsGridProps } from "./types"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { StatPill, StatPillSkeleton } from '@/components/ui/stat-pill';
+import type { DefiStatsGridProps } from './types';
+import { formatPercentage } from '@/lib/utils/formatters';
 
 /**
  * Format value with K/M suffix for compact display
  */
 function formatCompactValue(value: number): string {
   if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`
+    return `$${(value / 1000000).toFixed(1)}M`;
   }
   if (value >= 1000) {
-    return `$${(value / 1000).toFixed(1)}K`
+    return `$${(value / 1000).toFixed(1)}K`;
   }
-  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -30,11 +36,11 @@ export function DefiStatsGrid({
   positionsWithApy,
   totalPositions,
 }: DefiStatsGridProps) {
-  const showSkeleton = isLoading && !hasData
+  const showSkeleton = isLoading && !hasData;
 
   return (
     <TooltipProvider>
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+      <div className="mb-4 flex flex-wrap items-center gap-2 sm:mb-6 sm:gap-3">
         {/* Deposited */}
         {showSkeleton ? (
           <StatPillSkeleton width="w-32 sm:w-40" />
@@ -69,37 +75,47 @@ export function DefiStatsGrid({
                 icon="%"
                 color="purple"
                 label="--apy"
-                value={`${weightedApy.toFixed(1)}%`}
+                value={formatPercentage(weightedApy)}
                 interactive
                 asButton
               />
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-theme-bg border border-theme-border p-3 max-w-xs">
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
               <div className="space-y-2">
-                <div className="font-mono text-xs text-theme-purple font-bold">
-                  <span className="text-theme-purple">&gt;</span> yield --estimate
+                <div className="text-theme-purple font-mono text-xs font-bold">
+                  <span className="text-theme-purple">&gt;</span> yield
+                  --estimate
                 </div>
                 <div className="grid grid-cols-3 gap-3 pt-1">
                   <div>
-                    <div className="font-mono text-[9px] text-theme-text-muted">daily:</div>
-                    <div className="font-mono text-xs text-theme-accent font-bold tabular-nums">
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      daily:
+                    </div>
+                    <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
                       ${portfolioYield.daily.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="font-mono text-[9px] text-theme-text-muted">weekly:</div>
-                    <div className="font-mono text-xs text-theme-accent font-bold tabular-nums">
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      weekly:
+                    </div>
+                    <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
                       ${portfolioYield.weekly.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="font-mono text-[9px] text-theme-text-muted">monthly:</div>
-                    <div className="font-mono text-xs text-theme-accent font-bold tabular-nums">
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      monthly:
+                    </div>
+                    <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
                       ${portfolioYield.monthly.toFixed(2)}
                     </div>
                   </div>
                 </div>
-                <div className="font-mono text-[9px] text-theme-text-muted pt-2 border-t border-theme-border/50">
+                <div className="text-theme-text-muted border-theme-border/50 border-t pt-2 font-mono text-[9px]">
                   # {positionsWithApy}/{totalPositions} positions with apy data
                 </div>
               </div>
@@ -116,5 +132,5 @@ export function DefiStatsGrid({
         )}
       </div>
     </TooltipProvider>
-  )
+  );
 }

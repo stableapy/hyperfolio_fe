@@ -1,133 +1,141 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react"
-import { useWalletStore } from "@/lib/store/wallet-store"
-import { transformTransactions } from "@/lib/utils/data-transformers"
-import { secureFetch } from "@/lib/api/fetch"
-import type { Transaction } from "../types"
+import { useCallback, useMemo, useEffect, useRef } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useWalletStore } from '@/lib/store/wallet-store';
+import { transformTransactions } from '@/lib/utils/data-transformers';
+import { secureFetch } from '@/lib/api/fetch';
+import type { Transaction } from '../types';
 
-const TRANSACTIONS_PER_PAGE = 15
+const TRANSACTIONS_PER_PAGE = 15;
 
-interface TransactionsState {
-  transactions: Transaction[]
-  isLoading: boolean
-  error: string | null
-  page: number
-  hasMore: boolean
-  total: number
+interface TransactionsPageData {
+  transactions: Transaction[];
+  hasMore: boolean;
+  total: number;
 }
 
 /**
- * Hook to lazily fetch and paginate transactions
- * Only fetches when fetchTransactions() is called (lazy loading)
+ * Hook to fetch and paginate transactions using React Query's useInfiniteQuery
+ * Auto-fetches when currentAddress changes
+ * This implementation eliminates race conditions by using React Query's built-in pagination
  */
 export function useTransactions() {
-  const { wallets, selectedWalletId, syncTrigger } = useWalletStore()
+  const { wallets, selectedWalletId, syncTrigger } = useWalletStore();
+  const prevSyncTriggerRef = useRef(syncTrigger);
 
-  // Track previous sync trigger to detect changes
-  const prevSyncTriggerRef = useRef(syncTrigger)
-
-  const [state, setState] = useState<TransactionsState>({
-    transactions: [],
-    isLoading: false,
-    error: null,
-    page: 1,
-    hasMore: false,
-    total: 0,
-  })
-
-  // Get the current wallet address
+  // Get current wallet address
   const currentAddress = useMemo(() => {
     if (selectedWalletId) {
-      const wallet = wallets.find(w => w.id === selectedWalletId)
-      return wallet?.address || null
+      const wallet = wallets.find((w) => w.id === selectedWalletId);
+      return wallet?.address || null;
     }
     // For multiple wallets, use the first one (or could aggregate)
-    return wallets.length > 0 ? wallets[0].address : null
-  }, [wallets, selectedWalletId])
+    return wallets.length > 0 ? wallets[0].address : null;
+  }, [wallets, selectedWalletId]);
 
-  // Fetch transactions from API (lazy - only called when needed)
-  const fetchTransactions = useCallback(async (page = 1, reset = false) => {
-    if (!currentAddress) {
-      setState(prev => ({ ...prev, transactions: [], total: 0, hasMore: false }))
-      return
-    }
-
-    setState(prev => ({ ...prev, isLoading: true, error: null }))
-
-    try {
-      // Call our API route which will forward to the external API
-      const response = await secureFetch(
-        `/api/wallet/transactions?address=${currentAddress}&page=${page}&offset=${TRANSACTIONS_PER_PAGE}`
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch transactions')
+  // Use Infinite Query for pagination - eliminates manual state management and race conditions
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['transactions', currentAddress, syncTrigger],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      if (!currentAddress) {
+        return {
+          transactions: [],
+          hasMore: false,
+          total: 0,
+        };
       }
 
-      const data = await response.json()
-      const transformedTransactions = transformTransactions(data.transactions || [])
+      const response = await secureFetch(
+        `/api/wallet/transactions?address=${currentAddress}&page=${pageParam}&offset=${TRANSACTIONS_PER_PAGE}`
+      );
 
-      setState(prev => ({
-        ...prev,
-        transactions: reset 
-          ? transformedTransactions 
-          : [...prev.transactions, ...transformedTransactions],
-        isLoading: false,
-        page,
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      const data = await response.json();
+      const transformedTransactions = transformTransactions(
+        data.transactions || []
+      );
+
+      return {
+        transactions: transformedTransactions,
         hasMore: data.hasMore || false,
         total: data.total || transformedTransactions.length,
-      }))
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch transactions',
-      }))
-    }
-  }, [currentAddress])
+      } as TransactionsPageData;
+    },
+    getNextPageParam: (
+      lastPage: TransactionsPageData,
+      allPages: TransactionsPageData[]
+    ) => {
+      if (lastPage.hasMore) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    enabled: !!currentAddress,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
 
-  // Load more transactions (next page)
-  const loadMore = useCallback(() => {
-    if (!state.isLoading && state.hasMore) {
-      fetchTransactions(state.page + 1, false)
-    }
-  }, [fetchTransactions, state.isLoading, state.hasMore, state.page])
+  // Flatten pages for easier consumption (maintains backward compatibility)
+  const transactions = useMemo(() => {
+    return data?.pages.flatMap((page) => page.transactions) || [];
+  }, [data]);
+
+  const hasMore = hasNextPage || false;
+  const total = data?.pages[0]?.total || 0;
 
   // Clear transactions when sync is triggered (global refresh)
   useEffect(() => {
     if (syncTrigger !== prevSyncTriggerRef.current) {
-      // Sync was triggered - clear transactions and trigger a refetch
-      setState({
-        transactions: [],
-        isLoading: true,
-        error: null,
-        page: 1,
-        hasMore: false,
-        total: 0,
-      })
-      prevSyncTriggerRef.current = syncTrigger
-
-      // Trigger refetch after clearing (if we have an address)
-      if (currentAddress) {
-        fetchTransactions(1, true)
-      }
+      prevSyncTriggerRef.current = syncTrigger;
+      refetch();
     }
-  }, [syncTrigger, currentAddress, fetchTransactions])
+  }, [syncTrigger, refetch]);
 
   // Refresh transactions (reset to page 1)
   const refresh = useCallback(() => {
-    fetchTransactions(1, true)
-  }, [fetchTransactions])
+    refetch();
+  }, [refetch]);
+
+  // Load more transactions
+  const loadMore = useCallback(() => {
+    if (!isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+  // Fetch transactions explicitly (maintain API compatibility)
+  const fetchTransactions = useCallback(
+    (page: number, reset: boolean) => {
+      if (reset) {
+        refetch();
+      } else {
+        fetchNextPage();
+      }
+    },
+    [refetch, fetchNextPage]
+  );
 
   return {
-    transactions: state.transactions,
-    isLoading: state.isLoading,
-    error: state.error,
-    hasMore: state.hasMore,
-    total: state.total,
-    page: state.page,
+    transactions,
+    isLoading,
+    error: error instanceof Error ? error : null,
+    hasMore,
+    total,
+    page: data?.pages.length || 1,
     fetchTransactions,
     loadMore,
     refresh,
-  }
+  };
 }

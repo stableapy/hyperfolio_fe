@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { RefreshCw, Maximize2 } from 'lucide-react';
+import { RefreshCw, Maximize2, Eye, EyeOff } from 'lucide-react';
 import { useWalletStore } from '@/lib/store/wallet-store';
 
 // Sub-components
@@ -42,18 +42,18 @@ export function PortfolioHero({
     removeWallet,
     streaming,
     loading,
+    privacyMode,
+    togglePrivacyMode,
   } = useWalletStore();
 
   // Local state
-  const [privacyMode] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
-  const [showChart, setShowChart] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
   // Custom hooks
-  const { isLoadingHistory, chartData, getModalChartData } =
+  const { isLoadingHistory, chartData, getModalChartData, error } =
     usePortfolioHistory({
       selectedWalletId,
       wallets,
@@ -71,6 +71,10 @@ export function PortfolioHero({
     wallets,
   });
 
+  // Calculate showChart directly - no state needed
+  // Show chart if we have data, or keep showing while loading
+  const showChart = chartData.length > 0 || isLoadingHistory;
+
   // Hide scroll indicator when user scrolls, show when back at top
   useEffect(() => {
     const handleScroll = () => {
@@ -80,17 +84,6 @@ export function PortfolioHero({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Show chart as soon as chart data is available
-  // Don't hide chart on refetch - only hide when there's no data at all
-  useEffect(() => {
-    if (chartData.length > 0) {
-      setShowChart(true);
-    } else if (!isLoadingHistory && chartData.length === 0) {
-      // Only hide if we're done loading AND have no data (empty state)
-      setShowChart(false);
-    }
-  }, [isLoadingHistory, chartData.length]);
 
   // Get display data from selected wallet or aggregate
   const displayData = useMemo(() => {
@@ -220,9 +213,30 @@ export function PortfolioHero({
               </p>
             </div>
 
-            {/* Controls: Sync, Theme Toggle & Wallet Selector */}
+            {/* Controls: Sync, Theme Toggle, Privacy & Wallet Selector */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               <ThemeToggle />
+              <button
+                type="button"
+                onClick={() => togglePrivacyMode()}
+                className="bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150"
+                aria-label={
+                  privacyMode
+                    ? 'Show portfolio values'
+                    : 'Hide portfolio values'
+                }
+              >
+                <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-1.5 py-1.5 sm:px-2 sm:py-2">
+                  {privacyMode ? (
+                    <EyeOff className="text-theme-accent h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  ) : (
+                    <Eye className="text-theme-accent h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  )}
+                </div>
+                <span className="text-theme-text-muted hidden px-1.5 font-mono text-[9px] sm:inline sm:px-2 sm:text-[10px]">
+                  {privacyMode ? '--show' : '--hide'}
+                </span>
+              </button>
               <WalletSelector
                 wallets={wallets}
                 selectedWalletId={selectedWalletId}

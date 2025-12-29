@@ -1,105 +1,120 @@
 // Wallet Store using Zustand for state management
-'use client'
+'use client';
 
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 import type {
   Wallet,
   AggregateData,
   WalletCompositionResponse,
   WalletDataType,
-} from '@/lib/types/api'
-import { secureFetch } from '@/lib/api/fetch'
+} from '@/lib/types/api';
+import { secureFetch } from '@/lib/api/fetch';
 import type {
   StreamedProtocol,
   StreamProgress,
-  StreamPortfolioStats
-} from '@/hooks/use-positions-stream'
+  StreamPortfolioStats,
+} from '@/hooks/use-positions-stream';
 
 interface WalletData {
-  composition: WalletCompositionResponse | null  // Raw API response with { data: { tokens: [...] } }
-  compositionRaw?: WalletCompositionResponse | null  // Alias for composition
+  composition: WalletCompositionResponse | null; // Raw API response with { data: { tokens: [...] } }
+  compositionRaw?: WalletCompositionResponse | null; // Alias for composition
   // Note: transactions removed - loaded independently via /api/wallet/transactions
-  nfts: unknown
-  positions: unknown
-  userData: unknown
-  history: unknown[]
+  nfts: unknown;
+  positions: unknown;
+  userData: unknown;
+  history: unknown[];
 }
 
 // Streaming positions state
 interface StreamingState {
-  isStreaming: boolean
-  isStreamComplete: boolean
-  streamProgress: StreamProgress
-  streamedProtocols: Map<string, StreamedProtocol>
-  streamPortfolioStats: StreamPortfolioStats | null
-  streamError: string | null
-  skipCache: boolean  // Whether the current/next stream should skip cache
+  isStreaming: boolean;
+  isStreamComplete: boolean;
+  streamProgress: StreamProgress;
+  streamedProtocols: Map<string, StreamedProtocol>;
+  streamPortfolioStats: StreamPortfolioStats | null;
+  streamError: string | null;
+  skipCache: boolean; // Whether the current/next stream should skip cache
 
   // Wallet data streaming state (for progressive wallet data loading)
   walletDataStreaming: {
-    isStreaming: boolean
-    isComplete: boolean
-    errors: Array<{ address?: string; endpoint?: string; error: string }>
-  }
+    isStreaming: boolean;
+    isComplete: boolean;
+    errors: Array<{ address?: string; endpoint?: string; error: string }>;
+  };
 }
 
 // Granular loading states for each data source
 interface LoadingStates {
-  isWalletDataLoading: boolean  // For aggregate + individual wallet data (composition, history, tokens, NFTs, etc.)
-  isPositionsLoading: boolean    // For SSE positions streaming (DeFi positions)
+  isWalletDataLoading: boolean; // For aggregate + individual wallet data (composition, history, tokens, NFTs, etc.)
+  isPositionsLoading: boolean; // For SSE positions streaming (DeFi positions)
 }
 
 interface WalletState {
-  wallets: Wallet[]
-  selectedWalletId: string | null
+  wallets: Wallet[];
+  selectedWalletId: string | null;
   // Legacy: kept for backwards compatibility
-  isLoading: boolean
+  isLoading: boolean;
   // Granular loading states
-  loading: LoadingStates
-  error: string | null
-  aggregateData: AggregateData | null
-  walletData: Record<string, WalletData> // Store raw data per wallet address
+  loading: LoadingStates;
+  error: string | null;
+  aggregateData: AggregateData | null;
+  walletData: Record<string, WalletData>; // Store raw data per wallet address
+
+  // Privacy mode state
+  privacyMode: boolean;
 
   // Streaming state
-  streaming: StreamingState
+  streaming: StreamingState;
 
   // Sync trigger counter - incremented to signal full stream restart (clears data)
-  syncTrigger: number
+  syncTrigger: number;
   // Wallets changed trigger - incremented when wallets are added/removed (preserves data)
-  walletsChangedTrigger: number
+  walletsChangedTrigger: number;
 
   // Actions
-  addWallet: (wallet: Omit<Wallet, 'id'>) => void
-  removeWallet: (walletId: string) => void
-  updateWallet: (walletId: string, updates: Partial<Wallet>) => void
-  selectWallet: (walletId: string | null) => void
-  setLoading: (loading: boolean) => void
-  setWalletDataLoading: (loading: boolean) => void
-  setPositionsLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
-  setAggregateData: (data: AggregateData | null) => void
-  setWalletData: (address: string, data: WalletData) => void
-  syncWalletData: (walletId: string, skipCache?: boolean) => Promise<void>
-  syncAllWallets: (skipCache?: boolean) => Promise<void>
+  addWallet: (wallet: Omit<Wallet, 'id'>) => void;
+  removeWallet: (walletId: string) => void;
+  updateWallet: (walletId: string, updates: Partial<Wallet>) => void;
+  selectWallet: (walletId: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  setWalletDataLoading: (loading: boolean) => void;
+  setPositionsLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setAggregateData: (data: AggregateData | null) => void;
+  setWalletData: (address: string, data: WalletData) => void;
+  syncWalletData: (walletId: string, skipCache?: boolean) => Promise<void>;
+  syncAllWallets: (skipCache?: boolean) => Promise<void>;
   // Trigger a full sync (clears streamed data and restarts stream)
-  triggerSync: (skipCache?: boolean) => void
-  
+  triggerSync: (skipCache?: boolean) => void;
+
+  // Privacy mode actions
+  setPrivacyMode: (enabled: boolean) => void;
+  togglePrivacyMode: () => void;
+
   // Streaming actions
-  startStreaming: () => void
-  stopStreaming: () => void
-  updateStreamedProtocol: (protocol: StreamedProtocol) => void
-  setStreamProgress: (progress: StreamProgress) => void
-  setStreamComplete: (stats: StreamPortfolioStats) => void
-  setStreamError: (error: string | null) => void
-  clearStreamedData: () => void
+  startStreaming: () => void;
+  stopStreaming: () => void;
+  updateStreamedProtocol: (protocol: StreamedProtocol) => void;
+  setStreamProgress: (progress: StreamProgress) => void;
+  setStreamComplete: (stats: StreamPortfolioStats) => void;
+  setStreamError: (error: string | null) => void;
+  clearStreamedData: () => void;
 
   // Wallet data streaming actions
-  setWalletDataStreaming: (isStreaming: boolean) => void
-  setWalletDataStreamingComplete: () => void
-  setWalletDataStreamingError: (error: { address?: string; endpoint?: string; error: string }) => void
-  updatePartialWalletData: (address: string, dataType: WalletDataType, data: unknown) => void
+  setWalletDataStreaming: (isStreaming: boolean) => void;
+  setWalletDataStreamingComplete: () => void;
+  setWalletDataStreamingError: (error: {
+    address?: string;
+    endpoint?: string;
+    error: string;
+  }) => void;
+  updatePartialWalletData: (
+    address: string,
+    dataType: WalletDataType,
+    data: unknown
+  ) => void;
 }
 
 // Initial streaming state
@@ -116,7 +131,7 @@ const initialStreamingState: StreamingState = {
     isComplete: false,
     errors: [],
   },
-}
+};
 
 export const useWalletStore = create<WalletState>()(
   persist(
@@ -134,37 +149,39 @@ export const useWalletStore = create<WalletState>()(
       streaming: { ...initialStreamingState },
       syncTrigger: 0,
       walletsChangedTrigger: 0,
+      privacyMode: false,
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
           id: Date.now().toString(),
           ...wallet,
-        }
+        };
         set((state) => ({
           wallets: [...state.wallets, newWallet],
           // Increment walletsChangedTrigger to trigger streaming providers to fetch data for new wallet
           // This does NOT clear existing data, unlike syncTrigger
           walletsChangedTrigger: state.walletsChangedTrigger + 1,
-        }))
+        }));
       },
 
       removeWallet: (walletId) => {
         set((state) => {
-          const walletToRemove = state.wallets.find((w) => w.id === walletId)
-          const walletAddress = walletToRemove?.address
+          const walletToRemove = state.wallets.find((w) => w.id === walletId);
+          const walletAddress = walletToRemove?.address;
 
           // Clean up streamed protocols: remove positions belonging to the removed wallet
-          const cleanedProtocols = new Map<string, StreamedProtocol>()
+          const cleanedProtocols = new Map<string, StreamedProtocol>();
           state.streaming.streamedProtocols.forEach((protocol, protocolId) => {
             const filteredPositions = protocol.positions.filter(
               (pos) => pos.walletAddress !== walletAddress
-            )
+            );
             // Only keep protocols that still have positions after filtering
             if (filteredPositions.length > 0) {
               // Recalculate totalValueUSD from remaining positions to avoid stale values
               const recalculatedTotalValue = filteredPositions.reduce(
-                (sum, pos) => sum + parseFloat(pos.totalValueUSD || '0'), 0
-              )
+                (sum, pos) => sum + parseFloat(pos.totalValueUSD || '0'),
+                0
+              );
               cleanedProtocols.set(protocolId, {
                 ...protocol,
                 positions: filteredPositions,
@@ -174,40 +191,45 @@ export const useWalletStore = create<WalletState>()(
                   ...protocol.protocolStats,
                   totalPositions: filteredPositions.length,
                 },
-              })
+              });
             }
-          })
+          });
 
           // Clean up wallet data for the removed wallet address
-          const cleanedWalletData = { ...state.walletData }
+          const cleanedWalletData = { ...state.walletData };
           if (walletAddress && cleanedWalletData[walletAddress]) {
-            delete cleanedWalletData[walletAddress]
+            delete cleanedWalletData[walletAddress];
           }
 
           return {
             wallets: state.wallets.filter((w) => w.id !== walletId),
-            selectedWalletId: state.selectedWalletId === walletId ? null : state.selectedWalletId,
+            selectedWalletId:
+              state.selectedWalletId === walletId
+                ? null
+                : state.selectedWalletId,
             walletData: cleanedWalletData,
             streaming: {
               ...state.streaming,
               streamedProtocols: cleanedProtocols,
             },
-          }
-        })
+          };
+        });
       },
 
       updateWallet: (walletId, updates) => {
         set((state) => ({
-          wallets: state.wallets.map((w) => (w.id === walletId ? { ...w, ...updates } : w)),
-        }))
+          wallets: state.wallets.map((w) =>
+            w.id === walletId ? { ...w, ...updates } : w
+          ),
+        }));
       },
 
       selectWallet: (walletId) => {
-        set({ selectedWalletId: walletId })
+        set({ selectedWalletId: walletId });
       },
 
       setLoading: (loading) => {
-        set({ isLoading: loading })
+        set({ isLoading: loading });
       },
 
       setWalletDataLoading: (loading) => {
@@ -215,21 +237,21 @@ export const useWalletStore = create<WalletState>()(
           loading: { ...state.loading, isWalletDataLoading: loading },
           // Also update legacy isLoading for backwards compatibility
           isLoading: loading,
-        }))
+        }));
       },
 
       setPositionsLoading: (loading) => {
         set((state) => ({
           loading: { ...state.loading, isPositionsLoading: loading },
-        }))
+        }));
       },
 
       setError: (error) => {
-        set({ error })
+        set({ error });
       },
 
       setAggregateData: (data) => {
-        set({ aggregateData: data })
+        set({ aggregateData: data });
       },
 
       setWalletData: (address, data) => {
@@ -238,99 +260,113 @@ export const useWalletStore = create<WalletState>()(
             ...state.walletData,
             [address]: data,
           },
-        }))
+        }));
       },
 
       syncWalletData: async (walletId, skipCache = false) => {
-        const wallet = get().wallets.find((w) => w.id === walletId)
-        if (!wallet) return
+        const wallet = get().wallets.find((w) => w.id === walletId);
+        if (!wallet) return;
 
-        set({ isLoading: true, error: null })
+        set({ isLoading: true, error: null });
 
         try {
           // Fetch data from API with optional cache bypass
-          const cacheParam = skipCache ? '?cache=false' : ''
-          const response = await secureFetch(`/api/wallet/${wallet.address}${cacheParam}`)
-          if (!response.ok) throw new Error('Failed to fetch wallet data')
+          const cacheParam = skipCache ? '?cache=false' : '';
+          const response = await secureFetch(
+            `/api/wallet/${wallet.address}${cacheParam}`
+          );
+          if (!response.ok) throw new Error('Failed to fetch wallet data');
 
-          const data = await response.json()
+          const data = await response.json();
 
           // Update wallet with composition data
           get().updateWallet(walletId, {
             composition: data.composition,
             lastUpdated: Date.now(),
-          })
+          });
         } catch (error) {
-          console.error(`Error syncing wallet ${walletId}:`, error)
-          set({ error: error instanceof Error ? error.message : 'Failed to sync wallet' })
+          console.error(`Error syncing wallet ${walletId}:`, error);
+          set({
+            error:
+              error instanceof Error ? error.message : 'Failed to sync wallet',
+          });
         } finally {
-          set({ isLoading: false })
+          set({ isLoading: false });
         }
       },
 
       syncAllWallets: async (skipCache = false) => {
-        const { wallets } = get()
-        if (wallets.length === 0) return
+        const { wallets } = get();
+        if (wallets.length === 0) return;
 
         // Set wallet data loading state (not positions loading - that's separate)
-        get().setWalletDataLoading(true)
-        set({ error: null })
+        get().setWalletDataLoading(true);
+        set({ error: null });
 
         try {
-          const addresses = wallets.map((w) => w.address)
+          const addresses = wallets.map((w) => w.address);
           // Add cache=false to body when skipping cache
           const response = await secureFetch('/api/wallet/aggregate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ addresses, cache: skipCache ? false : undefined }),
-          })
-
+            body: JSON.stringify({
+              addresses,
+              cache: skipCache ? false : undefined,
+            }),
+          });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.error || 'Failed to fetch aggregate data')
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || 'Failed to fetch aggregate data'
+            );
           }
 
-          const aggregateData = await response.json()
+          const aggregateData = await response.json();
 
-          set({ aggregateData })
+          set({ aggregateData });
 
           // Update each wallet with raw data in parallel using Promise.allSettled
           // This ensures all requests run concurrently and we track completion properly
-          const cacheParam = skipCache ? '?cache=false' : ''
+          const cacheParam = skipCache ? '?cache=false' : '';
           const walletUpdatePromises = wallets.map(async (wallet) => {
-            const walletResponse = await secureFetch(`/api/wallet/${wallet.address}${cacheParam}`)
+            const walletResponse = await secureFetch(
+              `/api/wallet/${wallet.address}${cacheParam}`
+            );
             if (!walletResponse.ok) {
-              throw new Error(`Failed to fetch wallet ${wallet.address}`)
+              throw new Error(`Failed to fetch wallet ${wallet.address}`);
             }
-            const data = await walletResponse.json()
-            get().setWalletData(wallet.address, data)
+            const data = await walletResponse.json();
+            get().setWalletData(wallet.address, data);
 
             if (data.composition) {
               get().updateWallet(wallet.id, {
                 composition: data.composition,
                 lastUpdated: Date.now(),
-              })
+              });
             }
-            return { address: wallet.address, success: true }
-          })
+            return { address: wallet.address, success: true };
+          });
 
-          const results = await Promise.allSettled(walletUpdatePromises)
+          const results = await Promise.allSettled(walletUpdatePromises);
 
           // Log any failures but don't throw - we still have aggregate data
           results.forEach((result, index) => {
             if (result.status === 'rejected') {
-              console.error(`Error updating wallet ${wallets[index].id}:`, result.reason)
+              console.error(
+                `Error updating wallet ${wallets[index].id}:`,
+                result.reason
+              );
             }
-          })
+          });
 
-          get().setWalletDataLoading(false)
-
-        } catch (error) {   
+          get().setWalletDataLoading(false);
+        } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to sync wallets',
-          })
-          get().setWalletDataLoading(false)
+            error:
+              error instanceof Error ? error.message : 'Failed to sync wallets',
+          });
+          get().setWalletDataLoading(false);
         }
       },
 
@@ -354,10 +390,19 @@ export const useWalletStore = create<WalletState>()(
           },
           // Increment trigger to signal stream restart
           syncTrigger: state.syncTrigger + 1,
-        }))
+        }));
 
         // Note: syncAllWallets is NOT called here - the streaming providers (DefiStreamProvider and WalletDataStreamProvider)
         // will detect the syncTrigger change and restart their streams automatically
+      },
+
+      // Privacy mode actions
+      setPrivacyMode: (enabled: boolean) => {
+        set({ privacyMode: enabled });
+      },
+
+      togglePrivacyMode: () => {
+        set((state) => ({ privacyMode: !state.privacyMode }));
       },
 
       // Streaming actions
@@ -372,7 +417,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading, // Preserve wallet data loading state - they're independent
             isPositionsLoading: true,
           },
-        }))
+        }));
       },
 
       stopStreaming: () => {
@@ -385,20 +430,20 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isPositionsLoading: false,
           },
-        }))
+        }));
       },
 
       updateStreamedProtocol: (protocol: StreamedProtocol) => {
         set((state) => {
-          const newProtocols = new Map(state.streaming.streamedProtocols)
-          newProtocols.set(protocol.id, protocol)
+          const newProtocols = new Map(state.streaming.streamedProtocols);
+          newProtocols.set(protocol.id, protocol);
           return {
             streaming: {
               ...state.streaming,
               streamedProtocols: newProtocols,
             },
-          }
-        })
+          };
+        });
       },
 
       setStreamProgress: (progress: StreamProgress) => {
@@ -407,7 +452,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.streaming,
             streamProgress: progress,
           },
-        }))
+        }));
       },
 
       setStreamComplete: (stats: StreamPortfolioStats) => {
@@ -422,7 +467,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isPositionsLoading: false,
           },
-        }))
+        }));
       },
 
       setStreamError: (error: string | null) => {
@@ -436,7 +481,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isPositionsLoading: false,
           },
-        }))
+        }));
       },
 
       clearStreamedData: () => {
@@ -446,7 +491,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isPositionsLoading: false,
           },
-        }))
+        }));
       },
 
       // Wallet data streaming actions
@@ -463,7 +508,7 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isWalletDataLoading: isStreaming,
           },
-        }))
+        }));
       },
 
       setWalletDataStreamingComplete: () => {
@@ -480,10 +525,14 @@ export const useWalletStore = create<WalletState>()(
             ...state.loading,
             isWalletDataLoading: false,
           },
-        }))
+        }));
       },
 
-      setWalletDataStreamingError: (error: { address?: string; endpoint?: string; error: string }) => {
+      setWalletDataStreamingError: (error: {
+        address?: string;
+        endpoint?: string;
+        error: string;
+      }) => {
         set((state) => ({
           streaming: {
             ...state.streaming,
@@ -492,10 +541,14 @@ export const useWalletStore = create<WalletState>()(
               errors: [...state.streaming.walletDataStreaming.errors, error],
             },
           },
-        }))
+        }));
       },
 
-      updatePartialWalletData: (address: string, dataType: WalletDataType, data: unknown) => {
+      updatePartialWalletData: (
+        address: string,
+        dataType: WalletDataType,
+        data: unknown
+      ) => {
         set((state) => {
           const existing = state.walletData[address] || {
             composition: null,
@@ -505,19 +558,20 @@ export const useWalletStore = create<WalletState>()(
             userData: null,
             history: [],
             positions: null,
-          }
+          };
 
           // Map dataType to the correct field in walletData
-          const updatedWalletData = { ...existing }
+          const updatedWalletData = { ...existing };
           if (dataType === 'composition') {
-            updatedWalletData.compositionRaw = data as WalletCompositionResponse
-            updatedWalletData.composition = data as WalletCompositionResponse
+            updatedWalletData.compositionRaw =
+              data as WalletCompositionResponse;
+            updatedWalletData.composition = data as WalletCompositionResponse;
           } else if (dataType === 'nfts') {
-            updatedWalletData.nfts = data
+            updatedWalletData.nfts = data;
           } else if (dataType === 'hypercore') {
-            updatedWalletData.userData = data
+            updatedWalletData.userData = data;
           } else if (dataType === 'history') {
-            updatedWalletData.history = data as never[]
+            updatedWalletData.history = data as never[];
           }
 
           return {
@@ -525,8 +579,8 @@ export const useWalletStore = create<WalletState>()(
               ...state.walletData,
               [address]: updatedWalletData,
             },
-          }
-        })
+          };
+        });
       },
     }),
     {
@@ -534,8 +588,8 @@ export const useWalletStore = create<WalletState>()(
       partialize: (state) => ({
         wallets: state.wallets,
         selectedWalletId: state.selectedWalletId,
+        privacyMode: state.privacyMode,
       }),
     }
   )
-)
-
+);

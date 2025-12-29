@@ -1,25 +1,29 @@
-'use client'
+'use client';
 
-import { useEffect, useCallback, useMemo, useRef } from 'react'
-import { useWalletStore } from '@/lib/store/wallet-store'
-import { usePositionsStream, type StreamedProtocol, type StreamProtocolGroup } from '@/hooks/use-positions-stream'
-import type { ProtocolGroup } from '../types'
-import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers'
+import { useEffect, useCallback, useMemo, useRef } from 'react';
+import { useWalletStore } from '@/lib/store/wallet-store';
+import {
+  usePositionsStream,
+  type StreamedProtocol,
+  type StreamProtocolGroup,
+} from '@/hooks/use-positions-stream';
+import type { ProtocolGroup } from '../types';
+import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers';
 
 interface UseStreamingPositionsOptions {
-  skipCache?: boolean
-  enabled?: boolean
+  skipCache?: boolean;
+  enabled?: boolean;
 }
 
 interface UseStreamingPositionsResult {
-  protocolGroups: ProtocolGroup[]
-  positions: DeFiPositionDisplay[]
-  isStreaming: boolean
-  isComplete: boolean
-  hasData: boolean
-  progress: { completed: number; total: number }
-  error: string | null
-  refresh: () => void
+  protocolGroups: ProtocolGroup[];
+  positions: DeFiPositionDisplay[];
+  isStreaming: boolean;
+  isComplete: boolean;
+  hasData: boolean;
+  progress: { completed: number; total: number };
+  error: string | null;
+  refresh: () => void;
 }
 
 /**
@@ -41,41 +45,54 @@ export function useStreamingPositions({
     setStreamComplete,
     setStreamError,
     clearStreamedData,
-  } = useWalletStore()
-  
+  } = useWalletStore();
+
   // Track previous isLoading state to detect sync trigger
-  const prevIsLoadingRef = useRef(isLoading)
+  const prevIsLoadingRef = useRef(isLoading);
 
   // Get addresses based on selection
   const addresses = useMemo(() => {
     if (selectedWalletId) {
-      const wallet = wallets.find(w => w.id === selectedWalletId)
-      return wallet ? [wallet.address] : []
+      const wallet = wallets.find((w) => w.id === selectedWalletId);
+      return wallet ? [wallet.address] : [];
     }
-    return wallets.map(w => w.address)
-  }, [wallets, selectedWalletId])
+    return wallets.map((w) => w.address);
+  }, [wallets, selectedWalletId]);
 
   // Get wallet info map for position enrichment
   const walletInfoMap = useMemo(() => {
-    const map = new Map<string, { name: string; color: string }>()
-    wallets.forEach(w => {
-      map.set(w.address, { name: w.name, color: w.color })
-    })
-    return map
-  }, [wallets])
+    const map = new Map<string, { name: string; color: string }>();
+    wallets.forEach((w) => {
+      map.set(w.address, { name: w.name, color: w.color });
+    });
+    return map;
+  }, [wallets]);
 
   // Callbacks for stream events
-  const handleProtocolReceived = useCallback((protocol: StreamedProtocol) => {
-    updateStreamedProtocol(protocol)
-  }, [updateStreamedProtocol])
+  const handleProtocolReceived = useCallback(
+    (protocol: StreamedProtocol) => {
+      updateStreamedProtocol(protocol);
+    },
+    [updateStreamedProtocol]
+  );
 
-  const handleComplete = useCallback((stats: Parameters<NonNullable<Parameters<typeof usePositionsStream>[0]['onComplete']>>[0]) => {
-    setStreamComplete(stats)
-  }, [setStreamComplete])
+  const handleComplete = useCallback(
+    (
+      stats: Parameters<
+        NonNullable<Parameters<typeof usePositionsStream>[0]['onComplete']>
+      >[0]
+    ) => {
+      setStreamComplete(stats);
+    },
+    [setStreamComplete]
+  );
 
-  const handleError = useCallback((error: string) => {
-    setStreamError(error)
-  }, [setStreamError])
+  const handleError = useCallback(
+    (error: string) => {
+      setStreamError(error);
+    },
+    [setStreamError]
+  );
 
   // Use the SSE stream - skipCache when isLoading (sync triggered)
   const {
@@ -93,68 +110,85 @@ export function useStreamingPositions({
     onProtocolReceived: handleProtocolReceived,
     onComplete: handleComplete,
     onError: handleError,
-  })
+  });
 
   // Sync streaming state with store
   useEffect(() => {
     if (streamHookIsStreaming && !streaming.isStreaming) {
-      startStreaming()
+      startStreaming();
     }
-  }, [streamHookIsStreaming, streaming.isStreaming, startStreaming])
+  }, [streamHookIsStreaming, streaming.isStreaming, startStreaming]);
 
   useEffect(() => {
-    setStreamProgress(progress)
-  }, [progress, setStreamProgress])
+    setStreamProgress(progress);
+  }, [progress, setStreamProgress]);
 
   // Restart streaming when sync is triggered (isLoading becomes true)
   useEffect(() => {
-    if (isLoading && !prevIsLoadingRef.current && enabled && addresses.length > 0) {
+    if (
+      isLoading &&
+      !prevIsLoadingRef.current &&
+      enabled &&
+      addresses.length > 0
+    ) {
       // Sync was triggered, restart streaming with cache bypass
-      clearStreamedData()
-      stopStream()
+      clearStreamedData();
+      stopStream();
       setTimeout(() => {
-        startStream()
-      }, 100)
+        startStream();
+      }, 100);
     }
-    prevIsLoadingRef.current = isLoading
-  }, [isLoading, enabled, addresses.length, clearStreamedData, stopStream, startStream])
+    prevIsLoadingRef.current = isLoading;
+  }, [
+    isLoading,
+    enabled,
+    addresses.length,
+    clearStreamedData,
+    stopStream,
+    startStream,
+  ]);
 
   // Enrich protocol groups with wallet info and convert to local ProtocolGroup type
   const enrichedProtocolGroups: ProtocolGroup[] = useMemo(() => {
-    return streamedProtocolGroups.map(group => ({
+    return streamedProtocolGroups.map((group) => ({
       id: group.id,
       name: group.name,
       logo: group.logo || null,
+      url: group.url || '',
       totalValue: group.totalValue,
-      positions: group.positions.map(pos => {
-        const walletInfo = pos.walletAddress ? walletInfoMap.get(pos.walletAddress) : undefined
+      positions: group.positions.map((pos) => {
+        const walletInfo = pos.walletAddress
+          ? walletInfoMap.get(pos.walletAddress)
+          : undefined;
         return {
           ...pos,
           walletName: walletInfo?.name,
           walletColor: walletInfo?.color,
-        }
+        };
       }),
-      stats: group.stats ? {
-        weightedApyPercent: group.stats.weightedApyPercent ?? undefined,
-        estimatedYield: group.stats.estimatedYield,
-      } : undefined,
-    }))
-  }, [streamedProtocolGroups, walletInfoMap])
+      stats: group.stats
+        ? {
+            weightedApyPercent: group.stats.weightedApyPercent ?? undefined,
+            estimatedYield: group.stats.estimatedYield,
+          }
+        : undefined,
+    }));
+  }, [streamedProtocolGroups, walletInfoMap]);
 
   // Flatten positions for stats calculation
   const positions: DeFiPositionDisplay[] = useMemo(() => {
-    return enrichedProtocolGroups.flatMap(group => group.positions)
-  }, [enrichedProtocolGroups])
+    return enrichedProtocolGroups.flatMap((group) => group.positions);
+  }, [enrichedProtocolGroups]);
 
   // Refresh function
   const refresh = useCallback(() => {
-    clearStreamedData()
-    stopStream()
+    clearStreamedData();
+    stopStream();
     // Small delay to ensure cleanup
     setTimeout(() => {
-      startStream()
-    }, 100)
-  }, [clearStreamedData, stopStream, startStream])
+      startStream();
+    }, 100);
+  }, [clearStreamedData, stopStream, startStream]);
 
   return {
     protocolGroups: enrichedProtocolGroups,
@@ -165,6 +199,5 @@ export function useStreamingPositions({
     progress,
     error: error || streaming.streamError,
     refresh,
-  }
+  };
 }
-
