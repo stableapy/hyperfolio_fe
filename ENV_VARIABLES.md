@@ -26,9 +26,6 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 These variables are never exposed to the client and are only available in Server Components and API routes.
 
 ```env
-HYPEREVM_API_KEY=statuspage_aCMuCwVdKbV0T0M6qc_Pots9LS4GLlVgHfpKXTKcxjU
-DATABASE_URL=postgresql://user:password@localhost:5432/hyperfolio
-JWT_SECRET=your_jwt_secret_here
 
 # Internal API Security - Signed Token Authentication
 # 
