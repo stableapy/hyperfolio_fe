@@ -39,42 +39,29 @@ export function useTokensData({
   const rawTokens = useMemo(() => {
     if (wallets.length === 0) return []
 
-    // Debug: log wallet data structure
-    console.log('[useTokensData] wallets:', wallets)
-    console.log('[useTokensData] walletData keys:', Object.keys(walletData))
-    console.log('[useTokensData] walletData:', walletData)
-
     if (selectedWalletId) {
       const wallet = wallets.find(w => w.id === selectedWalletId)
-      console.log('[useTokensData] selectedWalletId:', selectedWalletId, 'wallet:', wallet)
-      console.log('[useTokensData] walletData[wallet.address]:', wallet ? walletData[wallet.address] : 'no wallet')
       const walletComposition = wallet ? walletData[wallet.address]?.compositionRaw : undefined
       if (walletComposition?.data?.tokens && wallet) {
-        console.log('[useTokensData] Found tokens for selected wallet:', walletComposition.data.tokens.length)
         return transformTokens(
           walletComposition.data.tokens,
           { address: wallet.address, name: wallet.name, color: wallet.color }
         )
       }
-      console.log('[useTokensData] No tokens found for selected wallet')
       return []
     } else {
       // Aggregate tokens from all wallets with wallet info
       const allTokens: Token[] = []
       wallets.forEach(wallet => {
-        console.log('[useTokensData] Processing wallet:', wallet.address, 'has data:', !!walletData[wallet.address])
-        console.log('[useTokensData] walletData[wallet.address]:', walletData[wallet.address])
         const walletComposition = walletData[wallet.address]?.compositionRaw
         if (walletComposition?.data?.tokens) {
           const tokens = walletComposition.data.tokens
-          console.log('[useTokensData] Found tokens for wallet', wallet.address, ':', tokens.length)
           allTokens.push(...transformTokens(
             tokens,
             { address: wallet.address, name: wallet.name, color: wallet.color }
           ))
         }
       })
-      console.log('[useTokensData] Total aggregated tokens:', allTokens.length)
       return allTokens
     }
   }, [wallets, walletData, selectedWalletId])

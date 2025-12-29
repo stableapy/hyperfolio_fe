@@ -273,13 +273,11 @@ export const useWalletStore = create<WalletState>()(
         if (wallets.length === 0) return
 
         // Set wallet data loading state (not positions loading - that's separate)
-        console.log('[WalletStore] syncAllWallets: Setting isWalletDataLoading = true')
         get().setWalletDataLoading(true)
         set({ error: null })
 
         try {
           const addresses = wallets.map((w) => w.address)
-          console.log('[WalletStore] Fetching aggregate data for addresses:', addresses)
           // Add cache=false to body when skipping cache
           const response = await secureFetch('/api/wallet/aggregate', {
             method: 'POST',
@@ -287,16 +285,13 @@ export const useWalletStore = create<WalletState>()(
             body: JSON.stringify({ addresses, cache: skipCache ? false : undefined }),
           })
 
-          console.log('[WalletStore] Aggregate response status:', response.status)
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
-            console.error('[WalletStore] Aggregate fetch failed:', errorData)
             throw new Error(errorData.error || 'Failed to fetch aggregate data')
           }
 
           const aggregateData = await response.json()
-          console.log('[WalletStore] Aggregate data received:', aggregateData)
 
           set({ aggregateData })
 
@@ -309,9 +304,6 @@ export const useWalletStore = create<WalletState>()(
               throw new Error(`Failed to fetch wallet ${wallet.address}`)
             }
             const data = await walletResponse.json()
-            console.log('[WalletStore] Fetched data for', wallet.address, ':', data)
-            console.log('[WalletStore] data.composition:', data.composition)
-            console.log('[WalletStore] data.composition?.data?.tokens:', data.composition?.data?.tokens)
             get().setWalletData(wallet.address, data)
 
             if (data.composition) {
@@ -332,11 +324,9 @@ export const useWalletStore = create<WalletState>()(
             }
           })
 
-          console.log('[WalletStore] syncAllWallets: Setting isWalletDataLoading = false')
           get().setWalletDataLoading(false)
 
-        } catch (error) {
-          console.error('Error syncing all wallets:', error)
+        } catch (error) {   
           set({
             error: error instanceof Error ? error.message : 'Failed to sync wallets',
           })

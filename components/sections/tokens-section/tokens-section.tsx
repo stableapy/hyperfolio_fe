@@ -45,9 +45,6 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
   // Show skeleton when loading and no data yet
   const showSkeleton = isLoading && !hasData
 
-  // Debug logging
-  console.log('[TokensSection] isLoading:', isLoading, 'hasData:', hasData, 'showSkeleton:', showSkeleton)
-
   // Show group toggle only in multi-wallet view with multiple wallets
   const showGroupToggle = !selectedWalletId && wallets.length > 1
 

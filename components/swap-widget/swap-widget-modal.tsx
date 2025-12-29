@@ -58,17 +58,6 @@ export function SwapWidgetModal({
 
   const { tokenList } = useKyberSwapTokenList();
 
-  // Debug: Log when fromToken changes
-  useEffect(() => {
-    console.log('SwapWidgetModal - fromToken prop:', fromToken);
-    console.log(
-      'SwapWidgetModal - defaultTokenIn will be:',
-      fromToken?.address && fromToken.address !== ''
-        ? fromToken.address
-        : DEFAULT_FROM_TOKEN.address
-    );
-  }, [fromToken]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -187,14 +176,12 @@ export function SwapWidgetModal({
                 onSubmitTx: async (txData: any) => {
                   /* eslint-enable @typescript-eslint/no-explicit-any */
                   try {
-                    console.log('Transaction data received:', txData);
 
                     if (typeof txData === 'string') {
                       return txData;
                     }
 
                     if (ethersSigner) {
-                      console.log('Sending transaction through signer...');
                       const tx = await ethersSigner.sendTransaction({
                         to: txData.to,
                         from: txData.from,
@@ -202,17 +189,14 @@ export function SwapWidgetModal({
                         data: txData.data,
                         gasLimit: txData.gasLimit,
                       });
-                      console.log('Transaction sent:', tx.hash);
 
                       await tx.wait();
-                      console.log('Transaction confirmed:', tx.hash);
 
                       return tx.hash;
                     }
 
                     return txData?.hash || '';
                   } catch (error) {
-                    console.error('Transaction error:', error);
                     throw error;
                   }
                 },

@@ -243,20 +243,15 @@ export async function secureFetch(
   url: string,
   options: FetchOptions = {}
 ): Promise<Response> {
-  console.log('[secureFetch] Starting request to:', url)
 
   // Check if token needs refresh before making the request
   const expired = await isTokenExpired()
-  console.log('[secureFetch] Token expired:', expired)
 
   if (expired) {
-    console.log('[secureFetch] Token expired, attempting refresh...')
     const refreshed = await tryRefreshToken()
-    console.log('[secureFetch] Token refresh result:', refreshed)
   }
 
   const token = getApiToken()
-  console.log('[secureFetch] Using token:', token ? `${token.substring(0, 20)}...` : 'none')
 
   const securityHeaders: Record<string, string> = {
     'x-requested-with': 'hyperfolio-internal',
@@ -270,8 +265,6 @@ export async function secureFetch(
     ...securityHeaders,
     ...options.headers,
   }
-
-  console.log('[secureFetch] Making fetch request to:', url)
 
   return fetch(url, {
     ...options,

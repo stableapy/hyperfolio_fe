@@ -36,14 +36,6 @@ export function WalletDataStreamProvider() {
     return wallets.map(w => w.address)
   }, [wallets])
 
-  // Debug: log render
-  console.log('[WalletDataStreamProvider] Render:', {
-    walletsCount: wallets.length,
-    addressesLength: addresses.length,
-    addresses,
-    syncTrigger,
-    skipCache: streaming.skipCache
-  })
 
   // Callback when data is received - update wallet store incrementally
   const handleDataReceived = (address: string, dataType: WalletDataType, data: unknown) => {
@@ -101,7 +93,6 @@ export function WalletDataStreamProvider() {
     const isWalletsChanged = walletsChangedTrigger > lastWalletsChangedTriggerRef.current
 
     if ((isFullSync || isWalletsChanged) && addresses.length > 0) {
-      console.log('[WalletDataStreamProvider] Stream restart triggered:', { isFullSync, isWalletsChanged })
       // Stop current stream
       stopStreamRef.current()
 
@@ -125,14 +116,7 @@ export function WalletDataStreamProvider() {
   // Auto-start on initial mount
   // Use refs to get latest function references in cleanup
   useEffect(() => {
-    console.log('[WalletDataStreamProvider] Auto-start effect:', {
-      addressesLength: addresses.length,
-      addresses,
-      hasInitialized: hasInitializedRef.current
-    })
-
     if (addresses.length > 0 && !hasInitializedRef.current) {
-      console.log('[WalletDataStreamProvider] Starting stream...')
       setWalletDataStreaming(true)
       startStreamRef.current()
       hasInitializedRef.current = true
