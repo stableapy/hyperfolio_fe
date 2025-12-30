@@ -26,6 +26,20 @@ export function SummaryCards({
     safeParseFloat(data?.portfolioSummary?.vaultValue)
   );
 
+  // Tooltip values showing full formatted amounts
+  const spotTooltip = data?.portfolioSummary?.spotValue
+    ? `$${parseFloat(data.portfolioSummary.spotValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : undefined;
+  const perpTooltip = data?.portfolioSummary?.perpValue
+    ? `$${parseFloat(data.portfolioSummary.perpValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : undefined;
+  const stakedTooltip = data?.portfolioSummary?.stakedValue
+    ? `$${parseFloat(data.portfolioSummary.stakedValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : undefined;
+  const vaultTooltip = data?.portfolioSummary?.vaultValue
+    ? `$${parseFloat(data.portfolioSummary.vaultValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : undefined;
+
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 sm:mb-4 sm:gap-3">
       {/* Spot Value */}
@@ -37,6 +51,7 @@ export function SummaryCards({
           color="accent"
           label="--spot"
           value={spotValue}
+          tooltipValue={spotTooltip}
           privacyMode={privacyMode}
         />
       )}
@@ -50,6 +65,7 @@ export function SummaryCards({
           color="cyan"
           label="--perp"
           value={perpValue}
+          tooltipValue={perpTooltip}
           privacyMode={privacyMode}
         />
       )}
@@ -63,6 +79,7 @@ export function SummaryCards({
           color="magenta"
           label="--staked"
           value={stakedValue}
+          tooltipValue={stakedTooltip}
           privacyMode={privacyMode}
         />
       )}
@@ -76,6 +93,7 @@ export function SummaryCards({
           color="orange"
           label="--vaults"
           value={vaultValue}
+          tooltipValue={vaultTooltip}
           privacyMode={privacyMode}
         />
       )}

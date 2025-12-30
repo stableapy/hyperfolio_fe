@@ -51,6 +51,11 @@ export function DefiStatsGrid({
             color="accent"
             label="--deposited"
             value={formatCompactValue(totalDeposited)}
+            tooltipValue={
+              totalDeposited != null
+                ? `$${totalDeposited.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : undefined
+            }
             privacyMode={privacyMode}
           />
         )}
@@ -64,6 +69,11 @@ export function DefiStatsGrid({
             color="cyan"
             label="--rewards"
             value={formatCompactValue(totalRewards)}
+            tooltipValue={
+              totalRewards != null
+                ? `$${totalRewards.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : undefined
+            }
             privacyMode={privacyMode}
           />
         )}

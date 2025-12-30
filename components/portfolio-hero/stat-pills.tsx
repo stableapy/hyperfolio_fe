@@ -156,6 +156,12 @@ export function StatPills({
               }
             };
 
+            // Format full value for tooltip
+            const tooltipValue =
+              item.value != null
+                ? `$${item.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : undefined;
+
             return (
               <StatPill
                 key={item.category}
@@ -164,6 +170,7 @@ export function StatPills({
                 label={`--${item.category.toLowerCase().replace(' ', '-')}`}
                 value={formatCompactValue(item.value)}
                 secondaryValue={formatPercentage(item.percentage)}
+                tooltipValue={tooltipValue}
                 privacyMode={privacyMode}
                 className="hover:border-theme-accent/30"
               />

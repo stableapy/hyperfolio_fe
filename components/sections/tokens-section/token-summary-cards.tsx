@@ -25,6 +25,11 @@ export function TokenSummaryCards({
           label="--total"
           value={`$${formatCompactValue(totalValue)}`}
           privacyMode={privacyMode}
+          tooltipValue={
+            totalValue != null
+              ? `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : undefined
+          }
         />
       )}
 
