@@ -14,8 +14,36 @@ export interface SpotBalance {
   decimals: string;
 }
 
+export interface PerpPositionDetail {
+  type: string;
+  position: {
+    coin: string;
+    szi: string;
+    leverage: {
+      type: string;
+      value: number;
+    };
+    entryPx: string;
+    positionValue: string;
+    unrealizedPnl: string;
+    returnOnEquity: string;
+    liquidationPx: string;
+    marginUsed: string;
+    maxLeverage: number;
+    cumFunding: {
+      allTime: string;
+      sinceOpen: string;
+      sinceChange: string;
+    };
+    image_url: string | null;
+    symbol: string;
+    name: string;
+    decimals: string;
+  };
+}
+
 export interface PerpPosition {
-  positions: unknown[];
+  positions: PerpPositionDetail[];
   margin: {
     usdcBalance: string;
     lastUpdate: number;
@@ -94,7 +122,7 @@ export interface TabConfig {
   color: string;
 }
 
-export interface HypercoerSectionProps {
+export interface HypercoreSectionProps {
   isLoading?: boolean;
 }
 
@@ -116,7 +144,8 @@ export interface SpotTabProps {
 }
 
 export interface PerpTabProps {
-  marginBalance: string;
+  positions?: PerpPositionDetail[];
+  marginBalance?: string;
   privacyMode?: boolean;
 }
 

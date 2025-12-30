@@ -1,7 +1,7 @@
 'use client';
 
 import { TokenImage } from '@/components/sections/tokens-section/token-image';
-import { formatCompactValue } from './utils';
+import { formatCompactValue, formatPrice } from './utils';
 import type { SpotTabProps, SpotBalance } from './types';
 
 /**
@@ -16,6 +16,7 @@ function SpotBalanceRow({
 }) {
   const total = parseFloat(balance.total);
   const usdValue = parseFloat(balance.usdValue);
+  const usdPrice = parseFloat(balance.usdPrice);
 
   return (
     <div className="group hover:bg-theme-accent/5 hover:border-l-theme-accent border-l-2 border-l-transparent px-3 py-2.5 transition-all duration-150 sm:px-4 sm:py-3">
@@ -40,7 +41,7 @@ function SpotBalanceRow({
                 {balance.symbol}
               </span>
               <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1 py-0.5 font-mono text-[9px] sm:px-1.5 sm:text-[10px]">
-                {formatCompactValue(total)}
+                @{formatPrice(usdPrice)}
               </span>
             </div>
             <div className="text-theme-text-muted truncate font-mono text-[10px] opacity-70 sm:text-[11px]">

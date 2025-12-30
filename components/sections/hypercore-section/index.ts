@@ -1,24 +1,25 @@
 // Barrel export for hypercore-section module
 
 // Main component
-export { HypercoreSection } from "./hypercore-section"
+export { HypercoreSection } from './hypercore-section';
 
 // Sub-components (exported for potential reuse)
-export { SummaryCards } from "./summary-cards"
-export { TabNavigation } from "./tab-navigation"
-export { ContentSkeleton } from "./content-skeleton"
-export { SpotTab } from "./spot-tab"
-export { PerpTab } from "./perp-tab"
-export { StakingTab } from "./staking-tab"
-export { VaultsTab } from "./vaults-tab"
+export { SummaryCards } from './summary-cards';
+export { TabNavigation } from './tab-navigation';
+export { ContentSkeleton } from './content-skeleton';
+export { SpotTab } from './spot-tab';
+export { PerpTab } from './perp-tab';
+export { StakingTab } from './staking-tab';
+export { VaultsTab } from './vaults-tab';
 
 // Hooks
-export { useHypercoreData } from "./hooks"
+export { useHypercoreData } from './hooks';
 
 // Types
 export type {
   SpotBalance,
   PerpPosition,
+  PerpPositionDetail,
   DelegatorSummary,
   Delegation,
   StakingInfo,
@@ -36,7 +37,7 @@ export type {
   StakingTabProps,
   VaultsTabProps,
   ContentSkeletonProps,
-} from "./types"
+} from './types';
 
 // Utils
 export {
@@ -45,5 +46,4 @@ export {
   safeParseFloat,
   formatAddress,
   isVaultLocked,
-} from "./utils"
-
+} from './utils';

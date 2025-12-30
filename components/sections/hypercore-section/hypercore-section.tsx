@@ -12,7 +12,7 @@ import { SpotTab } from './spot-tab';
 import { PerpTab } from './perp-tab';
 import { StakingTab } from './staking-tab';
 import { VaultsTab } from './vaults-tab';
-import type { HypercoerSectionProps, TabId, TabConfig } from './types';
+import type { HypercoreSectionProps, TabId, TabConfig } from './types';
 
 // Tab configuration with terminal-style colors
 // Note: spot uses CSS variable to respect light/dark theme accent
@@ -62,7 +62,7 @@ function getTerminalCommand(activeTab: TabId): string {
  * Hypercore section component displaying spot, perp, staking, and vault data
  * Uses terminal-style layout matching tokens-section and defi-section
  */
-export function HypercoreSection({ isLoading = false }: HypercoerSectionProps) {
+export function HypercoreSection({ isLoading = false }: HypercoreSectionProps) {
   const { hypercoreData } = useHypercoreData();
   const privacyMode = useWalletStore((state) => state.privacyMode);
   const [activeTab, setActiveTab] = useState<TabId>('spot');
@@ -109,6 +109,7 @@ export function HypercoreSection({ isLoading = false }: HypercoerSectionProps) {
           {/* Perp Tab */}
           {activeTab === 'perp' && hasData && (
             <PerpTab
+              positions={hypercoreData.perpPositions?.positions || []}
               marginBalance={
                 hypercoreData.perpPositions?.margin?.usdcBalance || '0'
               }

@@ -48,7 +48,7 @@ export function NFTListItem({ nft, privacyMode = false }: NFTListItemProps) {
               floor:
             </span>
             <span className="text-theme-text-secondary font-mono text-[11px] tabular-nums">
-              {nft.floorPrice.toFixed(2)}
+              {nft.floorPrice.toFixed(2)} HYPE
             </span>
           </div>
 
