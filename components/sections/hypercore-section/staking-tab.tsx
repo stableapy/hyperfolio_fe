@@ -2,6 +2,7 @@
 
 import { formatCompactValue, formatAddress, safeParseFloat } from './utils';
 import type { StakingTabProps, Delegation } from './types';
+import { StatPill } from '@/components/ui/stat-pill';
 
 /**
  * Individual delegation row component with terminal styling
@@ -60,38 +61,38 @@ function StakingSummary({
   return (
     <div className="border-theme-border/30 flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4 sm:py-4">
       {/* Total HYPE - Terminal style */}
-      <div className="bg-theme-card-bg border-theme-border/70 flex items-center overflow-hidden rounded-sm border">
-        <div className="bg-theme-magenta/10 border-theme-magenta/20 border-r px-2 py-1.5">
-          <span className="text-theme-magenta font-mono text-[10px] font-bold sm:text-xs">
-            ⚡
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-          <span className="text-theme-text-muted font-mono text-[10px]">
-            --total
-          </span>
-          <span className="text-theme-magenta font-mono text-xs font-bold tabular-nums sm:text-sm">
-            {privacyMode ? '•••' : `${formatCompactValue(totalHype)} HYPE`}
-          </span>
-        </div>
-      </div>
+      <StatPill
+        icon="⚡"
+        color="magenta"
+        label="--total"
+        value={`${formatCompactValue(totalHype)} HYPE`}
+        tooltipValue={
+          totalHype != null
+            ? `${totalHype.toLocaleString('en-US', {
+                minimumFractionDigits: 4,
+                maximumFractionDigits: 4,
+              })} HYPE`
+            : undefined
+        }
+        privacyMode={privacyMode}
+      />
 
       {/* Staked USD Value - Terminal style */}
-      <div className="bg-theme-card-bg border-theme-border/70 flex items-center overflow-hidden rounded-sm border">
-        <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-2 py-1.5">
-          <span className="text-theme-accent font-mono text-[10px] font-bold sm:text-xs">
-            $
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-          <span className="text-theme-text-muted font-mono text-[10px]">
-            --value
-          </span>
-          <span className="text-theme-accent font-mono text-xs font-bold tabular-nums sm:text-sm">
-            {privacyMode ? '•••' : `$${formatCompactValue(totalStakedUsd)}`}
-          </span>
-        </div>
-      </div>
+      <StatPill
+        icon="$"
+        color="accent"
+        label="--value"
+        value={`$${formatCompactValue(totalStakedUsd)}`}
+        tooltipValue={
+          totalStakedUsd != null
+            ? `$${totalStakedUsd.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
+            : undefined
+        }
+        privacyMode={privacyMode}
+      />
     </div>
   );
 }
