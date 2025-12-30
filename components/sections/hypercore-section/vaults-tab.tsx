@@ -1,122 +1,141 @@
-"use client"
+'use client';
 
-import { formatCompactValue, isVaultLocked, safeParseFloat } from "./utils"
-import type { VaultsTabProps, VaultDetail } from "./types"
+import { formatCompactValue, isVaultLocked, safeParseFloat } from './utils';
+import type { VaultsTabProps, VaultDetail } from './types';
 
 /**
  * Individual vault row component with terminal styling
  */
-function VaultRow({ vault }: { vault: VaultDetail }) {
-  const isLocked = isVaultLocked(vault.lockedUntilTimestamp)
-  const equity = parseFloat(vault.equity)
-  const pnl = parseFloat(vault.pnl)
-  const maxWithdrawable = safeParseFloat(vault.maxWithdrawable)
+function VaultRow({
+  vault,
+  privacyMode,
+}: {
+  vault: VaultDetail;
+  privacyMode?: boolean;
+}) {
+  const isLocked = isVaultLocked(vault.lockedUntilTimestamp);
+  const equity = parseFloat(vault.equity);
+  const pnl = parseFloat(vault.pnl);
+  const maxWithdrawable = safeParseFloat(vault.maxWithdrawable);
 
   return (
-    <div className="px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-150 group hover:bg-theme-accent/5 border-l-2 border-l-transparent hover:border-l-theme-orange">
+    <div className="group hover:bg-theme-accent/5 hover:border-l-theme-orange border-l-2 border-l-transparent px-3 py-2.5 transition-all duration-150 sm:px-4 sm:py-3">
       {/* Header Row */}
-      <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         {/* Terminal Prompt + Vault Name */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="font-mono text-sm font-bold text-theme-orange select-none flex-shrink-0">&gt;</span>
-          <div className="font-mono text-xs sm:text-sm text-theme-orange font-bold truncate tracking-wide">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="text-theme-orange flex-shrink-0 font-mono text-sm font-bold select-none">
+            &gt;
+          </span>
+          <div className="text-theme-orange truncate font-mono text-xs font-bold tracking-wide sm:text-sm">
             {vault.name}
           </div>
           {isLocked && (
-            <span className="font-mono text-[9px] sm:text-[10px] bg-theme-orange/10 border border-theme-orange/30 text-theme-orange px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+            <span className="bg-theme-orange/10 border-theme-orange/30 text-theme-orange rounded-sm border px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase sm:text-[10px]">
               locked
             </span>
           )}
           {vault.isClosed && (
-            <span className="font-mono text-[9px] sm:text-[10px] bg-theme-red/10 border border-theme-red/30 text-theme-red px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+            <span className="bg-theme-red/10 border-theme-red/30 text-theme-red rounded-sm border px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase sm:text-[10px]">
               closed
             </span>
           )}
         </div>
 
         {/* Right: Equity */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="font-mono text-[10px] text-theme-text-muted">=</span>
-          <span className="font-mono text-xs sm:text-sm text-theme-text-primary font-bold tabular-nums">
-            ${formatCompactValue(equity)}
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          <span className="text-theme-text-muted font-mono text-[10px]">=</span>
+          <span className="text-theme-text-primary font-mono text-xs font-bold tabular-nums sm:text-sm">
+            {privacyMode ? '•••' : `$${formatCompactValue(equity)}`}
           </span>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="flex items-center gap-2 sm:gap-3 ml-5">
+      <div className="ml-5 flex items-center gap-2 sm:gap-3">
         {/* APR Badge */}
-        <div className="flex items-center bg-theme-card-bg border border-theme-cyan/30 rounded-sm overflow-hidden">
-          <div className="px-1.5 py-1 bg-theme-cyan/10 border-r border-theme-cyan/20">
-            <span className="font-mono text-[9px] font-bold text-theme-cyan">%</span>
+        <div className="bg-theme-card-bg border-theme-cyan/30 flex items-center overflow-hidden rounded-sm border">
+          <div className="bg-theme-cyan/10 border-theme-cyan/20 border-r px-1.5 py-1">
+            <span className="text-theme-cyan font-mono text-[9px] font-bold">
+              %
+            </span>
           </div>
           <div className="flex items-center gap-1 px-1.5 py-1">
-            <span className="font-mono text-[9px] text-theme-text-muted">apr:</span>
-            <span className="font-mono text-[10px] text-theme-cyan font-bold tabular-nums">
+            <span className="text-theme-text-muted font-mono text-[9px]">
+              apr:
+            </span>
+            <span className="text-theme-cyan font-mono text-[10px] font-bold tabular-nums">
               {vault.apr.toFixed(1)}%
             </span>
           </div>
         </div>
 
         {/* P&L Badge */}
-        <div 
-          className={`flex items-center bg-theme-card-bg border rounded-sm overflow-hidden ${
-            pnl >= 0 
-              ? 'border-theme-accent/30' 
-              : 'border-theme-red/30'
+        <div
+          className={`bg-theme-card-bg flex items-center overflow-hidden rounded-sm border ${
+            pnl >= 0 ? 'border-theme-accent/30' : 'border-theme-red/30'
           }`}
         >
-          <div 
-            className={`px-1.5 py-1 border-r ${
-              pnl >= 0 
-                ? 'bg-theme-accent/10 border-theme-accent/20' 
+          <div
+            className={`border-r px-1.5 py-1 ${
+              pnl >= 0
+                ? 'bg-theme-accent/10 border-theme-accent/20'
                 : 'bg-theme-red/10 border-theme-red/20'
             }`}
           >
-            <span className={`font-mono text-[9px] font-bold ${pnl >= 0 ? 'text-theme-accent' : 'text-theme-red'}`}>
+            <span
+              className={`font-mono text-[9px] font-bold ${pnl >= 0 ? 'text-theme-accent' : 'text-theme-red'}`}
+            >
               {pnl >= 0 ? '+' : '-'}
             </span>
           </div>
           <div className="flex items-center gap-1 px-1.5 py-1">
-            <span className="font-mono text-[9px] text-theme-text-muted">pnl:</span>
-            <span className={`font-mono text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-theme-accent' : 'text-theme-red'}`}>
-              ${formatCompactValue(Math.abs(pnl))}
+            <span className="text-theme-text-muted font-mono text-[9px]">
+              pnl:
+            </span>
+            <span
+              className={`font-mono text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-theme-accent' : 'text-theme-red'}`}
+            >
+              {privacyMode ? '•••' : `$${formatCompactValue(Math.abs(pnl))}`}
             </span>
           </div>
         </div>
 
         {/* Max Withdrawable - Hidden on mobile */}
-        <span className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] text-theme-text-muted">
-          <span className="uppercase tracking-wider">max_wd:</span>
-          <span className="text-theme-text-secondary tabular-nums">${formatCompactValue(maxWithdrawable)}</span>
+        <span className="text-theme-text-muted hidden items-center gap-1.5 font-mono text-[10px] sm:flex">
+          <span className="tracking-wider uppercase">max_wd:</span>
+          <span className="text-theme-text-secondary tabular-nums">
+            {privacyMode ? '•••' : `$${formatCompactValue(maxWithdrawable)}`}
+          </span>
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 /**
  * Vaults tab content with terminal styling
  */
-export function VaultsTab({ vaults }: VaultsTabProps) {
+export function VaultsTab({ vaults, privacyMode }: VaultsTabProps) {
   if (!vaults || vaults.length === 0) {
     return (
-      <div className="text-center py-8 sm:py-12">
-        <div className="font-mono text-sm sm:text-base text-theme-text-secondary mb-2">
+      <div className="py-8 text-center sm:py-12">
+        <div className="text-theme-text-secondary mb-2 font-mono text-sm sm:text-base">
           NO VAULTS
         </div>
-        <div className="font-mono text-xs sm:text-sm text-theme-text-muted">
-          <span className="text-theme-orange">&gt;</span> hypercore --vaults returns empty
+        <div className="text-theme-text-muted font-mono text-xs sm:text-sm">
+          <span className="text-theme-orange">&gt;</span> hypercore --vaults
+          returns empty
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="divide-y divide-theme-border/30">
+    <div className="divide-theme-border/30 divide-y">
       {vaults.map((vault, index) => (
-        <VaultRow key={index} vault={vault} />
+        <VaultRow key={index} vault={vault} privacyMode={privacyMode} />
       ))}
     </div>
-  )
+  );
 }

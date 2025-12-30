@@ -35,6 +35,7 @@ export function DefiStatsGrid({
   portfolioYield,
   positionsWithApy,
   totalPositions,
+  privacyMode = false,
 }: DefiStatsGridProps) {
   const showSkeleton = isLoading && !hasData;
 
@@ -50,6 +51,7 @@ export function DefiStatsGrid({
             color="accent"
             label="--deposited"
             value={formatCompactValue(totalDeposited)}
+            privacyMode={privacyMode}
           />
         )}
 
@@ -62,6 +64,7 @@ export function DefiStatsGrid({
             color="cyan"
             label="--rewards"
             value={formatCompactValue(totalRewards)}
+            privacyMode={privacyMode}
           />
         )}
 
@@ -76,6 +79,7 @@ export function DefiStatsGrid({
                 color="purple"
                 label="--apy"
                 value={formatPercentage(weightedApy)}
+                privacyMode={privacyMode}
                 interactive
                 asButton
               />
@@ -95,7 +99,9 @@ export function DefiStatsGrid({
                       daily:
                     </div>
                     <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
-                      ${portfolioYield.daily.toFixed(2)}
+                      {privacyMode
+                        ? '•••'
+                        : `$${portfolioYield.daily.toFixed(2)}`}
                     </div>
                   </div>
                   <div>
@@ -103,7 +109,9 @@ export function DefiStatsGrid({
                       weekly:
                     </div>
                     <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
-                      ${portfolioYield.weekly.toFixed(2)}
+                      {privacyMode
+                        ? '•••'
+                        : `$${portfolioYield.weekly.toFixed(2)}`}
                     </div>
                   </div>
                   <div>
@@ -111,7 +119,9 @@ export function DefiStatsGrid({
                       monthly:
                     </div>
                     <div className="text-theme-accent font-mono text-xs font-bold tabular-nums">
-                      ${portfolioYield.monthly.toFixed(2)}
+                      {privacyMode
+                        ? '•••'
+                        : `$${portfolioYield.monthly.toFixed(2)}`}
                     </div>
                   </div>
                 </div>
@@ -127,6 +137,7 @@ export function DefiStatsGrid({
             color="muted"
             label="--apy"
             value="--"
+            privacyMode={privacyMode}
             className="opacity-60"
           />
         )}

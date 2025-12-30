@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RefreshCw, ChevronDown } from 'lucide-react';
 import { TerminalCard } from '@/components/ui/terminal-card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useWalletStore } from '@/lib/store/wallet-store';
 
 import { useTransactions } from './hooks';
 import { TransactionRow } from './transaction-row';
@@ -15,6 +16,8 @@ import type { TransactionsSectionProps } from './types';
 export function TransactionsSection({
   isLoading: parentLoading = false,
 }: TransactionsSectionProps) {
+  const { privacyMode } = useWalletStore();
+
   const {
     transactions,
     isLoading,
@@ -106,7 +109,11 @@ export function TransactionsSection({
           <TerminalCard showHeader title="txs --list">
             <div className="divide-theme-border/30 divide-y">
               {filteredTransactions.map((tx) => (
-                <TransactionRow key={tx.id} transaction={tx} />
+                <TransactionRow
+                  key={tx.id}
+                  transaction={tx}
+                  privacyMode={privacyMode}
+                />
               ))}
             </div>
           </TerminalCard>

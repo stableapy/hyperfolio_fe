@@ -400,6 +400,7 @@ export function PortfolioHero({
         onClose={() => setIsChartModalOpen(false)}
         getModalChartData={getModalChartData}
         isPositive={isPositive}
+        privacyMode={privacyMode}
       />
     </section>
   );

@@ -144,19 +144,25 @@ export function PositionItem({
                       <div className="flex justify-between gap-4">
                         <span className="text-theme-text-muted">daily:</span>
                         <span className="text-theme-text-primary tabular-nums">
-                          ${position.estimatedYield.daily}
+                          {privacyMode
+                            ? '•••'
+                            : `$${position.estimatedYield.daily}`}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
                         <span className="text-theme-text-muted">weekly:</span>
                         <span className="text-theme-text-primary tabular-nums">
-                          ${position.estimatedYield.weekly}
+                          {privacyMode
+                            ? '•••'
+                            : `$${position.estimatedYield.weekly}`}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
                         <span className="text-theme-text-muted">monthly:</span>
                         <span className="text-theme-text-primary tabular-nums">
-                          ${position.estimatedYield.monthly}
+                          {privacyMode
+                            ? '•••'
+                            : `$${position.estimatedYield.monthly}`}
                         </span>
                       </div>
                     </div>
@@ -197,11 +203,9 @@ export function PositionItem({
                                 {position.positionDetails.token0?.symbol}:
                               </span>
                               <span className="text-theme-text-primary tabular-nums">
-                                $
-                                {
-                                  position.positionDetails.uncollectedFees
-                                    .token0UsdValue
-                                }
+                                {privacyMode
+                                  ? '•••'
+                                  : `$${position.positionDetails.uncollectedFees.token0UsdValue}`}
                               </span>
                             </div>
                           )}
@@ -214,18 +218,18 @@ export function PositionItem({
                                 {position.positionDetails.token1?.symbol}:
                               </span>
                               <span className="text-theme-text-primary tabular-nums">
-                                $
-                                {
-                                  position.positionDetails.uncollectedFees
-                                    .token1UsdValue
-                                }
+                                {privacyMode
+                                  ? '•••'
+                                  : `$${position.positionDetails.uncollectedFees.token1UsdValue}`}
                               </span>
                             </div>
                           )}
                         <div className="border-theme-border/50 mt-2 flex justify-between gap-4 border-t pt-2">
                           <span className="text-theme-text-muted">total:</span>
                           <span className="text-theme-cyan font-bold tabular-nums">
-                            ${position.positionDetails.uncollectedFees.usdValue}
+                            {privacyMode
+                              ? '•••'
+                              : `$${position.positionDetails.uncollectedFees.usdValue}`}
                           </span>
                         </div>
                       </>

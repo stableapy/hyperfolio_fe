@@ -204,6 +204,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
         portfolioYield={stats.portfolioYield}
         positionsWithApy={stats.positionsWithApy}
         totalPositions={stats.totalPositions}
+        privacyMode={privacyMode}
       />
 
       {/* Streaming Progress - shows protocol scan progress */}

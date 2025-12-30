@@ -90,7 +90,9 @@ export function ProtocolCard({
                                 daily:
                               </span>
                               <span className="text-theme-text-primary tabular-nums">
-                                ${protocol.stats.estimatedYield.daily}
+                                {privacyMode
+                                  ? '•••'
+                                  : `$${protocol.stats.estimatedYield.daily}`}
                               </span>
                             </div>
                             <div className="flex justify-between gap-4">
@@ -98,7 +100,9 @@ export function ProtocolCard({
                                 weekly:
                               </span>
                               <span className="text-theme-text-primary tabular-nums">
-                                ${protocol.stats.estimatedYield.weekly}
+                                {privacyMode
+                                  ? '•••'
+                                  : `$${protocol.stats.estimatedYield.weekly}`}
                               </span>
                             </div>
                             <div className="flex justify-between gap-4">
@@ -106,7 +110,9 @@ export function ProtocolCard({
                                 monthly:
                               </span>
                               <span className="text-theme-text-primary tabular-nums">
-                                ${protocol.stats.estimatedYield.monthly}
+                                {privacyMode
+                                  ? '•••'
+                                  : `$${protocol.stats.estimatedYield.monthly}`}
                               </span>
                             </div>
                           </>

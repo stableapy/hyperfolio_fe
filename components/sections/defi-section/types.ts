@@ -15,6 +15,7 @@ export interface DefiStatsGridProps {
   portfolioYield: PortfolioYield;
   positionsWithApy: number;
   totalPositions: number;
+  privacyMode?: boolean;
 }
 
 export interface PortfolioYield {

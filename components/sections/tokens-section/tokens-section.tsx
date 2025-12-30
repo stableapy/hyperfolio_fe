@@ -58,6 +58,7 @@ export function TokensSection({ isLoading = false }: TokensSectionProps) {
           totalValue={totals.totalValue}
           tokenCount={totals.tokenCount}
           isLoading={showSkeleton}
+          privacyMode={privacyMode}
         />
 
         {/* Search Bar */}

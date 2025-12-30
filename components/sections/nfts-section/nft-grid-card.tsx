@@ -1,64 +1,67 @@
-"use client"
+'use client';
 
-import { ExternalLink } from "lucide-react"
-import { TerminalCard } from "@/components/ui/terminal-card"
-import type { NFTGridCardProps } from "./types"
+import { ExternalLink } from 'lucide-react';
+import { TerminalCard } from '@/components/ui/terminal-card';
+import type { NFTGridCardProps } from './types';
 
 /**
  * Individual NFT card for grid view display
  */
-export function NFTGridCard({ nft }: NFTGridCardProps) {
+export function NFTGridCard({ nft, privacyMode = false }: NFTGridCardProps) {
   const formatPrice = (value: number) => {
     if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`
+      return `$${(value / 1000).toFixed(1)}K`;
     }
-    return `$${value.toFixed(2)}`
-  }
+    return `$${value.toFixed(2)}`;
+  };
 
   return (
     <TerminalCard className="group hover:border-theme-accent transition-all">
-      <div className="relative aspect-square overflow-hidden bg-theme-bg">
+      <div className="bg-theme-bg relative aspect-square overflow-hidden">
         <img
-          src={nft.image || "/placeholder.svg"}
+          src={nft.image || '/placeholder.svg'}
           alt={nft.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-theme-bg via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="from-theme-bg absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
         <a
           href={`https://opensea.io/assets/hyperevm/${nft.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 p-1.5 sm:p-2 bg-theme-card-bg/80 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+          className="bg-theme-card-bg/80 absolute top-1.5 right-1.5 rounded-lg p-1.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 sm:top-2 sm:right-2 sm:p-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-theme-cyan" />
+          <ExternalLink className="text-theme-cyan h-3 w-3 sm:h-4 sm:w-4" />
         </a>
       </div>
-      <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+      <div className="space-y-1.5 p-2 sm:space-y-2 sm:p-3">
         <div>
-          <div className="font-mono text-[11px] sm:text-xs text-theme-accent font-semibold mb-0.5 truncate">
+          <div className="text-theme-accent mb-0.5 truncate font-mono text-[11px] font-semibold sm:text-xs">
             {nft.name}
           </div>
-          <div className="font-mono text-[9px] sm:text-[10px] text-theme-text-secondary truncate">
+          <div className="text-theme-text-secondary truncate font-mono text-[9px] sm:text-[10px]">
             {nft.collection}
           </div>
         </div>
-        <div className="flex items-center justify-between pt-1.5 sm:pt-2 border-t border-theme-border">
+        <div className="border-theme-border flex items-center justify-between border-t pt-1.5 sm:pt-2">
           <div>
-            <div className="font-mono text-[9px] sm:text-[10px] text-theme-text-secondary">FLOOR</div>
-            <div className="font-mono text-[10px] sm:text-xs text-theme-text-primary">
+            <div className="text-theme-text-secondary font-mono text-[9px] sm:text-[10px]">
+              FLOOR
+            </div>
+            <div className="text-theme-text-primary font-mono text-[10px] sm:text-xs">
               {nft.floorPrice.toFixed(2)}
             </div>
           </div>
           <div className="text-right">
-            <div className="font-mono text-[9px] sm:text-[10px] text-theme-text-secondary">VALUE</div>
-            <div className="font-mono text-[10px] sm:text-xs text-theme-accent font-medium">
-              {formatPrice(nft.usdPrice)}
+            <div className="text-theme-text-secondary font-mono text-[9px] sm:text-[10px]">
+              VALUE
+            </div>
+            <div className="text-theme-accent font-mono text-[10px] font-medium sm:text-xs">
+              {privacyMode ? '•••' : formatPrice(nft.usdPrice)}
             </div>
           </div>
         </div>
       </div>
     </TerminalCard>
-  )
+  );
 }
-

@@ -52,6 +52,7 @@ export interface TokenSummaryCardsProps {
   totalValue: number;
   tokenCount: number;
   isLoading: boolean;
+  privacyMode?: boolean;
 }
 
 export interface TokenSearchBarProps {

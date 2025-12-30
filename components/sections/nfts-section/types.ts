@@ -1,58 +1,60 @@
 // Types for NFTs Section components
 
 export interface NFT {
-  id: string
-  name: string
-  collection: string
-  image: string
-  floorPrice: number
-  usdPrice: number
-  tokenId: string
+  id: string;
+  name: string;
+  collection: string;
+  image: string;
+  floorPrice: number;
+  usdPrice: number;
+  tokenId: string;
 }
 
-export type ViewMode = "grid" | "list"
+export type ViewMode = 'grid' | 'list';
 
 export interface NFTsSectionProps {
-  isLoading?: boolean
+  isLoading?: boolean;
 }
 
 export interface NFTSummaryCardsProps {
-  totalValue: number
-  nftCount: number
-  showSkeleton: boolean
+  totalValue: number;
+  nftCount: number;
+  showSkeleton: boolean;
+  privacyMode?: boolean;
 }
 
 export interface NFTSearchControlsProps {
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  viewMode: ViewMode
-  onViewModeChange: (mode: ViewMode) => void
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 export interface NFTGridViewProps {
-  nfts: NFT[]
-  showSkeleton: boolean
+  nfts: NFT[];
+  showSkeleton: boolean;
 }
 
 export interface NFTListViewProps {
-  nfts: NFT[]
-  showSkeleton: boolean
+  nfts: NFT[];
+  showSkeleton: boolean;
 }
 
 export interface NFTGridCardProps {
-  nft: NFT
+  nft: NFT;
+  privacyMode?: boolean;
 }
 
 export interface NFTListItemProps {
-  nft: NFT
+  nft: NFT;
+  privacyMode?: boolean;
 }
 
 export interface NFTEmptyStateProps {
-  hasSearchQuery: boolean
+  hasSearchQuery: boolean;
 }
 
 export interface NFTTotals {
-  totalValue: number
-  nftCount: number
+  totalValue: number;
+  nftCount: number;
 }
-
