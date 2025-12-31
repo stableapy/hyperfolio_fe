@@ -20,9 +20,12 @@ export const REQUEST_TIMEOUTS = {
   /** Timeout for portfolio history */
   PORTFOLIO_HISTORY: Number(process.env.SSE_HISTORY_TIMEOUT_MS) || 10000, // 10s
 
+  /** Timeout for DeFi points */
+  WALLET_POINTS: Number(process.env.SSE_POINTS_TIMEOUT_MS) || 10000, // 10s
+
   /** Timeout for DeFi positions streaming */
   POSITIONS_STREAM: Number(process.env.SSE_POSITIONS_TIMEOUT_MS) || 10000, // 10s
-} as const
+} as const;
 
 // Overall stream timeouts (entire SSE session)
 export const STREAM_TIMEOUTS = {
@@ -30,8 +33,10 @@ export const STREAM_TIMEOUTS = {
   WALLET_AGGREGATE: Number(process.env.SSE_STREAM_TIMEOUT_MS) || 20000, // 20s
 
   /** Maximum time for positions stream to complete */
-  POSITIONS_STREAM: Number(process.env.SSE_POSITIONS_STREAM_TIMEOUT_MS) || 20000, // 20s
-} as const
+  POSITIONS_STREAM:
+    Number(process.env.SSE_POSITIONS_STREAM_TIMEOUT_MS) || 20000, // 20s
+} as const;
 
 // Timeout for initial SSE connection establishment
-export const CONNECTION_TIMEOUT = Number(process.env.SSE_CONNECTION_TIMEOUT_MS) || 5000 // 5s
+export const CONNECTION_TIMEOUT =
+  Number(process.env.SSE_CONNECTION_TIMEOUT_MS) || 5000; // 5s

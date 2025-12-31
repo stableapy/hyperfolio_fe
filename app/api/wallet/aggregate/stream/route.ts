@@ -1,116 +1,138 @@
 // SSE Route for streaming wallet data progressively
 // Streams each API response as it completes, without waiting for all wallets/endpoints
-import { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server';
 
 import type {
   WalletCompositionResponse,
   NFT,
   UserData,
   PortfolioHistoryPoint,
-} from '@/lib/types/api'
+} from '@/lib/types/api';
+import type { PointsDataResponse } from '@/lib/api/client';
 
 import {
   createTimeoutController,
   clearTimeoutController,
   isTimeoutError,
   getTimeoutErrorMessage,
-} from '@/lib/utils/timeout'
-import { REQUEST_TIMEOUTS, STREAM_TIMEOUTS } from '@/lib/config/api'
+} from '@/lib/utils/timeout';
+import { REQUEST_TIMEOUTS, STREAM_TIMEOUTS } from '@/lib/config/api';
+import { getDefiPoints } from '@/lib/api/client';
 
-const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.hyperfolio.xyz'
-const API_KEY = process.env.HYPEREVM_API_KEY || ''
+const API_BASE_URL =
+  process.env.API_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://api.hyperfolio.xyz';
+const API_KEY = process.env.HYPEREVM_API_KEY || '';
 
 /**
  * GET /api/wallet/aggregate/stream?addresses=0x1,0x2&cache=false
  *
  * Streams wallet data progressively using SSE.
  * Each API endpoint streams immediately when complete (no waiting for other endpoints or wallets).
+ *
+ * Endpoints streamed:
+ * 1. Wallet composition (/wallet/composition)
+ * 2. NFTs (/nfts)
+ * 3. Hypercore user data (/hypercore/user/{address})
+ * 4. Portfolio history (/portfolio-history)
+ * 5. DeFi points (/points)
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const addressesParam = searchParams.get('addresses')
-  const skipCache = searchParams.get('cache') === 'false'
+  const { searchParams } = new URL(request.url);
+  const addressesParam = searchParams.get('addresses');
+  const skipCache = searchParams.get('cache') === 'false';
 
   if (!addressesParam) {
     return new Response(
       JSON.stringify({ error: 'addresses parameter is required' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
-    )
+    );
   }
 
   // Parse addresses (comma-separated)
-  const addresses = addressesParam.split(',').map(a => a.trim()).filter(Boolean)
+  const addresses = addressesParam
+    .split(',')
+    .map((a) => a.trim())
+    .filter(Boolean);
 
   if (addresses.length === 0) {
     return new Response(
       JSON.stringify({ error: 'At least one valid address is required' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
-    )
+    );
   }
 
   // Create a TransformStream for SSE
-  const { readable, writable } = new TransformStream()
-  const writer = writable.getWriter()
-  const encoder = new TextEncoder()
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
 
   // Accumulate data for final aggregate computation
   const accumulator = {
     composition: new Map<string, WalletCompositionResponse>(),
-    nfts: new Map<string, { data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(),
+    nfts: new Map<
+      string,
+      { data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }
+    >(),
     hypercore: new Map<string, UserData>(),
     history: new Map<string, PortfolioHistoryPoint[]>(),
-  }
+    points: new Map<string, PointsDataResponse>(),
+  };
 
   // Overall stream timeout controller
   const overallStreamController = createTimeoutController(
     STREAM_TIMEOUTS.WALLET_AGGREGATE,
     'wallet aggregate stream'
-  )
+  );
 
   // Helper to write SSE message
   const writeSSE = async (data: unknown) => {
     try {
-      const message = `data: ${JSON.stringify(data)}\n\n`
-      await writer.write(encoder.encode(message))
+      const message = `data: ${JSON.stringify(data)}\n\n`;
+      await writer.write(encoder.encode(message));
     } catch (error) {
-      console.error('[Wallet Stream SSE] Error writing message:', error)
+      console.error('[Wallet Stream SSE] Error writing message:', error);
     }
-  }
+  };
 
   // Helper to fetch from API
   async function fetchAPI<T>(
     endpoint: string,
     options: { skipCache?: boolean; timeout?: number } = {}
   ): Promise<T> {
-    const { skipCache = false, timeout = REQUEST_TIMEOUTS.DEFAULT } = options
-    const controller = createTimeoutController(timeout, `API call to ${endpoint}`)
+    const { skipCache = false, timeout = REQUEST_TIMEOUTS.DEFAULT } = options;
+    const controller = createTimeoutController(
+      timeout,
+      `API call to ${endpoint}`
+    );
 
     try {
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'x-api-key': API_KEY,
-      }
+      };
 
-      const separator = endpoint.includes('?') ? '&' : '?'
+      const separator = endpoint.includes('?') ? '&' : '?';
       const url = skipCache
         ? `${API_BASE_URL}${endpoint}${separator}cache=false`
-        : `${API_BASE_URL}${endpoint}`
+        : `${API_BASE_URL}${endpoint}`;
 
-      const response = await fetch(url, { headers, signal: controller.signal })
+      const response = await fetch(url, { headers, signal: controller.signal });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
-      clearTimeoutController(controller)
-      return response.json()
+      clearTimeoutController(controller);
+      return response.json();
     } catch (error) {
-      clearTimeoutController(controller)
+      clearTimeoutController(controller);
 
       if (isTimeoutError(error)) {
-        throw new Error(getTimeoutErrorMessage(endpoint))
+        throw new Error(getTimeoutErrorMessage(endpoint));
       }
-      throw error
+      throw error;
     }
   }
 
@@ -121,17 +143,14 @@ export async function GET(request: NextRequest) {
     options: { skipCache?: boolean; timeout?: number } = {}
   ): Promise<PortfolioHistoryPoint[]> {
     const response = await fetchAPI<{
-      snapshots: Array<{ snapshot_timestamp: number; total_value_usd: number }>
-    }>(
-      `/portfolio-history?address=${address}&days=${days}`,
-      options
-    )
+      snapshots: Array<{ snapshot_timestamp: number; total_value_usd: number }>;
+    }>(`/portfolio-history?address=${address}&days=${days}`, options);
 
     // Transform snapshots to PortfolioHistoryPoint format
-    return response.snapshots.map(snapshot => ({
+    return response.snapshots.map((snapshot) => ({
       timestamp: snapshot.snapshot_timestamp * 1000,
-      value: snapshot.total_value_usd
-    }))
+      value: snapshot.total_value_usd,
+    }));
   }
 
   // Start streaming in the background
@@ -140,16 +159,16 @@ export async function GET(request: NextRequest) {
     overallStreamController.signal.addEventListener('abort', async () => {
       await writeSSE({
         type: 'error',
-        error: 'Stream timeout: Loading took too long. Please try again.'
-      })
-    })
+        error: 'Stream timeout: Loading took too long. Please try again.',
+      });
+    });
 
     try {
       // Fire ALL API requests immediately, stream each as it completes
-      const allPromises: Promise<void>[] = []
+      const allPromises: Promise<void>[] = [];
 
       for (const address of addresses) {
-        // For each wallet, fire all 4 APIs independently (no Promise.all barrier)
+        // For each wallet, fire all 5 APIs independently (no Promise.all barrier)
         // Note: Transactions are loaded separately via /api/wallet/transactions
 
         // 1. Composition
@@ -158,105 +177,135 @@ export async function GET(request: NextRequest) {
             `/wallet/composition?address=${address}`,
             { skipCache, timeout: REQUEST_TIMEOUTS.WALLET_COMPOSITION }
           )
-            .then(data => {
-              accumulator.composition.set(address, data)
-              return writeSSE({ type: 'composition', address, data })
+            .then((data) => {
+              accumulator.composition.set(address, data);
+              return writeSSE({ type: 'composition', address, data });
             })
-            .catch(err => writeSSE({
-              type: 'error',
-              address,
-              endpoint: 'composition',
-              error: err instanceof Error ? err.message : 'Unknown error'
-            }))
-        )
+            .catch((err) =>
+              writeSSE({
+                type: 'error',
+                address,
+                endpoint: 'composition',
+                error: err instanceof Error ? err.message : 'Unknown error',
+              })
+            )
+        );
 
         // 2. NFTs (Note: Transactions loaded independently via /api/wallet/transactions)
         allPromises.push(
-          fetchAPI<{ data: { nfts: NFT[]; totalNftValue: number }; cache: unknown }>(
-            `/nfts?address=${address}`,
-            { skipCache, timeout: REQUEST_TIMEOUTS.WALLET_NFTS }
-          )
-            .then(data => {
-              accumulator.nfts.set(address, data)
-              return writeSSE({ type: 'nfts', address, data })
+          fetchAPI<{
+            data: { nfts: NFT[]; totalNftValue: number };
+            cache: unknown;
+          }>(`/nfts?address=${address}`, {
+            skipCache,
+            timeout: REQUEST_TIMEOUTS.WALLET_NFTS,
+          })
+            .then((data) => {
+              accumulator.nfts.set(address, data);
+              return writeSSE({ type: 'nfts', address, data });
             })
-            .catch(err => writeSSE({
-              type: 'error',
-              address,
-              endpoint: 'nfts',
-              error: err instanceof Error ? err.message : 'Unknown error'
-            }))
-        )
+            .catch((err) =>
+              writeSSE({
+                type: 'error',
+                address,
+                endpoint: 'nfts',
+                error: err instanceof Error ? err.message : 'Unknown error',
+              })
+            )
+        );
 
         // 3. Hypercore user data
         allPromises.push(
-          fetchAPI<UserData>(
-            `/hypercore/user/${address}`,
-            { skipCache, timeout: REQUEST_TIMEOUTS.HYPERCORE_USER_DATA }
-          )
-            .then(data => {
-              accumulator.hypercore.set(address, data)
-              return writeSSE({ type: 'hypercore', address, data })
+          fetchAPI<UserData>(`/hypercore/user/${address}`, {
+            skipCache,
+            timeout: REQUEST_TIMEOUTS.HYPERCORE_USER_DATA,
+          })
+            .then((data) => {
+              accumulator.hypercore.set(address, data);
+              return writeSSE({ type: 'hypercore', address, data });
             })
-            .catch(err => writeSSE({
-              type: 'error',
-              address,
-              endpoint: 'hypercore',
-              error: err instanceof Error ? err.message : 'Unknown error'
-            }))
-        )
+            .catch((err) =>
+              writeSSE({
+                type: 'error',
+                address,
+                endpoint: 'hypercore',
+                error: err instanceof Error ? err.message : 'Unknown error',
+              })
+            )
+        );
 
         // 4. Portfolio history
         allPromises.push(
-          getPortfolioHistory(address, 30, { skipCache, timeout: REQUEST_TIMEOUTS.PORTFOLIO_HISTORY })
-            .then(data => {
-              accumulator.history.set(address, data)
-              return writeSSE({ type: 'history', address, data })
+          getPortfolioHistory(address, 30, {
+            skipCache,
+            timeout: REQUEST_TIMEOUTS.PORTFOLIO_HISTORY,
+          })
+            .then((data) => {
+              accumulator.history.set(address, data);
+              return writeSSE({ type: 'history', address, data });
             })
-            .catch(err => writeSSE({
-              type: 'error',
-              address,
-              endpoint: 'history',
-              error: err instanceof Error ? err.message : 'Unknown error'
-            }))
-        )
+            .catch((err) =>
+              writeSSE({
+                type: 'error',
+                address,
+                endpoint: 'history',
+                error: err instanceof Error ? err.message : 'Unknown error',
+              })
+            )
+        );
+
+        // 5. DeFi points
+        allPromises.push(
+          getDefiPoints(address, skipCache)
+            .then((data) => {
+              accumulator.points.set(address, data);
+              return writeSSE({ type: 'points', address, data });
+            })
+            .catch((err) =>
+              writeSSE({
+                type: 'error',
+                address,
+                endpoint: 'points',
+                error: err instanceof Error ? err.message : 'Unknown error',
+              })
+            )
+        );
       }
 
       // Wait for all requests to complete
-      await Promise.allSettled(allPromises)
+      await Promise.allSettled(allPromises);
 
       // Import computeAggregate (dynamic import to avoid circular dependency)
-      const { computeAggregate } = await import('@/lib/api/client')
+      const { computeAggregate } = await import('@/lib/api/client');
 
       // Compute and send final aggregate
-      const aggregate = computeAggregate(accumulator)
-      await writeSSE({ type: 'complete', aggregate })
-
+      const aggregate = computeAggregate(accumulator);
+      await writeSSE({ type: 'complete', aggregate });
     } catch (error) {
-      console.error('[Wallet Stream SSE] Stream error:', error)
+      console.error('[Wallet Stream SSE] Stream error:', error);
       await writeSSE({
         type: 'error',
-        error: error instanceof Error ? error.message : 'Stream error'
-      })
+        error: error instanceof Error ? error.message : 'Stream error',
+      });
     } finally {
-      clearTimeoutController(overallStreamController)
+      clearTimeoutController(overallStreamController);
       try {
-        await writer.close()
+        await writer.close();
       } catch {
         // Writer might already be closed
       }
     }
-  })()
+  })();
 
   // Don't await the promise - let it run in background
-  streamPromise.catch(console.error)
+  streamPromise.catch(console.error);
 
   return new Response(readable, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'X-Accel-Buffering': 'no', // Disable nginx buffering
     },
-  })
+  });
 }

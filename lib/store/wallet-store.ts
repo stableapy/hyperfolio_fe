@@ -9,6 +9,7 @@ import type {
   AggregateData,
   WalletCompositionResponse,
   WalletDataType,
+  PointsData,
 } from '@/lib/types/api';
 import { secureFetch } from '@/lib/api/fetch';
 import type {
@@ -16,6 +17,7 @@ import type {
   StreamProgress,
   StreamPortfolioStats,
 } from '@/hooks/use-positions-stream';
+// Note: clearPointsCache removed - no longer needed with wallet store as single source of truth
 
 interface WalletData {
   composition: WalletCompositionResponse | null; // Raw API response with { data: { tokens: [...] } }
@@ -25,6 +27,7 @@ interface WalletData {
   positions: unknown;
   userData: unknown;
   history: unknown[];
+  points: PointsData[];
 }
 
 // Streaming positions state
@@ -558,6 +561,7 @@ export const useWalletStore = create<WalletState>()(
             userData: null,
             history: [],
             positions: null,
+            points: [],
           };
 
           // Map dataType to the correct field in walletData
@@ -572,6 +576,13 @@ export const useWalletStore = create<WalletState>()(
             updatedWalletData.userData = data;
           } else if (dataType === 'history') {
             updatedWalletData.history = data as never[];
+          } else if (dataType === 'points') {
+            // Points data comes as { data: PointsData[], cache: {...} }
+            const pointsResponse = data as {
+              data: PointsData[];
+              cache: unknown;
+            };
+            updatedWalletData.points = pointsResponse.data;
           }
 
           return {
