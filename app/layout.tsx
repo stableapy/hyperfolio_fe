@@ -17,6 +17,10 @@ import { Providers } from './providers';
 import { config } from '@/lib/wagmi/config';
 import { generatePageToken } from '@/lib/api/token';
 import { TokenProvider } from '@/components/token-provider';
+import { validateAndLogEnvironment } from '@/lib/utils/env-validation';
+
+// Validate environment variables at app startup
+validateAndLogEnvironment();
 
 // Initialize fonts
 const _geist = V0_Font_Geist({

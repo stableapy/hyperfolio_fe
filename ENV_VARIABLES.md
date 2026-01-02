@@ -28,7 +28,7 @@ These variables are never exposed to the client and are only available in Server
 ```env
 
 # Internal API Security - Signed Token Authentication
-# 
+#
 # This secret is used for HMAC signing of API tokens. The authentication flow:
 # 1. Server generates a signed token on page load (with User-Agent fingerprint + 10min expiry)
 # 2. Token is passed to client via TokenProvider component
@@ -68,7 +68,35 @@ SENTRY_DSN=your_sentry_dsn
 # Wallet Configuration
 WALLET_NETWORK_RPC=https://rpc.hyperevm.com
 WALLET_SUPPORTED_CHAINS=1,8453,42161
+
+# Yield Section - Mock Data Mode
+# Controls mock data behavior for yield opportunities section
+# Values: true (always mock), false (always real data), auto (fallback to mock on error)
+USE_MOCK_YIELD_DATA=false
 ```
+
+### USE_MOCK_YIELD_DATA Details
+
+This variable controls whether the yield section uses mock data, which is useful for:
+
+- **Development**: Work on UI without backend dependency
+- **Testing**: Test error handling and fallback behavior
+- **Demo**: Show the UI when backend is unavailable
+
+**Values:**
+
+- `false` (default): Always fetch real data from backend API
+- `true`: Always use mock data, bypassing API calls
+- `auto`: Try real data first, fall back to mock on API errors (403, 500, timeout, etc.)
+
+**When to use:**
+
+- `true`: When developing UI features without backend running
+- `false`: When testing real API integration
+- `auto`: For production where you want graceful degradation
+
+**Visual Indicator:**
+When mock data is active, a visual badge/banner will appear in the UI to indicate this is sample data.
 
 ## Security Notes
 
@@ -82,11 +110,13 @@ WALLET_SUPPORTED_CHAINS=1,8453,42161
 ### After Frontend Redeploy
 
 1. **Remove orphan containers** - Old containers with deployment IDs may persist:
+
    ```bash
    docker ps -a | grep eww8w8wgsw8wsgsg8gg8c840 | grep -v "Up" | awk '{print $1}' | xargs -r docker rm
    ```
 
 2. **Reconnect RPC nodes to coolify network** (if disconnected):
+
    ```bash
    docker network connect coolify hyperliquid-node
    docker network connect coolify hyperliquid-archive
@@ -100,6 +130,7 @@ WALLET_SUPPORTED_CHAINS=1,8453,42161
 ### SSL/Cloudflare Configuration
 
 For LetsEncrypt certificate renewal:
+
 - In Cloudflare, set `api.hyperfolio.xyz` to **DNS Only** (gray cloud) temporarily
 - This allows LetsEncrypt to validate the certificate directly
 - After renewal, you can re-enable the orange cloud (Proxied)
@@ -107,8 +138,8 @@ For LetsEncrypt certificate renewal:
 ### Container Naming
 
 Enable "Consistent Container Names" in Coolify for both frontend and backend:
+
 - Frontend: `eww8w8wgsw8wsgsg8gg8c840` (project UUID)
 - Backend: `hyperfolio-api-s8ck4kwg0ksg848gs4cwog48`
 
 This prevents duplicate router conflicts in Traefik when redeploying
-
