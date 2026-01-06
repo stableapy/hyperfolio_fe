@@ -32,24 +32,70 @@ export function TransactionStatsGrid({
         {showSkeleton ? (
           <StatPillSkeleton width="w-32 sm:w-40" />
         ) : (
-          <StatPill
-            icon=">_"
-            color="accent"
-            label="--total"
-            value={total}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <StatPill
+                icon=">_"
+                color="accent"
+                label="--total"
+                value={total}
+                interactive
+                asButton
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
+              <div className="space-y-1">
+                <div className="text-theme-accent font-mono text-xs font-bold">
+                  <span className="text-theme-accent">&gt;</span> txs
+                  --total
+                </div>
+                <div className="text-theme-text-muted font-mono text-[9px]">
+                  Total number of transactions across all wallets
+                </div>
+                <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                  {total}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Showing Count */}
         {showSkeleton ? (
           <StatPillSkeleton width="w-28 sm:w-36" />
         ) : (
-          <StatPill
-            icon="#"
-            color="cyan"
-            label="showing:"
-            value={filteredCount}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <StatPill
+                icon="#"
+                color="cyan"
+                label="showing:"
+                value={filteredCount}
+                interactive
+                asButton
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
+              <div className="space-y-1">
+                <div className="text-theme-cyan font-mono text-xs font-bold">
+                  <span className="text-theme-cyan">&gt;</span> txs
+                  --filtered
+                </div>
+                <div className="text-theme-text-muted font-mono text-[9px]">
+                  Number of transactions matching current filters
+                </div>
+                <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                  {filteredCount}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Refresh Button */}

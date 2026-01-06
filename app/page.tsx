@@ -112,6 +112,10 @@ export default function Home() {
     !Number.isNaN(pastValue)
       ? ((currentValueWithDeFi - pastValue) / pastValue) * 100
       : 0;
+  const totalDollarChange24h =
+    !Number.isNaN(currentValueWithDeFi) && !Number.isNaN(pastValue)
+      ? currentValueWithDeFi - pastValue
+      : 0;
 
   return (
     <main className="bg-theme-bg min-h-screen">
@@ -145,6 +149,7 @@ export default function Home() {
       {/* Hero Section - Full width, no padding */}
       <PortfolioHero
         change24h={totalChange24h}
+        dollarChange24h={totalDollarChange24h}
         onRefresh={handleRefresh}
         onAddWallet={() => setIsAddWalletOpen(true)}
         onScrollToContent={handleScrollToContent}

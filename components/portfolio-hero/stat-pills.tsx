@@ -25,6 +25,7 @@ interface StatPillsProps {
   hasData: boolean;
   isPositive: boolean;
   change24h: number;
+  dollarChange24h: number;
   privacyMode: boolean;
   breakdown: AssetBreakdown[];
   apyData: ApyData;
@@ -38,6 +39,7 @@ export function StatPills({
   hasData,
   isPositive,
   change24h,
+  dollarChange24h,
   privacyMode,
   breakdown,
   apyData,
@@ -49,19 +51,50 @@ export function StatPills({
         {isLoading && !hasData ? (
           <StatPillSkeleton width="w-28 sm:w-36" />
         ) : (
-          <StatPill
-            icon={
-              isPositive ? (
-                <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              ) : (
-                <TrendingDown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              )
-            }
-            color={isPositive ? 'accent' : 'red'}
-            label="--24h"
-            value={`${isPositive ? '+' : ''}${change24h.toFixed(2)}%`}
-            privacyMode={privacyMode}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <StatPill
+                icon={
+                  isPositive ? (
+                    <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  )
+                }
+                color={isPositive ? 'accent' : 'red'}
+                label="--24h"
+                value={`${isPositive ? '+' : ''}${change24h.toFixed(2)}%`}
+                privacyMode={privacyMode}
+                interactive
+                asButton
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
+              <div className="space-y-1">
+                <div
+                  className={`font-mono text-xs font-bold ${isPositive ? 'text-theme-accent' : 'text-theme-red'}`}
+                >
+                  <span className={isPositive ? 'text-theme-accent' : 'text-theme-red'}>
+                    &gt;
+                  </span>{' '}
+                  portfolio --24h
+                </div>
+                <div className="text-theme-text-muted font-mono text-[9px]">
+                  24-hour change in total portfolio value
+                </div>
+                {dollarChange24h !== 0 && (
+                  <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                    {privacyMode
+                      ? '•••'
+                      : `${isPositive ? '+' : ''}$${dollarChange24h.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </div>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* APY Pill with Tooltip - Only show when data is available */}
@@ -156,6 +189,22 @@ export function StatPills({
               }
             };
 
+            // Get category-specific description
+            const getCategoryDescription = () => {
+              switch (item.category.toLowerCase()) {
+                case 'tokens':
+                  return 'Total value of all tokens held across all wallets';
+                case 'defi':
+                  return 'Total value deposited in DeFi protocols';
+                case 'nfts':
+                  return 'Total value of NFT collection';
+                case 'hypercore':
+                  return 'Total value of Hypercore perpetual positions';
+                default:
+                  return `Total value of ${item.category.toLowerCase()}`;
+              }
+            };
+
             // Format full value for tooltip
             const tooltipValue =
               item.value != null
@@ -163,17 +212,42 @@ export function StatPills({
                 : undefined;
 
             return (
-              <StatPill
-                key={item.category}
-                icon={getCategoryIcon()}
-                customColor={item.color}
-                label={`--${item.category.toLowerCase().replace(' ', '-')}`}
-                value={formatCompactValue(item.value)}
-                secondaryValue={formatPercentage(item.percentage)}
-                tooltipValue={tooltipValue}
-                privacyMode={privacyMode}
-                className="hover:border-theme-accent/30"
-              />
+              <Tooltip key={item.category}>
+                <TooltipTrigger asChild>
+                  <StatPill
+                    icon={getCategoryIcon()}
+                    customColor={item.color}
+                    label={`--${item.category.toLowerCase().replace(' ', '-')}`}
+                    value={formatCompactValue(item.value)}
+                    privacyMode={privacyMode}
+                    interactive
+                    asButton
+                    className="hover:border-theme-accent/30"
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="bg-theme-bg border-theme-border max-w-xs border p-3"
+                >
+                  <div className="space-y-1">
+                    <div
+                      className="font-mono text-xs font-bold"
+                      style={{ color: item.color }}
+                    >
+                      <span style={{ color: item.color }}>&gt;</span> portfolio
+                      --{item.category.toLowerCase().replace(' ', '-')}
+                    </div>
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      {getCategoryDescription()}
+                    </div>
+                    {tooltipValue && (
+                      <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                        {privacyMode ? '•••' : tooltipValue}
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             );
           })
         )}

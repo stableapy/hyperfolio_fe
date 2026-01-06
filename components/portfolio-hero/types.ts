@@ -2,6 +2,7 @@
 
 export interface PortfolioHeroProps {
   change24h: number
+  dollarChange24h: number
   onRefresh?: () => void
   onAddWallet?: () => void
   onScrollToContent?: () => void

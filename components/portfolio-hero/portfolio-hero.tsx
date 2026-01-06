@@ -29,6 +29,7 @@ import type { PortfolioHeroProps } from './types';
 
 export function PortfolioHero({
   change24h,
+  dollarChange24h,
   onRefresh,
   onAddWallet,
   onScrollToContent,
@@ -321,6 +322,7 @@ export function PortfolioHero({
               hasData={displayData.value !== 0}
               isPositive={isPositive}
               change24h={displayData.change24h}
+              dollarChange24h={dollarChange24h}
               privacyMode={privacyMode}
               breakdown={breakdown}
               apyData={apyData}
