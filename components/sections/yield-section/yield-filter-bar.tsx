@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { TerminalCard } from '@/components/ui/terminal-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,46 +11,86 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, TrendingUp, TrendingDown } from 'lucide-react';
-import type { YieldFilterBarProps } from './types';
+import { Search, TrendingUp, TrendingDown } from 'lucide-react';
+import { MultiSelectFilter } from './multi-select-filter';
+import { ResetAllButton } from './reset-all-button';
+import { useHyperEvmTokens } from '@/hooks/use-hyperevm-tokens';
+import type { YieldFilterBarProps, YieldCategoryFilter, FilterOption } from './types';
 
 const CATEGORIES: Array<{
-  value: 'all' | 'lending' | 'amm' | 'yield' | 'staking';
+  value: Exclude<YieldCategoryFilter, 'all'>;
   label: string;
+  count?: number;
 }> = [
-  { value: 'all', label: 'All' },
   { value: 'lending', label: 'Lending' },
   { value: 'amm', label: 'AMM' },
   { value: 'yield', label: 'Yield' },
   { value: 'staking', label: 'Staking' },
+  { value: 'derivatives', label: 'Derivatives' },
 ];
 
 /**
- * Props for YieldFilterBar component
- * @typedef {Object} YieldFilterBarProps
- * @property {string} searchQuery - Current search query text
- * @property {(query: string) => void} onSearchChange - Callback when search query changes
- * @property {'all' | 'lending' | 'amm' | 'yield' | 'staking'} selectedCategory - Currently selected category filter
- * @property {(category: 'all' | 'lending' | 'amm' | 'yield' | 'staking') => void} onCategoryChange - Callback when category changes
- * @property {'desc' | 'asc'} sortOrder - Current sort order for APY
- * @property {(order: 'desc' | 'asc') => void} onSortChange - Callback when sort order changes
- */
-
-/**
  * YieldFilterBar Component
- * Provides search, category filter, and sort controls for yield opportunities
- *
- * @param {YieldFilterBarProps} props - Component props
+ * Provides search, multi-select filters, and sort controls for yield opportunities
  */
 export function YieldFilterBar({
-  searchQuery,
-  onSearchChange,
-  selectedCategory,
-  onCategoryChange,
-  sortOrder,
-  onSortChange,
+  filters,
+  onFiltersChange,
+  availableProtocols,
+  availableTokens,
   disabled = false,
 }: YieldFilterBarProps) {
+  // Fetch HyperEVM tokens for logo URIs
+  const { data: hyperEvmTokens } = useHyperEvmTokens();
+
+  // Create a map of token symbol to logo URI for quick lookup
+  const tokenLogoMap = useMemo(() => {
+    if (!hyperEvmTokens) return new Map<string, string>();
+    return new Map(
+      hyperEvmTokens.map((token) => [token.symbol.toUpperCase(), token.logoURI])
+    );
+  }, [hyperEvmTokens]);
+
+  // Enhance tokens with logo URIs and sort by logo availability then alphabetically
+  const tokensWithLogos: FilterOption[] = useMemo(() => {
+    const enhancedTokens = availableTokens.map((token) => ({
+      ...token,
+      logoURI: tokenLogoMap.get(token.label.toUpperCase()),
+    }));
+
+    return enhancedTokens.sort((a, b) => {
+      // Tokens with logos come first
+      const aHasLogo = Boolean(a.logoURI);
+      const bHasLogo = Boolean(b.logoURI);
+
+      if (aHasLogo && !bHasLogo) return -1;
+      if (!aHasLogo && bHasLogo) return 1;
+
+      // Within each group, sort alphabetically
+      return a.label.localeCompare(b.label);
+    });
+  }, [availableTokens, tokenLogoMap]);
+
+  const hasActiveFilters =
+    filters.selectedCategories.length > 0 ||
+    filters.selectedProtocols.length > 0 ||
+    filters.selectedTokens.length > 0 ||
+    filters.stablecoinOnly ||
+    filters.hypeOnly ||
+    filters.searchQuery.length > 0;
+
+  const handleResetAll = () => {
+    onFiltersChange({
+      selectedCategories: [],
+      selectedProtocols: [],
+      selectedTokens: [],
+      stablecoinOnly: false,
+      hypeOnly: false,
+      searchQuery: '',
+      sortOrder: 'desc',
+    });
+  };
+
   return (
     <TerminalCard compact className="px-3 py-3 sm:px-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -59,40 +100,92 @@ export function YieldFilterBar({
           <Input
             type="text"
             placeholder="Search token symbol..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={filters.searchQuery}
+            onChange={(e) => onFiltersChange({ searchQuery: e.target.value })}
             aria-label="Search yield opportunities by token symbol"
             disabled={disabled}
             className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary placeholder:text-theme-text-muted h-9 pl-9 font-mono text-sm disabled:opacity-50"
           />
         </div>
 
-        {/* Category Filters */}
+        {/* Multi-Select Dropdowns */}
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="text-theme-text-muted size-4 sm:hidden" />
-          {CATEGORIES.map((cat) => (
-            <Button
-              key={cat.value}
-              variant={selectedCategory === cat.value ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onCategoryChange(cat.value)}
-              disabled={disabled}
-              className={`h-9 font-mono text-xs uppercase ${
-                selectedCategory === cat.value
-                  ? 'bg-theme-accent border-theme-accent text-white'
-                  : 'border-theme-border/50 text-theme-text-secondary hover:border-theme-accent bg-transparent'
-              } disabled:opacity-50`}
-            >
-              {cat.label}
-            </Button>
-          ))}
+          {/* Categories Dropdown */}
+          <MultiSelectFilter
+            triggerLabel="Categories"
+            items={CATEGORIES}
+            selectedValues={filters.selectedCategories}
+            onSelectionChange={(values) =>
+              onFiltersChange({ selectedCategories: values as YieldCategoryFilter[] })
+            }
+            disabled={disabled}
+            placeholder="Search categories..."
+          />
+
+          {/* Protocols Dropdown */}
+          <MultiSelectFilter
+            triggerLabel="Protocols"
+            items={availableProtocols}
+            selectedValues={filters.selectedProtocols}
+            onSelectionChange={(values) =>
+              onFiltersChange({ selectedProtocols: values })
+            }
+            showProtocolLogo={true}
+            disabled={disabled}
+            placeholder="Search protocols..."
+          />
+
+          {/* Tokens Dropdown */}
+          <MultiSelectFilter
+            triggerLabel="Tokens"
+            items={tokensWithLogos}
+            selectedValues={filters.selectedTokens}
+            onSelectionChange={(values) =>
+              onFiltersChange({ selectedTokens: values })
+            }
+            showTokenLogo={true}
+            disabled={disabled}
+            placeholder="Search tokens..."
+          />
+
+          {/* Stablecoin Toggle */}
+          <Button
+            variant={filters.stablecoinOnly ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onFiltersChange({ stablecoinOnly: !filters.stablecoinOnly })}
+            disabled={disabled}
+            className={`h-9 font-mono text-xs uppercase ${
+              filters.stablecoinOnly
+                ? 'bg-theme-accent border-theme-accent text-white'
+                : 'border-theme-border/50 text-theme-text-secondary hover:border-theme-accent bg-transparent'
+            } disabled:opacity-50`}
+          >
+            Stablecoin
+          </Button>
+
+          {/* HYPE Toggle */}
+          <Button
+            variant={filters.hypeOnly ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onFiltersChange({ hypeOnly: !filters.hypeOnly })}
+            disabled={disabled}
+            className={`h-9 font-mono text-xs uppercase ${
+              filters.hypeOnly
+                ? 'bg-theme-accent border-theme-accent text-white'
+                : 'border-theme-border/50 text-theme-text-secondary hover:border-theme-accent bg-transparent'
+            } disabled:opacity-50`}
+          >
+            HYPE
+          </Button>
         </div>
 
         {/* Sort Dropdown */}
         <div className="flex items-center gap-2">
           <Select
-            value={sortOrder}
-            onValueChange={(value: 'desc' | 'asc') => onSortChange(value)}
+            value={filters.sortOrder}
+            onValueChange={(value: 'desc' | 'asc') =>
+              onFiltersChange({ sortOrder: value })
+            }
             disabled={disabled}
           >
             <SelectTrigger
@@ -116,6 +209,12 @@ export function YieldFilterBar({
               </SelectItem>
             </SelectContent>
           </Select>
+
+          <ResetAllButton
+            onReset={handleResetAll}
+            disabled={disabled}
+            hasActiveFilters={hasActiveFilters}
+          />
         </div>
       </div>
     </TerminalCard>

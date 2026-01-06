@@ -1,6 +1,6 @@
 'use client';
 
-import { Coins, ImageIcon, TrendingUp, Clock, Zap, Trophy } from 'lucide-react';
+import { Coins, ImageIcon, Percent, TrendingUp, Clock, Zap, Trophy } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +25,12 @@ const SECTIONS = [
     label: 'DeFi',
     icon: TrendingUp,
     ariaLabel: 'View DeFi positions',
+  },
+  {
+    id: 'yield',
+    label: 'Yield',
+    icon: Percent,
+    ariaLabel: 'View yield opportunities',
   },
   {
     id: 'points',

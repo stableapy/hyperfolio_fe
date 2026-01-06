@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { TerminalCard } from '@/components/ui/terminal-card';
+import { useWalletStore } from '@/lib/store/wallet-store';
 import { YieldStats } from './yield-stats';
 import { YieldFilterBar } from './yield-filter-bar';
 import { YieldCard } from './yield-card';
 import { YieldListSkeleton } from './yield-list-skeleton';
 import { useYieldData } from './hooks/use-yield-data';
-import type { YieldSectionProps } from './types';
+import type { YieldSectionProps, YieldFilters } from './types';
 
 /**
  * Main YieldSection component
@@ -15,42 +16,63 @@ import type { YieldSectionProps } from './types';
  * with filtering, sorting, and statistics
  */
 export function YieldSection({ isLoading = false }: YieldSectionProps) {
-  // Filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<
-    'all' | 'lending' | 'amm' | 'yield' | 'staking'
-  >('all');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  // Combined filter state
+  const [filters, setFilters] = useState<YieldFilters>({
+    selectedCategories: [],
+    selectedProtocols: [],
+    selectedTokens: [],
+    stablecoinOnly: false,
+    hypeOnly: false,
+    searchQuery: '',
+    sortOrder: 'desc',
+  });
+
+  // Handle filter changes
+  const handleFiltersChange = (updates: Partial<YieldFilters>) => {
+    setFilters((prev) => ({ ...prev, ...updates }));
+  };
+
+  // Get privacy mode from wallet store
+  const privacyMode = useWalletStore((state) => state.privacyMode);
 
   // Fetch and process data
   const {
     opportunities,
+    filterOptions,
     isLoading: isDataLoading,
     error,
     hasData,
     stats,
-  } = useYieldData({
-    searchQuery,
-    selectedCategory,
-    sortOrder,
-  });
+  } = useYieldData(filters);
 
-  // Show loading state
-  const showLoading = isLoading || isDataLoading;
+  // Show loading state until data is ready
+  const showLoading = (isLoading || isDataLoading) && !hasData;
+
+  // Check if any filters are active for empty state message
+  const hasActiveFilters =
+    filters.selectedCategories.length > 0 ||
+    filters.selectedProtocols.length > 0 ||
+    filters.selectedTokens.length > 0 ||
+    filters.stablecoinOnly ||
+    filters.hypeOnly ||
+    filters.searchQuery.trim() !== '';
 
   return (
     <div className="min-w-0 flex-1 space-y-4 pb-20 sm:space-y-4 lg:pb-0">
       {/* Stats Grid */}
-      <YieldStats stats={stats} isLoading={showLoading} hasData={hasData} />
+      <YieldStats
+        stats={stats}
+        isLoading={showLoading}
+        hasData={hasData}
+        privacyMode={privacyMode}
+      />
 
       {/* Filter Bar */}
       <YieldFilterBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        sortOrder={sortOrder}
-        onSortChange={setSortOrder}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        availableProtocols={filterOptions.protocols}
+        availableTokens={filterOptions.tokens}
         disabled={showLoading}
       />
 
@@ -70,18 +92,18 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
           )}
 
           {/* Loading State - Skeleton */}
-          {showLoading && !error && !hasData && <YieldListSkeleton />}
+          {showLoading && !error && <YieldListSkeleton />}
 
           {/* Empty State */}
           {!showLoading && !error && hasData === false && (
             <div className="py-8 text-center">
               <div className="text-theme-text-secondary mb-2 font-mono text-sm">
-                {searchQuery || selectedCategory !== 'all'
+                {hasActiveFilters
                   ? 'NO YIELD OPPORTUNITIES FOUND'
                   : 'NO YIELD OPPORTUNITIES'}
               </div>
               <div className="text-theme-text-muted font-mono text-xs">
-                {searchQuery || selectedCategory !== 'all'
+                {hasActiveFilters
                   ? 'Try adjusting your filters'
                   : 'Yield opportunities will appear here'}
               </div>
