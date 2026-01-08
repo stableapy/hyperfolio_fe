@@ -156,21 +156,27 @@ export function usePositionsStream({
       logo: protocol.logo,
       url: protocol.url,
       totalValue: parseFloat(protocol.totalValueUSD || '0'),
-      positions: protocol.positions.map(pos => ({
-        id: pos.id,
-        protocol: protocol.name,
-        type: mapPositionType(pos.type),
-        assets: extractAssets(pos.details),
-        deposited: parseFloat(pos.totalValueUSD || '0'),
-        current: parseFloat(pos.totalValueUSD || '0'),
-        apy: extractApy(pos.details),
-        rewards: extractRewards(pos.details),
-        logo: protocol.logo,
-        positionDetails: pos.details,
-        protocolUrl: protocol.url,
-        estimatedYield: extractEstimatedYield(pos.details),
-        walletAddress: pos.walletAddress,
-      })),
+      positions: protocol.positions.map(pos => {
+        const mappedType = mapPositionType(pos.type)
+        return {
+          id: pos.id,
+          protocol: protocol.name,
+          type: mappedType,
+          positionSubType: mappedType === 'lending'
+            ? pos.positionType === 'borrowed' ? 'borrowed' : 'supplied'
+            : null,
+          assets: extractAssets(pos.details),
+          deposited: parseFloat(pos.totalValueUSD || '0'),
+          current: parseFloat(pos.totalValueUSD || '0'),
+          apy: extractApy(pos.details),
+          rewards: extractRewards(pos.details),
+          logo: protocol.logo,
+          positionDetails: pos.details,
+          protocolUrl: protocol.url,
+          estimatedYield: extractEstimatedYield(pos.details),
+          walletAddress: pos.walletAddress,
+        }
+      }),
       stats: protocol.protocolStats ? {
         weightedApyPercent: protocol.protocolStats.weightedApyPercent,
         positionsWithApy: protocol.protocolStats.positionsWithApy,

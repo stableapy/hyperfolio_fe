@@ -164,7 +164,7 @@ export function useStreamingPositions({
           ...pos,
           walletName: walletInfo?.name,
           walletColor: walletInfo?.color,
-        };
+        } as DeFiPositionDisplay;
       }),
       stats: group.stats
         ? {

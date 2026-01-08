@@ -41,11 +41,17 @@ export function usePortfolioBreakdown({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let data: any = aggregateData
 
-    // Calculate DeFi value from streaming data (single source of truth)
-    const streamingAddresses = selectedWalletId
-      ? [wallets.find(w => w.id === selectedWalletId)?.address].filter(Boolean) as string[]
-      : undefined
-    const defiValue = calculateStreamingTotalValue(streaming.streamedProtocols, streamingAddresses)
+    // Calculate DeFi value from streaming data
+    // When ALL wallets selected: use server-calculated aggregate total (more accurate)
+    // When specific wallet selected: filter positions by wallet address
+    const defiValue = selectedWalletId
+      ? (() => {
+          const streamingAddresses = [wallets.find(w => w.id === selectedWalletId)?.address].filter(Boolean) as string[]
+          return calculateStreamingTotalValue(streaming.streamedProtocols, streamingAddresses)
+        })()
+      : (streaming.streamPortfolioStats?.totalValueUSD
+          ? parseFloat(streaming.streamPortfolioStats.totalValueUSD)
+          : 0)
 
     if (selectedWalletId) {
       const selectedWallet = wallets.find(w => w.id === selectedWalletId)
@@ -126,6 +132,6 @@ export function usePortfolioBreakdown({
       { category: "NFTs", value: nftValue, percentage: (nftValue / totalVal) * 100, color: "var(--theme-purple)" },
       { category: "Hypercore", value: data.total_hypercore || 0, percentage: ((data.total_hypercore || 0) / totalVal) * 100, color: "var(--theme-orange)" },
     ].filter(item => item.value > 0)
-  }, [aggregateData, selectedWalletId, wallets, walletData, streaming.streamedProtocols])
+  }, [aggregateData, selectedWalletId, wallets, walletData, streaming.streamPortfolioStats, streaming.streamedProtocols])
 }
 

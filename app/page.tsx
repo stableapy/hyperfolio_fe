@@ -8,7 +8,6 @@ import { PortfolioHero } from '@/components/portfolio-hero';
 import { SwapWidgetModal } from '@/components/swap-widget';
 import { SeoFooter } from '@/components/seo-footer';
 import { useWalletStore } from '@/lib/store/wallet-store';
-import { calculateStreamingTotalValue } from '@/components/portfolio-hero/utils';
 
 // Home page components
 import {
@@ -93,10 +92,10 @@ export default function Home() {
   const { streaming } = useWalletStore();
 
   // Calculate 24h change on client side to include streaming DeFi positions
-  // The server-side calculation in getMultiWalletData() doesn't have access to streamed DeFi data
-  const streamingDeFiValue = calculateStreamingTotalValue(
-    streaming.streamedProtocols
-  );
+  // Use server-calculated net total from streaming portfolio stats (parsed from string to number)
+  const streamingDeFiValue = streaming.streamPortfolioStats?.totalValueUSD
+    ? parseFloat(streaming.streamPortfolioStats.totalValueUSD)
+    : 0;
   const currentValueWithDeFi = totalValue + streamingDeFiValue;
 
   const history = aggregateData?.history || [];

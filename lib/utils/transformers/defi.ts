@@ -12,6 +12,7 @@ export interface DeFiPositionDisplay {
   id: string
   protocol: string
   type: "lending" | "liquidity" | "staking" | "farming"
+  positionSubType: "supplied" | "borrowed" | null
   assets: string[]
   deposited: number
   current: number
@@ -65,6 +66,16 @@ export function transformDeFiPositions(
         }
 
         const positionType = typeMap[position.type] || "lending"
+
+        // Preserve specific sub-type for lending positions
+        // Treat all lending except "borrowed" as "supplied" (vaults, supplied, etc.)
+        const positionSubType: "supplied" | "borrowed" | null =
+          positionType === "lending"
+            ? position.positionType === "borrowed"
+              ? "borrowed"
+              : "supplied"
+            : null
+
         const tokens = []
 
         if (position.details?.token) {
@@ -99,6 +110,7 @@ export function transformDeFiPositions(
           id: position.id,
           protocol: protocol.name,
           type: positionType,
+          positionSubType,
           assets: tokens,
           deposited: positionValue,
           current: positionValue,
@@ -129,9 +141,12 @@ export function groupPositionsByProtocol(positions: DeFiPositionDisplay[], proto
   positions.forEach((position) => {
     const existing = protocolMap.get(position.protocol)
 
+    // Calculate net value: subtract borrowed, add all others
+    const value = position.positionSubType === 'borrowed' ? -position.current : position.current
+
     if (existing) {
       existing.positions.push(position)
-      existing.totalValue += position.current
+      existing.totalValue += value
     } else {
       // Find protocol stats from raw API data
       const protocolData = protocolsData?.find((p: any) => p.name === position.protocol)
@@ -142,7 +157,7 @@ export function groupPositionsByProtocol(positions: DeFiPositionDisplay[], proto
         name: position.protocol,
         logo: position.logo,
         url: position.protocolUrl || '',
-        totalValue: position.current,
+        totalValue: value,
         positions: [position],
         stats,
       })
@@ -154,13 +169,17 @@ export function groupPositionsByProtocol(positions: DeFiPositionDisplay[], proto
     // Sort positions within protocol by value (highest first)
     protocol.positions.sort((a, b) => b.current - a.current)
 
-    const positionsWithApy = protocol.positions.filter(pos => pos.apy > 0)
+    // Only include supplied positions in APY calculation (borrows are expenses, not income)
+    const positionsWithApy = protocol.positions.filter(pos => pos.apy > 0 && pos.positionSubType !== 'borrowed')
 
     if (positionsWithApy.length > 0) {
-      // Calculate weighted APY
-      const weightedApy = positionsWithApy.reduce((sum, pos) => sum + (pos.apy * pos.current), 0) / protocol.totalValue
+      // Calculate weighted APY based on total supplied value (not net, for accurate yield rate)
+      const totalSuppliedValue = positionsWithApy.reduce((sum, pos) => sum + pos.current, 0)
+      const weightedApy = totalSuppliedValue > 0
+        ? positionsWithApy.reduce((sum, pos) => sum + (pos.apy * pos.current), 0) / totalSuppliedValue
+        : 0
 
-      // Calculate total estimated yield
+      // Calculate total estimated yield (only from supplied positions)
       const totalYield = {
         daily: positionsWithApy.reduce((sum, pos) => {
           const daily = pos.estimatedYield ? safeFloat(pos.estimatedYield.daily) : 0

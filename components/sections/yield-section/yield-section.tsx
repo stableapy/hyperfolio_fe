@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { TerminalCard } from '@/components/ui/terminal-card';
+import { SwapWidgetInline } from '@/components/swap-widget';
 import { useWalletStore } from '@/lib/store/wallet-store';
 import { YieldStats } from './yield-stats';
 import { YieldFilterBar } from './yield-filter-bar';
@@ -26,6 +27,11 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
     searchQuery: '',
     sortOrder: 'desc',
   });
+
+  // State for pre-filling swap widget (for future swap click functionality)
+  const [selectedSwapToken, setSelectedSwapToken] = useState<
+    { address: string; symbol: string; chainId: number } | undefined
+  >(undefined);
 
   // Handle filter changes
   const handleFiltersChange = (updates: Partial<YieldFilters>) => {
@@ -58,68 +64,78 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
     filters.searchQuery.trim() !== '';
 
   return (
-    <div className="min-w-0 flex-1 space-y-4 pb-20 sm:space-y-4 lg:pb-0">
-      {/* Stats Grid */}
-      <YieldStats
-        stats={stats}
-        isLoading={showLoading}
-        hasData={hasData}
-        privacyMode={privacyMode}
-      />
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      {/* Left: Yield Content */}
+      <div className="min-w-0 flex-1 space-y-4 pb-20 sm:space-y-4 lg:pb-0">
+        {/* Stats Grid */}
+        <YieldStats
+          stats={stats}
+          isLoading={showLoading}
+          hasData={hasData}
+          privacyMode={privacyMode}
+        />
 
-      {/* Filter Bar */}
-      <YieldFilterBar
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        availableProtocols={filterOptions.protocols}
-        availableTokens={filterOptions.tokens}
-        disabled={showLoading}
-      />
+        {/* Filter Bar */}
+        <YieldFilterBar
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          availableProtocols={filterOptions.protocols}
+          availableTokens={filterOptions.tokens}
+          disabled={showLoading}
+        />
 
-      {/* Yield Opportunities List */}
-      <TerminalCard showHeader title="yield --list">
-        <div className="divide-theme-border/30 divide-y">
-          {/* Error State */}
-          {error && !showLoading && (
-            <div className="py-8 text-center">
-              <div className="text-theme-text-secondary mb-2 font-mono text-sm">
-                ERROR LOADING YIELD DATA
+        {/* Yield Opportunities List */}
+        <TerminalCard showHeader title="yield --list">
+          <div className="divide-theme-border/30 divide-y">
+            {/* Error State */}
+            {error && !showLoading && (
+              <div className="py-8 text-center">
+                <div className="text-theme-text-secondary mb-2 font-mono text-sm">
+                  ERROR LOADING YIELD DATA
+                </div>
+                <div className="text-theme-text-muted font-mono text-xs">
+                  {error}
+                </div>
               </div>
-              <div className="text-theme-text-muted font-mono text-xs">
-                {error}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Loading State - Skeleton */}
-          {showLoading && !error && <YieldListSkeleton />}
+            {/* Loading State - Skeleton */}
+            {showLoading && !error && <YieldListSkeleton />}
 
-          {/* Empty State */}
-          {!showLoading && !error && hasData === false && (
-            <div className="py-8 text-center">
-              <div className="text-theme-text-secondary mb-2 font-mono text-sm">
-                {hasActiveFilters
-                  ? 'NO YIELD OPPORTUNITIES FOUND'
-                  : 'NO YIELD OPPORTUNITIES'}
+            {/* Empty State */}
+            {!showLoading && !error && hasData === false && (
+              <div className="py-8 text-center">
+                <div className="text-theme-text-secondary mb-2 font-mono text-sm">
+                  {hasActiveFilters
+                    ? 'NO YIELD OPPORTUNITIES FOUND'
+                    : 'NO YIELD OPPORTUNITIES'}
+                </div>
+                <div className="text-theme-text-muted font-mono text-xs">
+                  {hasActiveFilters
+                    ? 'Try adjusting your filters'
+                    : 'Yield opportunities will appear here'}
+                </div>
               </div>
-              <div className="text-theme-text-muted font-mono text-xs">
-                {hasActiveFilters
-                  ? 'Try adjusting your filters'
-                  : 'Yield opportunities will appear here'}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Yield Cards */}
-          {!showLoading && !error && hasData && (
-            <>
-              {opportunities.map((opportunity) => (
-                <YieldCard key={opportunity.id} opportunity={opportunity} />
-              ))}
-            </>
-          )}
+            {/* Yield Cards */}
+            {!showLoading && !error && hasData && (
+              <>
+                {opportunities.map((opportunity) => (
+                  <YieldCard key={opportunity.id} opportunity={opportunity} />
+                ))}
+              </>
+            )}
+          </div>
+        </TerminalCard>
+      </div>
+
+      {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
+      <div className="hidden w-[380px] flex-shrink-0 lg:block">
+        <div className="sticky top-25">
+          <SwapWidgetInline fromToken={selectedSwapToken} />
         </div>
-      </TerminalCard>
+      </div>
     </div>
   );
 }

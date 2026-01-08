@@ -60,9 +60,13 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
             )
           : protocol.positions;
 
-        // Recalculate total value from filtered positions
+        // Recalculate total value from filtered positions (net: supplied - borrowed)
         const totalValue = filteredPositions.reduce(
-          (sum, pos) => sum + parseFloat(pos.totalValueUSD || '0'),
+          (sum, pos) => {
+            const value = parseFloat(pos.totalValueUSD || '0');
+            // Subtract borrowed positions, add all others (vault, supplied, etc.)
+            return pos.positionType === 'borrowed' ? sum - value : sum + value;
+          },
           0
         );
 
@@ -90,15 +94,18 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
             const posApy = extractApy(pos.details);
             const posYield = extractEstimatedYield(pos.details);
 
-            if (posApy > 0 && posValue > 0) {
-              totalWeightedApy += posApy * posValue;
-              totalValueForApy += posValue;
-            }
+            // Only include supplied positions in yield calculations (borrows are expenses, not income)
+            if (pos.positionType !== 'borrowed') {
+              if (posApy > 0 && posValue > 0) {
+                totalWeightedApy += posApy * posValue;
+                totalValueForApy += posValue;
+              }
 
-            if (posYield) {
-              dailyYield += parseFloat(posYield.daily) || 0;
-              weeklyYield += parseFloat(posYield.weekly) || 0;
-              monthlyYield += parseFloat(posYield.monthly) || 0;
+              if (posYield) {
+                dailyYield += parseFloat(posYield.daily) || 0;
+                weeklyYield += parseFloat(posYield.weekly) || 0;
+                monthlyYield += parseFloat(posYield.monthly) || 0;
+              }
             }
           });
 
@@ -133,10 +140,14 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
             const walletInfo = pos.walletAddress
               ? walletInfoMap.get(pos.walletAddress)
               : undefined;
+            const mappedType = mapPositionType(pos.type);
             return {
               id: pos.id,
               protocol: protocol.name,
-              type: mapPositionType(pos.type),
+              type: mappedType,
+              positionSubType: mappedType === 'lending'
+                ? pos.positionType === 'borrowed' ? 'borrowed' : 'supplied'
+                : null,
               assets: extractAssets(pos.details),
               deposited: parseFloat(pos.totalValueUSD || '0'),
               current: parseFloat(pos.totalValueUSD || '0'),
@@ -168,6 +179,15 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
   // Calculate stats from positions
   const stats = useDefiStats({ positions });
 
+  // Extract net total from streaming portfolio stats
+  // When ALL wallets selected: use server-calculated aggregate total (more accurate)
+  // When specific wallet selected: calculate from filtered positions
+  const streamingTotalValue = selectedWalletAddress
+    ? stats.totalDeposited  // Positions are already filtered by selectedWalletAddress
+    : (streaming.streamPortfolioStats?.totalValueUSD
+        ? parseFloat(streaming.streamPortfolioStats.totalValueUSD)
+        : 0);
+
   // Calculate total portfolio value from positions (for percentage display in privacy mode)
   const totalPortfolioUSD = stats.totalCurrent || 0;
 
@@ -198,7 +218,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
       <DefiStatsGrid
         isLoading={isStreamingActive && !hasData}
         hasData={hasData}
-        totalDeposited={stats.totalDeposited}
+        totalDeposited={streamingTotalValue}
         totalRewards={stats.totalRewards}
         weightedApy={stats.weightedApy}
         portfolioYield={stats.portfolioYield}

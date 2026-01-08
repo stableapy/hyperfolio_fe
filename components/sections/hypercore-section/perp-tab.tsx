@@ -2,6 +2,11 @@
 
 import { useMemo } from 'react';
 import { TokenImage } from '@/components/sections/tokens-section/token-image';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatCompactValue, safeParseFloat } from './utils';
 import type { PerpTabProps, PerpPositionDetail } from './types';
 
@@ -47,6 +52,8 @@ function PerpPositionRow({
   const szi = safeParseFloat(pos.szi);
   const entryPrice = safeParseFloat(pos.entryPx);
   const marginUsed = safeParseFloat(pos.marginUsed || '0');
+  const positionValue = safeParseFloat(pos.positionValue || '0');
+  const liquidationPx = safeParseFloat(pos.liquidationPx || '0');
   const unrealizedPnl = safeParseFloat(pos.unrealizedPnl);
   const returnOnEquity = safeParseFloat(pos.returnOnEquity);
   const leverage = pos.leverage ?? { type: 'cross', value: 1 };
@@ -89,17 +96,66 @@ function PerpPositionRow({
               >
                 {isLong ? 'LONG' : 'SHORT'}
               </span>
-              <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1 py-0.5 font-mono text-[9px] sm:px-1.5 sm:text-[10px]">
-                {formatPositionSize(pos.szi, isLong)}
-              </span>
+              {pos.isHip3 && pos.dexName && (
+                <span className="bg-theme-cyan/10 text-theme-cyan border-theme-cyan/20 border px-1 py-0.5 font-mono text-[9px] font-bold sm:px-1.5 sm:text-[10px]">
+                  {pos.dexName}
+                </span>
+              )}
+              <div className="flex items-center gap-0.5">
+                <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+                  size:
+                </span>
+                <span className="text-theme-text-secondary font-mono text-[9px] font-bold tabular-nums sm:text-[10px]">
+                  {formatPositionSize(pos.szi, isLong)}
+                </span>
+              </div>
             </div>
             <div className="text-theme-text-muted truncate font-mono text-[10px] opacity-70 sm:text-[11px]">
               {pos.name} · {formatLeverage(leverage)}
             </div>
+            {/* Mobile-only: Entry, ROI & Liquidation */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 md:hidden">
+              <div className="flex items-center gap-1">
+                <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+                  entry:
+                </span>
+                <span className="text-theme-text-secondary font-mono text-[9px] tabular-nums">
+                  ${entryPrice.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+                  roi:
+                </span>
+                <span
+                  className={`font-mono text-[9px] font-bold tabular-nums ${
+                    isProfitable ? 'text-theme-accent' : 'text-theme-magenta'
+                  }`}
+                >
+                  {privacyMode ? '•••' : formatPnlPercent(pos.returnOnEquity)}
+                </span>
+              </div>
+              {liquidationPx > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+                    liq:
+                  </span>
+                  <span className="text-theme-orange font-mono text-[9px] font-bold tabular-nums">
+                    ${liquidationPx.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Center: Entry Price & ROI - Hidden on mobile */}
+        {/* Center: Entry Price, ROI, Position Value, Liquidation - Hidden on mobile */}
         <div className="hidden items-center gap-4 md:flex">
           <div className="flex items-center gap-1.5">
             <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
@@ -125,27 +181,67 @@ function PerpPositionRow({
               {privacyMode ? '•••' : formatPnlPercent(pos.returnOnEquity)}
             </span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+              pos:
+            </span>
+            <span className="text-theme-text-secondary font-mono text-xs tabular-nums">
+              {privacyMode ? '•••' : `$${formatCompactValue(positionValue)}`}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text-muted font-mono text-[9px] tracking-wider uppercase">
+              liq:
+            </span>
+            <span
+              className={`font-mono text-xs font-bold tabular-nums ${
+                liquidationPx > 0 ? 'text-theme-orange' : 'text-theme-text-muted'
+              }`}
+            >
+              {privacyMode
+                ? '•••'
+                : liquidationPx > 0
+                  ? `$${liquidationPx.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`
+                  : 'N/A'}
+            </span>
+          </div>
         </div>
 
-        {/* Right: Value & Unrealized PnL */}
+        {/* Right: Position Value, Margin Used, Unrealized PnL */}
         <div className="flex min-w-[100px] flex-shrink-0 flex-col items-end gap-0.5">
           <div className="flex items-center gap-1.5">
             <span className="text-theme-text-muted font-mono text-[10px]">
-              =
+              pos:
             </span>
             <span className="text-theme-accent font-mono text-xs font-bold tabular-nums sm:text-sm">
+              {privacyMode ? '•••' : `$${formatCompactValue(positionValue)}`}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text-muted font-mono text-[10px]">
+              margin:
+            </span>
+            <span className="text-theme-text-secondary font-mono text-[10px] font-bold tabular-nums sm:text-xs">
               {privacyMode ? '•••' : `$${formatCompactValue(marginUsed)}`}
             </span>
           </div>
-          <span
-            className={`font-mono text-[10px] font-bold tabular-nums sm:text-[11px] ${
-              isProfitable ? 'text-theme-accent' : 'text-theme-magenta'
-            }`}
-          >
-            {privacyMode
-              ? '•••'
-              : `${isProfitable ? '+' : ''}$${unrealizedPnl.toFixed(2)}`}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text-muted font-mono text-[10px]">
+              pnl:
+            </span>
+            <span
+              className={`font-mono text-[10px] font-bold tabular-nums sm:text-[11px] ${
+                isProfitable ? 'text-theme-accent' : 'text-theme-magenta'
+              }`}
+            >
+              {privacyMode
+                ? '•••'
+                : `${isProfitable ? '+' : ''}$${unrealizedPnl.toFixed(2)}`}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -191,11 +287,40 @@ export function PerpTab({
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1.5">
             <span className="text-theme-text-muted font-mono text-[10px]">
-              --margin
+              available margin
             </span>
-            <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
-              {privacyMode ? '•••' : `$${margin.toFixed(2)}`}
-            </span>
+            {!privacyMode && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="text-theme-cyan font-mono text-xs font-bold tabular-nums focus:ring-theme-accent focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
+                    aria-describedby="tooltip-content"
+                  >
+                    ${margin.toFixed(2)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="bg-theme-bg border-theme-border max-w-xs border p-3"
+                  role="tooltip"
+                  id="tooltip-content"
+                >
+                  <div className="space-y-1">
+                    <div className="text-theme-accent font-mono text-xs font-bold">
+                      <span className="text-theme-accent">&gt;</span> hypercore --margin
+                    </div>
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      Free cash available for trading
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {privacyMode && (
+              <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
+                •••
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -214,11 +339,40 @@ export function PerpTab({
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1.5">
             <span className="text-theme-text-muted font-mono text-[10px]">
-              --margin
+              available margin
             </span>
-            <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
-              {privacyMode ? '•••' : `$${margin.toFixed(2)}`}
-            </span>
+            {!privacyMode && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="text-theme-cyan font-mono text-xs font-bold tabular-nums focus:ring-theme-accent focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
+                    aria-describedby="tooltip-content"
+                  >
+                    ${margin.toFixed(2)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="bg-theme-bg border-theme-border max-w-xs border p-3"
+                  role="tooltip"
+                  id="tooltip-content"
+                >
+                  <div className="space-y-1">
+                    <div className="text-theme-accent font-mono text-xs font-bold">
+                      <span className="text-theme-accent">&gt;</span> hypercore --margin
+                    </div>
+                    <div className="text-theme-text-muted font-mono text-[9px]">
+                      Free cash available for trading
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {privacyMode && (
+              <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
+                •••
+              </span>
+            )}
           </div>
         </div>
       </div>

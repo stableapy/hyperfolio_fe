@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PositionItem } from './position-item';
-import { TYPE_LABELS, TYPE_COLORS, type PositionType } from './constants';
+import { TYPE_LABELS, TYPE_COLORS, SUBTYPE_LABELS, SUBTYPE_COLORS, type PositionType, type PositionSubType } from './constants';
 import type { ProtocolCardProps } from './types';
 import { formatPercentage } from '@/lib/utils/formatters';
 
@@ -151,19 +151,38 @@ export function ProtocolCard({
       {/* Positions List - Grouped by Type */}
       {isExpanded && (
         <div className="border-theme-border/50 border-t px-2 pt-2 pb-2 sm:px-3 sm:pb-3">
-          {/* Group positions by type */}
+          {/* Group positions by type, with sub-grouping for lending */}
           {(() => {
+            // First group by type
             const positionsByType = protocol.positions.reduce(
               (acc, pos) => {
-                if (!acc[pos.type]) acc[pos.type] = [];
-                acc[pos.type].push(pos);
+                if (!acc[pos.type]) {
+                  acc[pos.type] = {
+                    default: [] as typeof protocol.positions,
+                    supplied: [] as typeof protocol.positions,
+                    borrowed: [] as typeof protocol.positions,
+                  };
+                }
+                // For lending positions with sub-type, group by sub-type
+                if (pos.type === 'lending' && pos.positionSubType) {
+                  acc[pos.type][pos.positionSubType].push(pos);
+                } else {
+                  acc[pos.type].default.push(pos);
+                }
                 return acc;
               },
-              {} as Record<string, typeof protocol.positions>
+              {} as Record<
+                string,
+                {
+                  default: typeof protocol.positions;
+                  supplied: typeof protocol.positions;
+                  borrowed: typeof protocol.positions;
+                }
+              >
             );
 
             return Object.entries(positionsByType).map(
-              ([type, typePositions]) => (
+              ([type, typeGroups]) => (
                 <div key={type} className="mb-2 last:mb-0">
                   {/* Type Header - shown once per type, terminal style */}
                   <div className="mb-1 ml-4 flex items-center gap-1.5 py-1 sm:ml-5">
@@ -176,23 +195,100 @@ export function ProtocolCard({
                     >
                       {TYPE_LABELS[type as PositionType]}
                     </span>
-                    {typePositions.length > 1 && (
-                      <span className="text-theme-text-muted font-mono text-[9px] sm:text-[10px]">
-                        [{typePositions.length}]
-                      </span>
-                    )}
                   </div>
 
-                  {/* Positions under this type */}
-                  {typePositions.map((position) => (
-                    <PositionItem
-                      key={position.id}
-                      position={position}
-                      showWalletIndicator={!selectedWalletId}
-                      privacyMode={privacyMode}
-                      totalPortfolioUSD={totalPortfolioUSD}
-                    />
-                  ))}
+                  {/* Lending: Render sub-groups for supplied/borrowed */}
+                  {type === 'lending' ? (
+                    <>
+                      {/* Supplied positions */}
+                      {typeGroups.supplied.length > 0 && (
+                        <div className="mb-1 last:mb-0">
+                          <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
+                            <span className="text-theme-text-muted font-mono text-[8px]">
+                              &gt;
+                            </span>
+                            <span
+                              className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
+                              style={{ color: SUBTYPE_COLORS.supplied }}
+                            >
+                              {SUBTYPE_LABELS.supplied}
+                            </span>
+                            {typeGroups.supplied.length > 1 && (
+                              <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
+                                [{typeGroups.supplied.length}]
+                              </span>
+                            )}
+                          </div>
+                          {typeGroups.supplied.map((position) => (
+                            <PositionItem
+                              key={position.id}
+                              position={position}
+                              showWalletIndicator={!selectedWalletId}
+                              privacyMode={privacyMode}
+                              totalPortfolioUSD={totalPortfolioUSD}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Borrowed positions */}
+                      {typeGroups.borrowed.length > 0 && (
+                        <div className="mb-1 last:mb-0">
+                          <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
+                            <span className="text-theme-text-muted font-mono text-[8px]">
+                              &gt;
+                            </span>
+                            <span
+                              className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
+                              style={{ color: SUBTYPE_COLORS.borrowed }}
+                            >
+                              {SUBTYPE_LABELS.borrowed}
+                            </span>
+                            {typeGroups.borrowed.length > 1 && (
+                              <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
+                                [{typeGroups.borrowed.length}]
+                              </span>
+                            )}
+                          </div>
+                          {typeGroups.borrowed.map((position) => (
+                            <PositionItem
+                              key={position.id}
+                              position={position}
+                              showWalletIndicator={!selectedWalletId}
+                              privacyMode={privacyMode}
+                              totalPortfolioUSD={totalPortfolioUSD}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Default positions (no sub-type) */}
+                      {typeGroups.default.length > 0 && (
+                        <div>
+                          {typeGroups.default.map((position) => (
+                            <PositionItem
+                              key={position.id}
+                              position={position}
+                              showWalletIndicator={!selectedWalletId}
+                              privacyMode={privacyMode}
+                              totalPortfolioUSD={totalPortfolioUSD}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Non-lending: Render positions directly */
+                    typeGroups.default.map((position) => (
+                      <PositionItem
+                        key={position.id}
+                        position={position}
+                        showWalletIndicator={!selectedWalletId}
+                        privacyMode={privacyMode}
+                        totalPortfolioUSD={totalPortfolioUSD}
+                      />
+                    ))
+                  )}
                 </div>
               )
             );
