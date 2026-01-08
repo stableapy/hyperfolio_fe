@@ -26,6 +26,13 @@ const SECTIONS = [
     icon: TrendingUp,
     ariaLabel: 'View DeFi positions',
   },
+  // TODO: Re-enable yield tab in next upgrade
+  // {
+  //   id: 'yield',
+  //   label: 'Yield',
+  //   icon: Percent,
+  //   ariaLabel: 'View yield opportunities',
+  // },
   {
     id: 'points',
     label: 'Points',

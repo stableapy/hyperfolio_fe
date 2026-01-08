@@ -46,36 +46,80 @@ export function DefiStatsGrid({
         {showSkeleton ? (
           <StatPillSkeleton width="w-32 sm:w-40" />
         ) : (
-          <StatPill
-            icon=">_"
-            color="accent"
-            label="--deposited"
-            value={formatCompactValue(totalDeposited)}
-            tooltipValue={
-              totalDeposited != null
-                ? `$${totalDeposited.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : undefined
-            }
-            privacyMode={privacyMode}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <StatPill
+                icon=">_"
+                color="accent"
+                label="--deposited"
+                value={formatCompactValue(totalDeposited)}
+                privacyMode={privacyMode}
+                interactive
+                asButton
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
+              <div className="space-y-1">
+                <div className="text-theme-accent font-mono text-xs font-bold">
+                  <span className="text-theme-accent">&gt;</span> defi
+                  --deposited
+                </div>
+                <div className="text-theme-text-muted font-mono text-[9px]">
+                  Total value deposited in DeFi protocols
+                </div>
+                {totalDeposited != null && (
+                  <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                    {privacyMode
+                      ? '•••'
+                      : `$${totalDeposited.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </div>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Rewards */}
         {showSkeleton ? (
           <StatPillSkeleton width="w-28 sm:w-36" />
         ) : (
-          <StatPill
-            icon="+"
-            color="cyan"
-            label="--rewards"
-            value={formatCompactValue(totalRewards)}
-            tooltipValue={
-              totalRewards != null
-                ? `$${totalRewards.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : undefined
-            }
-            privacyMode={privacyMode}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <StatPill
+                icon="+"
+                color="cyan"
+                label="--rewards"
+                value={formatCompactValue(totalRewards)}
+                privacyMode={privacyMode}
+                interactive
+                asButton
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-theme-bg border-theme-border max-w-xs border p-3"
+            >
+              <div className="space-y-1">
+                <div className="text-theme-cyan font-mono text-xs font-bold">
+                  <span className="text-theme-cyan">&gt;</span> defi
+                  --rewards
+                </div>
+                <div className="text-theme-text-muted font-mono text-[9px]">
+                  Total rewards earned from DeFi positions
+                </div>
+                {totalRewards != null && (
+                  <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
+                    {privacyMode
+                      ? '•••'
+                      : `$${totalRewards.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </div>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Average APY with Tooltip */}

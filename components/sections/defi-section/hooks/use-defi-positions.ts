@@ -82,6 +82,12 @@ export function useDefiPositions({
               id: pos.id,
               protocol: protocol.name,
               type: mapPositionType(pos.type),
+              positionSubType:
+                mapPositionType(pos.type) === "lending"
+                  ? pos.positionType === "borrowed"
+                    ? "borrowed"
+                    : "supplied"
+                  : null,
               assets: extractAssets(details),
               deposited: parseFloat(pos.totalValueUSD || '0'),
               current: parseFloat(pos.totalValueUSD || '0'),

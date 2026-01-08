@@ -6,6 +6,7 @@ import { DeFiSection } from '@/components/sections/defi-section';
 import { HypercoreSection } from '@/components/sections/hypercore-section';
 import { TransactionsSection } from '@/components/sections/transactions-section';
 import { PointsSection } from '@/components/sections/points-section';
+import { YieldSection } from '@/components/sections/yield-section';
 import type { SectionContentProps } from './types';
 
 // Section configuration with SEO-friendly headings
@@ -43,6 +44,12 @@ const SECTION_CONFIG = {
     heading: 'Protocol Points',
     description:
       'View and track your protocol points across different DeFi platforms',
+  },
+  yield: {
+    id: 'yield-panel',
+    heading: 'Yield Opportunities',
+    description:
+      'Browse lending, AMM, staking yield opportunities across Hyperliquid protocols',
   },
 } as const;
 
@@ -96,6 +103,9 @@ export function SectionContent({
       )}
       {activeSection === 'points' && (
         <PointsSection isLoading={sectionIsLoading} />
+      )}
+      {activeSection === 'yield' && (
+        <YieldSection isLoading={sectionIsLoading} />
       )}
     </section>
   );

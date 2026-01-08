@@ -190,6 +190,12 @@ function validatePerpPositions(data: unknown): PerpPosition {
               decimals: isString(positionObj.decimals)
                 ? positionObj.decimals
                 : '0',
+              isHip3: typeof positionObj.isHip3 === 'boolean'
+                ? positionObj.isHip3
+                : undefined,
+              dexName: isString(positionObj.dexName)
+                ? positionObj.dexName
+                : undefined,
             }
           : {
               coin: '',
@@ -207,6 +213,8 @@ function validatePerpPositions(data: unknown): PerpPosition {
               symbol: '',
               name: '',
               decimals: '0',
+              isHip3: undefined,
+              dexName: undefined,
             },
       };
     });

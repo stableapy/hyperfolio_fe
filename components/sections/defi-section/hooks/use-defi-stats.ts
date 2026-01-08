@@ -11,11 +11,21 @@ interface UseDefiStatsOptions {
 /**
  * Custom hook for calculating DeFi portfolio statistics
  * Computes totals, weighted APY, and estimated yields
+ *
+ * IMPORTANT: For lending protocols, borrowed positions subtract from total
  */
 export function useDefiStats({ positions }: UseDefiStatsOptions): DefiStats {
   return useMemo(() => {
-    const totalDeposited = positions.reduce((sum, pos) => sum + pos.deposited, 0)
-    const totalCurrent = positions.reduce((sum, pos) => sum + pos.current, 0)
+    const totalDeposited = positions.reduce((sum, pos) => {
+      // For lending protocols, borrowed positions subtract from the total
+      const value = pos.positionSubType === 'borrowed' ? -pos.deposited : pos.deposited
+      return sum + value
+    }, 0)
+    const totalCurrent = positions.reduce((sum, pos) => {
+      // For lending protocols, borrowed positions subtract from the total
+      const value = pos.positionSubType === 'borrowed' ? -pos.current : pos.current
+      return sum + value
+    }, 0)
     const totalRewards = positions.reduce((sum, pos) => sum + pos.rewards, 0)
     
     // Calculate weighted portfolio APY

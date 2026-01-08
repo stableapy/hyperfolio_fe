@@ -29,6 +29,7 @@ import type { PortfolioHeroProps } from './types';
 
 export function PortfolioHero({
   change24h,
+  dollarChange24h,
   onRefresh,
   onAddWallet,
   onScrollToContent,
@@ -87,15 +88,19 @@ export function PortfolioHero({
 
   // Get display data from selected wallet or aggregate
   const displayData = useMemo(() => {
-    // Calculate streaming DeFi value (grows as protocols stream in)
-    const streamingDeFiValue = calculateStreamingTotalValue(
-      streaming.streamedProtocols,
-      selectedWalletId
-        ? ([wallets.find((w) => w.id === selectedWalletId)?.address].filter(
+    // Calculate streaming DeFi value
+    // When ALL wallets selected: use server-calculated aggregate total (more accurate)
+    // When specific wallet selected: filter positions by wallet address
+    const streamingDeFiValue = selectedWalletId
+      ? calculateStreamingTotalValue(
+          streaming.streamedProtocols,
+          [wallets.find((w) => w.id === selectedWalletId)?.address].filter(
             Boolean
-          ) as string[])
-        : undefined
-    );
+          ) as string[]
+        )
+      : (streaming.streamPortfolioStats?.totalValueUSD
+          ? parseFloat(streaming.streamPortfolioStats.totalValueUSD)
+          : 0);
 
     if (selectedWalletId) {
       const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
@@ -321,6 +326,7 @@ export function PortfolioHero({
               hasData={displayData.value !== 0}
               isPositive={isPositive}
               change24h={displayData.change24h}
+              dollarChange24h={dollarChange24h}
               privacyMode={privacyMode}
               breakdown={breakdown}
               apyData={apyData}

@@ -39,6 +39,8 @@ export interface PerpPositionDetail {
     symbol: string;
     name: string;
     decimals: string;
+    isHip3?: boolean;
+    dexName?: string;
   };
 }
 

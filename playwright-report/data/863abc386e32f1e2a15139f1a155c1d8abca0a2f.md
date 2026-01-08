@@ -1,0 +1,103 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: ">"
+        - generic [ref=e8]: hyperfolio_API
+      - generic [ref=e9]: —
+      - generic [ref=e10]: Build on HyperEVM data
+      - generic [ref=e11]: "|"
+      - link "> View Docs" [ref=e12] [cursor=pointer]:
+        - /url: https://api.hyperfolio.xyz/docs
+        - generic [ref=e13]: ">"
+        - generic [ref=e14]:
+          - generic [ref=e15]: View Docs
+          - img [ref=e16]
+    - generic [ref=e20]:
+      - generic [ref=e23]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - generic [ref=e28]: ">"
+              - heading "HYPERFOLIO_" [level=1] [ref=e29]
+            - paragraph [ref=e30]: Multi-wallet DeFi portfolio tracker for HyperEVM
+          - generic [ref=e31]:
+            - button "Toggle theme" [disabled] [ref=e32]
+            - button "Hide portfolio values" [ref=e34]:
+              - img [ref=e36]
+              - generic [ref=e39]: "--hide"
+            - generic [ref=e40]:
+              - button "--add" [ref=e41]:
+                - img [ref=e43]
+                - generic [ref=e47]: "--add"
+              - generic [ref=e48]:
+                - img [ref=e49]
+                - generic [ref=e51]: Add your wallet
+            - button "Refresh data" [ref=e52]:
+              - img [ref=e54]
+              - generic [ref=e59]: "--sync"
+        - generic [ref=e61]:
+          - generic [ref=e62]: $0.00
+          - generic [ref=e64]:
+            - generic [ref=e65]: ">"
+            - generic [ref=e66]: fetching portfolio data
+            - generic [ref=e67]: _
+          - generic [ref=e69]:
+            - img [ref=e72]
+            - generic [ref=e75]:
+              - generic [ref=e76]: "--24h"
+              - generic [ref=e77]: +0.00%
+      - button "Scroll to content" [ref=e79]:
+        - img [ref=e80]
+      - button "Expand chart":
+        - generic: ">"
+        - generic:
+          - img
+          - generic: "--expand"
+    - region "> Start Tracking Your HyperEVM Portfolio" [ref=e83]:
+      - heading "> Start Tracking Your HyperEVM Portfolio" [level=2] [ref=e84]
+      - paragraph [ref=e85]: Add your first HyperEVM wallet address to monitor your tokens, NFTs, DeFi positions, and transaction history in real-time.
+      - button "+ ADD FIRST WALLET" [ref=e86]
+      - generic [ref=e87]:
+        - heading "How to Track Your HyperEVM Portfolio" [level=3] [ref=e88]
+        - paragraph [ref=e89]: Hyperfolio allows you to track cryptocurrency portfolios on the HyperEVM blockchain. Simply enter your public wallet address to view token balances, NFT collections, DeFi positions from protocols like Hyperlend and Hyperswap, and complete transaction history. No wallet connection required - just paste any HyperEVM address to get started.
+    - generic [ref=e91]:
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: HYPERFOLIO
+          - generic [ref=e95]: © 2026
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - link "API Docs" [ref=e98] [cursor=pointer]:
+              - /url: /api-docs
+            - generic [ref=e99]: ·
+          - generic [ref=e100]:
+            - link "Hyperliquid" [ref=e101] [cursor=pointer]:
+              - /url: https://hyperliquid.xyz
+              - text: Hyperliquid
+              - img [ref=e102]
+            - generic [ref=e106]: ·
+          - link "Explorer" [ref=e108] [cursor=pointer]:
+            - /url: https://hyperevmscan.io
+            - text: Explorer
+            - img [ref=e109]
+        - link "Follow on X" [ref=e114] [cursor=pointer]:
+          - /url: https://x.com/stableAPY
+          - img [ref=e115]
+      - generic [ref=e117]:
+        - heading "About Hyperfolio - HyperEVM Portfolio Tracker" [level=2] [ref=e118]
+        - paragraph [ref=e119]: Hyperfolio is a free DeFi portfolio tracker for the HyperEVM blockchain in the Hyperliquid ecosystem. Track tokens, NFTs, DeFi positions, and transactions across multiple wallets. Monitor HYPE tokens, Hyperlend positions, and Hyperswap liquidity. No wallet connection required - simply enter any public address to view holdings.
+        - heading "Features" [level=3] [ref=e120]
+        - list [ref=e121]:
+          - listitem [ref=e122]: Multi-wallet portfolio tracking on HyperEVM
+          - listitem [ref=e123]: Real-time token balances with USD valuations
+          - listitem [ref=e124]: NFT collection management
+          - listitem [ref=e125]: DeFi position monitoring for Hypercore protocols
+          - listitem [ref=e126]: Complete transaction history
+          - listitem [ref=e127]: Portfolio analytics and charts
+  - button "Open Next.js Dev Tools" [ref=e133] [cursor=pointer]:
+    - img [ref=e134]
+```

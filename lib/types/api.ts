@@ -325,3 +325,80 @@ export interface PartialWalletData {
   history?: PortfolioHistoryPoint[];
   points?: PointsData[];
 }
+
+/**
+ * Token details for pool tokens (AMM pairs, underlying assets, collateral)
+ */
+export interface PoolTokenDetails {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+}
+
+/**
+ * Pool information for yield opportunities
+ * Token fields vary by position type:
+ * - AMM: token0 + token1 (LP pairs)
+ * - Lending/Staking/Yield: underlyingToken (single asset)
+ * - Derivatives: underlyingToken + collateralToken
+ */
+export interface YieldPoolInfo {
+  address?: string;
+  name?: string;
+  symbol?: string;
+  tvlUsd?: number;
+  liquidityUsd?: number;
+  /** First token in AMM pair (only for category: 'amm') */
+  token0?: PoolTokenDetails;
+  /** Second token in AMM pair (only for category: 'amm') */
+  token1?: PoolTokenDetails;
+  /** Primary asset for single-asset positions (lending, staking, yield, derivatives) */
+  underlyingToken?: PoolTokenDetails;
+  /** Settlement/collateral token (derivatives only) */
+  collateralToken?: PoolTokenDetails;
+}
+
+export interface YieldOpportunity {
+  id: string;
+  protocol: {
+    id: string;
+    name: string;
+    category: string;
+    website: string;
+    chainId: number;
+  };
+  category: 'lending' | 'amm' | 'yield' | 'staking' | 'derivatives';
+  type: 'supply' | 'borrow' | 'lp' | 'stake' | 'pt' | 'yt' | 'vault';
+  pool: YieldPoolInfo;
+  apy: {
+    baseApy?: number;
+    totalApy?: number;
+    rewardApy?: number;
+  };
+  risk: {
+    riskLevel: 'low' | 'medium' | 'high';
+    liquidationRisk?: boolean;
+    impermanentLossRisk?: boolean;
+  };
+  metadata: {
+    underlyingToken?: string;
+    underlyingSymbol?: string;
+    protocolSpecific?: Record<string, unknown>;
+  };
+  lastUpdated: string;
+  dataSource: 'on-chain' | 'api';
+}
+
+export interface YieldResponse {
+  opportunities: YieldOpportunity[];
+  byCategory: {
+    lending: YieldOpportunity[];
+    amm: YieldOpportunity[];
+    yield: YieldOpportunity[];
+    staking: YieldOpportunity[];
+  };
+  byProtocol: Record<string, YieldOpportunity[]>;
+  lastUpdated: string;
+  totalCount: number;
+}

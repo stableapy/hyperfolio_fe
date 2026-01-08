@@ -84,6 +84,8 @@ export function calculateWalletTotalValue(data: any): number {
 /**
  * Calculate total value from streaming DeFi positions
  * This sums up all protocol values that have streamed in so far
+ *
+ * IMPORTANT: For lending protocols, borrowed positions are subtracted from total
  */
 export function calculateStreamingTotalValue(
   streamedProtocols: Map<string, unknown>,
@@ -97,15 +99,25 @@ export function calculateStreamingTotalValue(
     if (walletAddresses && walletAddresses.length > 0) {
       const protocolPositions = proto.positions
       if (Array.isArray(protocolPositions)) {
+        // Sum only positions belonging to selected wallets
+        // For lending protocols: borrowed positions subtract from total
         const filteredValue = protocolPositions
           .filter((pos: unknown) => {
             const address = (pos as any).walletAddress
             return address && walletAddresses.includes(address)
           })
-          .reduce((sum: number, pos: unknown) => sum + safeParseFloat((pos as any).totalValueUSD), 0)
+          .reduce((sum: number, pos: unknown) => {
+            const value = safeParseFloat((pos as any).totalValueUSD)
+            // For lending protocols, borrowed positions subtract from total
+            const positionType = (pos as any).positionType
+            const isBorrowed = positionType === 'borrowed'
+            return sum + (isBorrowed ? -value : value)
+          }, 0)
         total += filteredValue
       }
     } else {
+      // When not filtering by wallet, use protocol-level totalValueUSD
+      // (already correctly calculates net value for lending protocols)
       total += safeParseFloat(proto.totalValueUSD)
     }
   })
