@@ -98,7 +98,10 @@ export function getProtocolLogoPath(protocolName: string): string {
     'silhouette': '/silhouette.jpg',
     'liminal': '/liminal.jpg',
     'hybra': '/hybra.jpg',
+    'hybrav3': '/hybra.jpg',
     'rysk': '/rysk.jpg',
+    'altura': '/altura.jpg',
+    'equilibria': '/equilibria.png',
     'sentiment': '/sentiment.jpg',
     'hyperdrive': '/hyperdrive.jpg',
     'ultrasolid': '/ultrasolid.jpg',
@@ -108,7 +111,7 @@ export function getProtocolLogoPath(protocolName: string): string {
     'projectx': '/project-x.jpg',
   };
 
-  return logoMap[normalizedName] || '/placeholder-logo.svg';
+  return logoMap[normalizedName] || '/placeholder.svg';
 }
 
 /**

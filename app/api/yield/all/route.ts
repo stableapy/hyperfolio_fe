@@ -106,7 +106,7 @@ export async function GET() {
   }
 
   const API_KEY = process.env.HYPERFOLIO_API_KEY;
-  const API_URL = process.env.HYPERFOLIO_API_URL || 'http://localhost:3000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   const backendUrl = `${API_URL}/yield/all`;
 
   // Check for missing API key

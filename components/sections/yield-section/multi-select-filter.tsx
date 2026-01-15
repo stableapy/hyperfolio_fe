@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { Check, X } from 'lucide-react';
 import {
   Popover,
@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { ProtocolLogo } from './protocol-logo';
 import { TokenLogo } from './token-logo';
 import { getProtocolLogoPath } from './utils';
-import { cn } from '@/lib/utils';
 import type { FilterOption } from './types';
 
 interface MultiSelectFilterProps {
@@ -47,6 +46,9 @@ export function MultiSelectFilter({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
+
   const handleToggle = (value: string) => {
     const updated = selectedValues.includes(value)
       ? selectedValues.filter((v) => v !== value)
@@ -59,9 +61,12 @@ export function MultiSelectFilter({
     setSearchQuery('');
   };
 
-  const filteredItems = items.filter((item) =>
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = useMemo(() => {
+    if (!normalizedQuery) return items;
+    return items.filter((item) =>
+      item.label.toLowerCase().includes(normalizedQuery)
+    );
+  }, [items, normalizedQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

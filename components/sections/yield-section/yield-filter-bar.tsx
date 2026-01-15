@@ -71,6 +71,11 @@ export function YieldFilterBar({
     });
   }, [availableTokens, tokenLogoMap]);
 
+  // Sort protocols alphabetically by name
+  const sortedProtocols: FilterOption[] = useMemo(() => {
+    return [...availableProtocols].sort((a, b) => a.label.localeCompare(b.label));
+  }, [availableProtocols]);
+
   const hasActiveFilters =
     filters.selectedCategories.length > 0 ||
     filters.selectedProtocols.length > 0 ||
@@ -125,7 +130,7 @@ export function YieldFilterBar({
           {/* Protocols Dropdown */}
           <MultiSelectFilter
             triggerLabel="Protocols"
-            items={availableProtocols}
+            items={sortedProtocols}
             selectedValues={filters.selectedProtocols}
             onSelectionChange={(values) =>
               onFiltersChange({ selectedProtocols: values })

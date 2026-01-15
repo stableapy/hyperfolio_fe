@@ -4,18 +4,26 @@ import type {
   UseYieldDataReturn,
   ConsolidatedLendingMarket,
   YieldDisplayItem,
-  YieldCategoryFilter,
   YieldFilters,
-  FilterOption,
 } from '../types';
 import { secureFetch } from '@/lib/api/fetch';
-import {
-  extractTokenSymbols,
-  extractTokenSymbolsFromDisplayItem,
-  isStablecoinOpportunity,
-  isHypeOpportunity,
-  matchesTokenFilter,
-} from '../utils';
+import { extractTokenSymbolsFromDisplayItem } from '../utils';
+
+const STABLECOIN_SYMBOLS = [
+  'USDC',
+  'USDT',
+  'DAI',
+  'BUSD',
+  'TUSD',
+  'FEI',
+  'sUSD',
+  'USD',
+];
+
+const COLLATOR = new Intl.Collator('en', {
+  numeric: true,
+  sensitivity: 'base',
+});
 
 /**
  * Structured error information from the API
@@ -32,6 +40,17 @@ interface YieldError {
   status?: number;
   troubleshooting?: string[];
   isMockData?: boolean;
+}
+
+interface NormalizedDisplayItem {
+  item: YieldDisplayItem;
+  category: YieldDisplayItem['category'];
+  protocolName: string;
+  tokenSymbols: string[];
+  searchText: string;
+  isStablecoin: boolean;
+  isHype: boolean;
+  hasValidApy: boolean;
 }
 
 /**
@@ -136,40 +155,30 @@ function getDisplayItemApy(item: YieldDisplayItem): number {
 }
 
 /**
- * Extract unique protocols and tokens from display items
- * Used for dynamic filter options - counts AFTER consolidation
+ * Checks if an APY value is valid
  */
-export function useFilterOptions(displayItems: YieldDisplayItem[]): {
-  protocols: FilterOption[];
-  tokens: FilterOption[];
-} {
-  // Extract unique protocols with counts
-  const protocols = useMemo(() => {
-    const protocolMap = new Map<string, number>();
-    displayItems.forEach((item) => {
-      const name = item.protocol.name;
-      protocolMap.set(name, (protocolMap.get(name) || 0) + 1);
-    });
-    return Array.from(protocolMap.entries())
-      .map(([name, count]) => ({ value: name, label: name, count }))
-      .sort((a, b) => b.count - a.count); // Sort by popularity
-  }, [displayItems]);
+function isValidApyValue(apy?: number | null): boolean {
+  return apy !== null && apy !== undefined && !Number.isNaN(apy);
+}
 
-  // Extract unique tokens with counts - FROM CONSOLIDATED ITEMS
-  const tokens = useMemo(() => {
-    const tokenMap = new Map<string, number>();
-    displayItems.forEach((item) => {
-      const symbols = extractTokenSymbolsFromDisplayItem(item);
-      symbols.forEach((symbol) => {
-        tokenMap.set(symbol, (tokenMap.get(symbol) || 0) + 1);
-      });
-    });
-    return Array.from(tokenMap.entries())
-      .map(([symbol, count]) => ({ value: symbol, label: symbol, count }))
-      .sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
-  }, [displayItems]);
+/**
+ * Checks if an APY object contains any valid values
+ */
+function hasValidApyData(
+  apy?: { baseApy?: number; totalApy?: number } | null
+): boolean {
+  if (!apy) return false;
+  return isValidApyValue(apy.totalApy) || isValidApyValue(apy.baseApy);
+}
 
-  return { protocols, tokens };
+/**
+ * Checks if a display item has any valid APY data
+ */
+function hasValidDisplayItemApy(item: YieldDisplayItem): boolean {
+  if (item.type === 'market') {
+    return hasValidApyData(item.supplyApy) || hasValidApyData(item.borrowApy);
+  }
+  return hasValidApyData(item.apy);
 }
 
 /**
@@ -179,91 +188,197 @@ export function useFilterOptions(displayItems: YieldDisplayItem[]): {
  * @returns Filtered and sorted opportunities with loading state and statistics
  */
 export function useYieldData(filters: YieldFilters): UseYieldDataReturn {
-
   // Fetch yield data
   const { data, isLoading, error, errorDetails } = useFetchYieldData();
 
+  const deferredFilters = filters;
+
+  const normalizedFilters = useMemo(() => {
+    const selectedCategoriesSet =
+      deferredFilters.selectedCategories.length > 0
+        ? new Set(deferredFilters.selectedCategories)
+        : new Set();
+    const selectedProtocolsSet =
+      deferredFilters.selectedProtocols.length > 0
+        ? new Set(deferredFilters.selectedProtocols)
+        : new Set();
+    const selectedTokensSet =
+      deferredFilters.selectedTokens.length > 0
+        ? new Set(deferredFilters.selectedTokens)
+        : new Set();
+
+    return {
+      searchQuery: deferredFilters.searchQuery.trim().toLowerCase(),
+      selectedCategories: selectedCategoriesSet,
+      selectedProtocols: selectedProtocolsSet,
+      selectedTokens: selectedTokensSet,
+      stablecoinOnly: deferredFilters.stablecoinOnly,
+      hypeOnly: deferredFilters.hypeOnly,
+    };
+  }, [
+    deferredFilters.searchQuery,
+    deferredFilters.selectedCategories.length,
+    deferredFilters.selectedProtocols.length,
+    deferredFilters.selectedTokens.length,
+    deferredFilters.stablecoinOnly,
+    deferredFilters.hypeOnly,
+  ]);
+
+  const normalizedDisplayItems = useMemo<NormalizedDisplayItem[]>(() => {
+    if (!data?.opportunities?.length) return [];
+
+    const preFiltered = data.opportunities.filter((opp) => {
+      return (
+        (opp.apy?.totalApy !== null && opp.apy?.totalApy !== undefined) ||
+        (opp.apy?.baseApy !== null && opp.apy?.baseApy !== undefined)
+      );
+    });
+
+    const consolidated = consolidateLendingOpportunities(preFiltered);
+
+    return consolidated.map((item) => {
+      const tokenSymbols = extractTokenSymbolsFromDisplayItem(item);
+      const searchText = tokenSymbols.join(' ').toLowerCase();
+      const isStablecoin = tokenSymbols.some((symbol) =>
+        STABLECOIN_SYMBOLS.some((stable) => symbol.includes(stable))
+      );
+      const isHype =
+        item.protocol.id === 'hyperliquid' ||
+        tokenSymbols.some((symbol) => symbol.includes('HYPE'));
+      const hasValidApy = hasValidDisplayItemApy(item);
+
+      return {
+        item,
+        category: item.category,
+        protocolName: item.protocol.name,
+        tokenSymbols,
+        searchText,
+        isStablecoin,
+        isHype,
+        hasValidApy,
+      };
+    });
+  }, [data]);
+
   // Filter and sort opportunities with AND logic
-  const filteredOpportunities = useMemo(() => {
-    if (!data?.opportunities) return [];
+  const filteredDisplayItems = useMemo(() => {
+    if (normalizedDisplayItems.length === 0) return [];
 
-    return data.opportunities.filter((opp) => {
-      // 1. Search query filter
-      if (filters.searchQuery.trim()) {
-        const query = filters.searchQuery.toLowerCase();
-        const symbol = opp.metadata.underlyingSymbol?.toLowerCase() || '';
-        const poolSymbol = opp.pool.symbol?.toLowerCase() || '';
-        const token0Symbol = opp.pool.token0?.symbol?.toLowerCase() || '';
-        const token1Symbol = opp.pool.token1?.symbol?.toLowerCase() || '';
-        const underlyingSymbol =
-          opp.pool.underlyingToken?.symbol?.toLowerCase() || '';
-        const collateralSymbol =
-          opp.pool.collateralToken?.symbol?.toLowerCase() || '';
+    const hasSearchQuery = normalizedFilters.searchQuery.length > 0;
+    const hasCategoryFilters = normalizedFilters.selectedCategories.size > 0;
+    const hasProtocolFilters = normalizedFilters.selectedProtocols.size > 0;
+    const hasTokenFilters = normalizedFilters.selectedTokens.size > 0;
 
-        const matchesSearch =
-          symbol.includes(query) ||
-          poolSymbol.includes(query) ||
-          token0Symbol.includes(query) ||
-          token1Symbol.includes(query) ||
-          underlyingSymbol.includes(query) ||
-          collateralSymbol.includes(query);
+    // Early return: If no filters active, only filter by valid APY
+    if (
+      !hasSearchQuery &&
+      !hasCategoryFilters &&
+      !hasProtocolFilters &&
+      !hasTokenFilters &&
+      !normalizedFilters.stablecoinOnly &&
+      !normalizedFilters.hypeOnly
+    ) {
+      return normalizedDisplayItems.filter((item) => item.hasValidApy);
+    }
 
-        if (!matchesSearch) return false;
+    const results: NormalizedDisplayItem[] = [];
+
+    for (const item of normalizedDisplayItems) {
+      // 7. Filter out opportunities without valid APY data (check first - cheapest)
+      if (!item.hasValidApy) {
+        continue;
       }
 
-      // 2. Categories filter (must match at least one if any selected)
+      // 2. Categories filter (usually first to check)
       if (
-        filters.selectedCategories.length > 0 &&
-        !filters.selectedCategories.includes(opp.category)
+        hasCategoryFilters &&
+        !normalizedFilters.selectedCategories.has(item.category)
       ) {
-        return false;
+        continue;
       }
 
-      // 3. Protocols filter (must match if any selected)
+      // 1. Search query filter (more expensive, check after category)
       if (
-        filters.selectedProtocols.length > 0 &&
-        !filters.selectedProtocols.includes(opp.protocol.name)
+        hasSearchQuery &&
+        !item.searchText.includes(normalizedFilters.searchQuery)
       ) {
-        return false;
+        continue;
       }
 
-      // 4. Tokens filter (must match at least one if any selected)
+      // 3. Protocols filter
       if (
-        filters.selectedTokens.length > 0 &&
-        !matchesTokenFilter(opp, filters.selectedTokens)
+        hasProtocolFilters &&
+        !normalizedFilters.selectedProtocols.has(item.protocolName)
       ) {
-        return false;
+        continue;
+      }
+
+      // 4. Tokens filter (loop check, do last)
+      if (hasTokenFilters) {
+        let matchesToken = false;
+        for (const symbol of item.tokenSymbols) {
+          if (normalizedFilters.selectedTokens.has(symbol)) {
+            matchesToken = true;
+            break;
+          }
+        }
+        if (!matchesToken) {
+          continue;
+        }
       }
 
       // 5. Stablecoin filter
-      if (filters.stablecoinOnly && !isStablecoinOpportunity(opp)) {
-        return false;
+      if (normalizedFilters.stablecoinOnly && !item.isStablecoin) {
+        continue;
       }
 
       // 6. HYPE filter
-      if (filters.hypeOnly && !isHypeOpportunity(opp)) {
-        return false;
+      if (normalizedFilters.hypeOnly && !item.isHype) {
+        continue;
       }
 
-      // All filters passed
-      return true;
-    });
-  }, [data, filters]);
+      results.push(item);
+    }
 
-  // Consolidate lending opportunities and sort
+    return results;
+  }, [normalizedDisplayItems, normalizedFilters]);
+
+  // Sort filtered items
   const displayItems = useMemo(() => {
-    const consolidated = consolidateLendingOpportunities(filteredOpportunities);
-    consolidated.sort((a, b) => {
+    const items = filteredDisplayItems.map((entry) => entry.item);
+    const sortOrder = deferredFilters.sortOrder;
+    items.sort((a, b) => {
       const apyA = getDisplayItemApy(a);
       const apyB = getDisplayItemApy(b);
-      return filters.sortOrder === 'desc' ? apyB - apyA : apyA - apyB;
+      return sortOrder === 'desc' ? apyB - apyA : apyA - apyB;
     });
-    return consolidated;
-  }, [filteredOpportunities, filters.sortOrder]);
+    return items;
+  }, [filteredDisplayItems, deferredFilters.sortOrder]);
 
-  // Extract filter options from CONSOLIDATED display items
-  // This ensures token counts match what users actually see
-  const { protocols, tokens } = useFilterOptions(displayItems);
+  const { protocols, tokens } = useMemo(() => {
+    const protocolMap = new Map<string, number>();
+    const tokenMap = new Map<string, number>();
+
+    normalizedDisplayItems.forEach((item) => {
+      protocolMap.set(
+        item.protocolName,
+        (protocolMap.get(item.protocolName) || 0) + 1
+      );
+      item.tokenSymbols.forEach((symbol) => {
+        tokenMap.set(symbol, (tokenMap.get(symbol) || 0) + 1);
+      });
+    });
+
+    const protocols = Array.from(protocolMap.entries())
+      .map(([name, count]) => ({ value: name, label: name, count }))
+      .sort((a, b) => b.count - a.count || COLLATOR.compare(a.label, b.label));
+
+    const tokens = Array.from(tokenMap.entries())
+      .map(([symbol, count]) => ({ value: symbol, label: symbol, count }))
+      .sort((a, b) => COLLATOR.compare(a.label, b.label));
+
+    return { protocols, tokens };
+  }, [normalizedDisplayItems]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -434,16 +549,20 @@ function useFetchYieldData() {
 
         // Extract error information - handle both Error instances and plain objects
         let yieldError: YieldError;
-        
+
         // First, try to extract properties from the error object
         const errorObj = err as any;
-        const hasErrorType = errorObj && typeof errorObj === 'object' && 'errorType' in errorObj;
+        const hasErrorType =
+          errorObj && typeof errorObj === 'object' && 'errorType' in errorObj;
         const hasMessage = errorObj && (errorObj.message || errorObj.error);
-        
+
         if (hasErrorType) {
           // Already a YieldError (from parseErrorResponse)
           yieldError = {
-            message: errorObj.message || errorObj.error || 'Failed to fetch yield data',
+            message:
+              errorObj.message ||
+              errorObj.error ||
+              'Failed to fetch yield data',
             errorType: errorObj.errorType,
             details: errorObj.details || errorObj.debug?.details,
             status: errorObj.status || errorObj.debug?.status,
@@ -457,7 +576,7 @@ function useFetchYieldData() {
             err.message.includes('Failed to fetch') ||
             err.name === 'TypeError' ||
             err.name === 'NetworkError';
-          
+
           yieldError = {
             message: err.message || 'Unknown error',
             errorType: isNetworkError ? 'NETWORK_ERROR' : 'UNKNOWN',
@@ -466,10 +585,11 @@ function useFetchYieldData() {
         } else {
           // Unknown error type - try to extract any useful information
           const errorString = err ? String(err) : 'Unknown error';
-          const errorJson = err && typeof err === 'object' 
-            ? JSON.stringify(err, Object.getOwnPropertyNames(err))
-            : null;
-          
+          const errorJson =
+            err && typeof err === 'object'
+              ? JSON.stringify(err, Object.getOwnPropertyNames(err))
+              : null;
+
           yieldError = {
             message: errorString,
             errorType: 'UNKNOWN',
@@ -520,8 +640,9 @@ function useFetchYieldData() {
         // Add optional fields only if they exist
         if (yieldError.details) logData.details = yieldError.details;
         if (yieldError.status) logData.status = yieldError.status;
-        if (yieldError.troubleshooting) logData.troubleshooting = yieldError.troubleshooting;
-        
+        if (yieldError.troubleshooting)
+          logData.troubleshooting = yieldError.troubleshooting;
+
         // Add original error info for debugging
         if (err instanceof Error) {
           logData.originalError = {
@@ -531,7 +652,10 @@ function useFetchYieldData() {
           };
         } else if (err) {
           try {
-            logData.originalError = JSON.stringify(err, Object.getOwnPropertyNames(err));
+            logData.originalError = JSON.stringify(
+              err,
+              Object.getOwnPropertyNames(err)
+            );
           } catch {
             logData.originalError = String(err);
           }

@@ -12,7 +12,11 @@ interface TokenLogoProps {
  * Token logo component with fallback handling
  * Displays token logo with graceful fallback to first letter
  */
-export function TokenLogo({ src, symbol, className = '' }: TokenLogoProps) {
+export function TokenLogo({
+  src,
+  symbol,
+  className = '',
+}: TokenLogoProps) {
   const [hasError, setHasError] = useState(false);
 
   const handleError = () => {

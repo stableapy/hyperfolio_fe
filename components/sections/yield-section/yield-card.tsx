@@ -1,15 +1,19 @@
 'use client';
 
+import React from 'react';
 import { TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProtocolLogo } from './protocol-logo';
-import type { YieldCardProps, YieldDisplayItem, ConsolidatedLendingMarket } from './types';
+import type {
+  YieldCardProps,
+  YieldDisplayItem,
+  ConsolidatedLendingMarket,
+} from './types';
 import { isConsolidatedMarket } from './types';
 import {
   formatApyDisplay,
@@ -117,20 +121,18 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
             {/* Primary: Token Symbol */}
             <div className="flex items-center gap-2">
               {tokenDisplay.tooltip ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
-                        {tokenDisplay.symbol}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-theme-bg border-theme-border max-w-xs border p-3">
-                      <span className="text-theme-text-primary font-mono text-xs">
-                        {tokenDisplay.tooltip}
-                      </span>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
+                      {tokenDisplay.symbol}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-theme-bg border-theme-border max-w-xs border p-3">
+                    <span className="text-theme-text-primary font-mono text-xs">
+                      {tokenDisplay.tooltip}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
               ) : (
                 <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
                   {tokenDisplay.symbol}
@@ -145,26 +147,24 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
             </div>
             {/* Secondary: Protocol Name */}
             <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a
-                      href={market.protocol.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-theme-text-muted hover:text-theme-accent truncate font-mono text-[11px] transition-colors hover:underline"
-                    >
-                      {market.protocol.name}
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-theme-bg border-theme-border border p-2">
-                    <div className="text-theme-text-primary flex items-center gap-1 font-mono text-xs">
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Visit {market.protocol.name}</span>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={market.protocol.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-theme-text-muted hover:text-theme-accent truncate font-mono text-[11px] transition-colors hover:underline"
+                  >
+                    {market.protocol.name}
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent className="bg-theme-bg border-theme-border border p-2">
+                  <div className="text-theme-text-primary flex items-center gap-1 font-mono text-xs">
+                    <ExternalLink className="h-3 w-3" />
+                    <span>Visit {market.protocol.name}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
               <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1.5 py-0.5 font-mono text-[10px]">
                 market
               </span>
@@ -186,7 +186,7 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
               <span className="text-theme-text-muted font-mono text-[10px] uppercase">
                 supply
               </span>
-              <span className="font-mono text-sm font-bold tabular-nums text-green-500">
+              <span className="font-mono text-sm font-bold text-green-500 tabular-nums">
                 {formatApyPercentage(supplyApyValue)}
               </span>
             </div>
@@ -204,7 +204,7 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
               <span className="text-theme-text-muted font-mono text-[10px] uppercase">
                 borrow
               </span>
-              <span className="font-mono text-sm font-bold tabular-nums text-orange-500">
+              <span className="font-mono text-sm font-bold text-orange-500 tabular-nums">
                 {formatApyPercentage(borrowApyValue)}
               </span>
             </div>
@@ -255,7 +255,7 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
               <span className="text-theme-text-muted font-mono text-[10px] uppercase">
                 supply
               </span>
-              <span className="font-mono text-sm font-bold tabular-nums text-green-500">
+              <span className="font-mono text-sm font-bold text-green-500 tabular-nums">
                 {formatApyPercentage(supplyApyValue)}
               </span>
             </div>
@@ -268,7 +268,7 @@ function LendingMarketCard({ market }: { market: ConsolidatedLendingMarket }) {
               <span className="text-theme-text-muted font-mono text-[10px] uppercase">
                 borrow
               </span>
-              <span className="font-mono text-sm font-bold tabular-nums text-orange-500">
+              <span className="font-mono text-sm font-bold text-orange-500 tabular-nums">
                 {formatApyPercentage(borrowApyValue)}
               </span>
             </div>
@@ -292,7 +292,9 @@ function RegularOpportunityCard({
   const totalApy = opportunity.apy.totalApy;
   const apyDisplay = formatApyDisplay(baseApy, totalApy);
   const logoPath = getProtocolLogoPath(opportunity.protocol.name);
-  const tvl = formatTvl(opportunity.pool.tvlUsd || opportunity.pool.liquidityUsd);
+  const tvl = formatTvl(
+    opportunity.pool.tvlUsd || opportunity.pool.liquidityUsd
+  );
 
   return (
     <div className="group hover:border-l-theme-accent border-l-2 border-l-transparent px-3 py-3 transition-all duration-150 sm:px-4">
@@ -314,22 +316,20 @@ function RegularOpportunityCard({
           />
           <div className="flex min-w-0 flex-col">
             {/* Primary: Token Symbol */}
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               {tokenDisplay.tooltip ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
-                        {tokenDisplay.symbol}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-theme-bg border-theme-border max-w-xs border p-3">
-                      <span className="text-theme-text-primary font-mono text-xs">
-                        {tokenDisplay.tooltip}
-                      </span>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
+                      {tokenDisplay.symbol}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-theme-bg border-theme-border max-w-xs border p-3">
+                    <span className="text-theme-text-primary font-mono text-xs">
+                      {tokenDisplay.tooltip}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
               ) : (
                 <span className="text-theme-accent truncate font-mono text-sm font-bold tracking-wide">
                   {tokenDisplay.symbol}
@@ -339,38 +339,36 @@ function RegularOpportunityCard({
                 variant="outline"
                 className="text-theme-text-muted border-theme-border/30 text-[10px] uppercase"
               >
-              {opportunity.category}
-            </Badge>
-          </div>
+                {opportunity.category}
+              </Badge>
+            </div>
             {/* Secondary: Protocol Name */}
-          <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a
-                      href={opportunity.protocol.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-theme-text-muted hover:text-theme-accent truncate font-mono text-[11px] transition-colors hover:underline"
-                    >
-                      {opportunity.protocol.name}
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-theme-bg border-theme-border border p-2">
-                    <div className="text-theme-text-primary flex items-center gap-1 font-mono text-xs">
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Visit {opportunity.protocol.name}</span>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={opportunity.protocol.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-theme-text-muted hover:text-theme-accent truncate font-mono text-[11px] transition-colors hover:underline"
+                  >
+                    {opportunity.protocol.name}
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent className="bg-theme-bg border-theme-border border p-2">
+                  <div className="text-theme-text-primary flex items-center gap-1 font-mono text-xs">
+                    <ExternalLink className="h-3 w-3" />
+                    <span>Visit {opportunity.protocol.name}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
               <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1.5 py-0.5 font-mono text-[10px]">
                 {opportunity.type}
               </span>
               {tvl && (
                 <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1.5 py-0.5 font-mono text-[10px]">
                   TVL {tvl}
-            </span>
+                </span>
               )}
             </div>
           </div>
@@ -392,12 +390,12 @@ function RegularOpportunityCard({
               <div className="flex items-center gap-2">
                 <span className="text-theme-text-secondary font-mono text-sm tabular-nums">
                   {apyDisplay.base}
-          </span>
+                </span>
                 <span className="text-theme-text-muted">→</span>
                 <span className="text-theme-accent font-mono text-base font-bold tabular-nums">
                   {apyDisplay.total}
-          </span>
-        </div>
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -436,8 +434,8 @@ function RegularOpportunityCard({
               {tvl && (
                 <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1 py-0.5 font-mono text-[9px]">
                   {tvl}
-            </span>
-          )}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -462,9 +460,9 @@ function RegularOpportunityCard({
                 <span className="text-theme-text-muted">→</span>
                 <span className="text-theme-accent font-mono text-base font-bold tabular-nums">
                   {apyDisplay.total}
-            </span>
+                </span>
               </div>
-          )}
+            )}
           </div>
         </div>
       </div>
@@ -478,12 +476,18 @@ function RegularOpportunityCard({
  * For lending markets, shows consolidated supply/borrow view
  * For other categories, shows standard opportunity view
  */
-export function YieldCard({ opportunity }: YieldCardProps) {
-  // Check if this is a consolidated lending market
-  if (isConsolidatedMarket(opportunity)) {
-    return <LendingMarketCard market={opportunity} />;
-  }
+export const YieldCard = React.memo(
+  ({ opportunity }: YieldCardProps) => {
+    // Check if this is a consolidated lending market
+    if (isConsolidatedMarket(opportunity)) {
+      return <LendingMarketCard market={opportunity} />;
+    }
 
-  // Regular opportunity (AMM, yield, staking, or standalone lending)
-  return <RegularOpportunityCard opportunity={opportunity} />;
-}
+    // Regular opportunity (AMM, yield, staking, or standalone lending)
+    return <RegularOpportunityCard opportunity={opportunity} />;
+  },
+  (prevProps, nextProps) => {
+    // Compare by opportunity ID to prevent unnecessary re-renders
+    return prevProps.opportunity.id === nextProps.opportunity.id;
+  }
+);

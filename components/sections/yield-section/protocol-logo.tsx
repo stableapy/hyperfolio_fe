@@ -12,14 +12,18 @@ interface ProtocolLogoProps {
  * Protocol logo component with fallback handling
  * Displays protocol logo with graceful fallback to placeholder
  */
-export function ProtocolLogo({ src, name, className = '' }: ProtocolLogoProps) {
+export function ProtocolLogo({
+  src,
+  name,
+  className = '',
+}: ProtocolLogoProps) {
   const [hasError, setHasError] = useState(false);
 
   const handleError = () => {
     setHasError(true);
   };
 
-  const fallbackSrc = '/placeholder-logo.svg';
+  const fallbackSrc = '/placeholder.svg';
   const imageSrc = hasError ? fallbackSrc : src;
 
   return (
@@ -31,4 +35,3 @@ export function ProtocolLogo({ src, name, className = '' }: ProtocolLogoProps) {
     />
   );
 }
-

@@ -1,6 +1,6 @@
 'use client';
 
-import { Coins, ImageIcon, TrendingUp, Clock, Zap, Trophy } from 'lucide-react';
+import { Coins, ImageIcon, TrendingUp, Clock, Zap, Trophy, Percent } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -26,13 +26,12 @@ const SECTIONS = [
     icon: TrendingUp,
     ariaLabel: 'View DeFi positions',
   },
-  // TODO: Re-enable yield tab in next upgrade
-  // {
-  //   id: 'yield',
-  //   label: 'Yield',
-  //   icon: Percent,
-  //   ariaLabel: 'View yield opportunities',
-  // },
+  {
+    id: 'yield',
+    label: 'Yield',
+    icon: Percent,
+    ariaLabel: 'View yield opportunities',
+  },
   {
     id: 'points',
     label: 'Points',

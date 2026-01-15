@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useTransition, useMemo } from 'react';
 import { TerminalCard } from '@/components/ui/terminal-card';
 import { SwapWidgetInline } from '@/components/swap-widget';
 import { useWalletStore } from '@/lib/store/wallet-store';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { YieldStats } from './yield-stats';
 import { YieldFilterBar } from './yield-filter-bar';
-import { YieldCard } from './yield-card';
 import { YieldListSkeleton } from './yield-list-skeleton';
+import { VirtualizedYieldList } from './virtualized-yield-list';
 import { useYieldData } from './hooks/use-yield-data';
 import type { YieldSectionProps, YieldFilters } from './types';
 
@@ -33,10 +34,17 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
     { address: string; symbol: string; chainId: number } | undefined
   >(undefined);
 
+  const [, startTransition] = useTransition();
+
   // Handle filter changes
-  const handleFiltersChange = (updates: Partial<YieldFilters>) => {
-    setFilters((prev) => ({ ...prev, ...updates }));
-  };
+  const handleFiltersChange = useCallback(
+    (updates: Partial<YieldFilters>) => {
+      startTransition(() => {
+        setFilters((prev) => ({ ...prev, ...updates }));
+      });
+    },
+    [startTransition]
+  );
 
   // Get privacy mode from wallet store
   const privacyMode = useWalletStore((state) => state.privacyMode);
@@ -54,14 +62,16 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
   // Show loading state until data is ready
   const showLoading = (isLoading || isDataLoading) && !hasData;
 
-  // Check if any filters are active for empty state message
-  const hasActiveFilters =
-    filters.selectedCategories.length > 0 ||
-    filters.selectedProtocols.length > 0 ||
-    filters.selectedTokens.length > 0 ||
-    filters.stablecoinOnly ||
-    filters.hypeOnly ||
-    filters.searchQuery.trim() !== '';
+  const hasActiveFilters = useMemo(
+    () =>
+      filters.selectedCategories.length > 0 ||
+      filters.selectedProtocols.length > 0 ||
+      filters.selectedTokens.length > 0 ||
+      filters.stablecoinOnly ||
+      filters.hypeOnly ||
+      filters.searchQuery.trim() !== '',
+    [filters]
+  );
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
@@ -85,49 +95,47 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
         />
 
         {/* Yield Opportunities List */}
-        <TerminalCard showHeader title="yield --list">
-          <div className="divide-theme-border/30 divide-y">
-            {/* Error State */}
-            {error && !showLoading && (
-              <div className="py-8 text-center">
-                <div className="text-theme-text-secondary mb-2 font-mono text-sm">
-                  ERROR LOADING YIELD DATA
+        <TooltipProvider>
+          <TerminalCard showHeader title="yield --list">
+            <div className="divide-theme-border/30 divide-y">
+              {/* Error State */}
+              {error && !showLoading && (
+                <div className="py-8 text-center">
+                  <div className="text-theme-text-secondary mb-2 font-mono text-sm">
+                    ERROR LOADING YIELD DATA
+                  </div>
+                  <div className="text-theme-text-muted font-mono text-xs">
+                    {error}
+                  </div>
                 </div>
-                <div className="text-theme-text-muted font-mono text-xs">
-                  {error}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Loading State - Skeleton */}
-            {showLoading && !error && <YieldListSkeleton />}
+              {/* Loading State - Skeleton */}
+              {showLoading && !error && <YieldListSkeleton />}
 
-            {/* Empty State */}
-            {!showLoading && !error && hasData === false && (
-              <div className="py-8 text-center">
-                <div className="text-theme-text-secondary mb-2 font-mono text-sm">
-                  {hasActiveFilters
-                    ? 'NO YIELD OPPORTUNITIES FOUND'
-                    : 'NO YIELD OPPORTUNITIES'}
+              {/* Empty State */}
+              {!showLoading && !error && hasData === false && (
+                <div className="py-8 text-center">
+                  <div className="text-theme-text-secondary mb-2 font-mono text-sm">
+                    {hasActiveFilters
+                      ? 'NO YIELD OPPORTUNITIES FOUND'
+                      : 'NO YIELD OPPORTUNITIES'}
+                  </div>
+                  <div className="text-theme-text-muted font-mono text-xs">
+                    {hasActiveFilters
+                      ? 'Try adjusting your filters'
+                      : 'Yield opportunities will appear here'}
+                  </div>
                 </div>
-                <div className="text-theme-text-muted font-mono text-xs">
-                  {hasActiveFilters
-                    ? 'Try adjusting your filters'
-                    : 'Yield opportunities will appear here'}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Yield Cards */}
-            {!showLoading && !error && hasData && (
-              <>
-                {opportunities.map((opportunity) => (
-                  <YieldCard key={opportunity.id} opportunity={opportunity} />
-                ))}
-              </>
-            )}
-          </div>
-        </TerminalCard>
+              {/* Yield Cards */}
+              {!showLoading && !error && (
+                <VirtualizedYieldList opportunities={opportunities} />
+              )}
+            </div>
+          </TerminalCard>
+        </TooltipProvider>
       </div>
 
       {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
