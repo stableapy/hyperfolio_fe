@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, Grid3x3, List } from 'lucide-react';
 import { MultiSelectFilter } from './multi-select-filter';
 import { ResetAllButton } from './reset-all-button';
 import { useHyperEvmTokens } from '@/hooks/use-hyperevm-tokens';
@@ -39,6 +39,8 @@ export function YieldFilterBar({
   availableProtocols,
   availableTokens,
   disabled = false,
+  viewMode = 'list',
+  onViewModeChange,
 }: YieldFilterBarProps) {
   // Fetch HyperEVM tokens for logo URIs
   const { data: hyperEvmTokens } = useHyperEvmTokens();
@@ -182,6 +184,38 @@ export function YieldFilterBar({
           >
             HYPE
           </Button>
+
+          {/* View Mode Toggle */}
+          {onViewModeChange && (
+            <div className="flex bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => onViewModeChange('card')}
+                disabled={disabled}
+                className={`px-2.5 py-2 transition-all duration-150 border-r border-theme-border/50 ${
+                  viewMode === 'card'
+                    ? 'bg-theme-purple/10 text-theme-purple'
+                    : 'text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-bg/50'
+                } disabled:opacity-50`}
+                aria-label="Switch to card view"
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange('list')}
+                disabled={disabled}
+                className={`px-2.5 py-2 transition-all duration-150 ${
+                  viewMode === 'list'
+                    ? 'bg-theme-purple/10 text-theme-purple'
+                    : 'text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-bg/50'
+                } disabled:opacity-50`}
+                aria-label="Switch to list view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sort Dropdown */}
