@@ -9,6 +9,7 @@ import { YieldStats } from './yield-stats';
 import { YieldFilterBar } from './yield-filter-bar';
 import { YieldListSkeleton } from './yield-list-skeleton';
 import { VirtualizedYieldList } from './virtualized-yield-list';
+import { YieldCardGrid } from './yield-card-grid';
 import { useYieldData } from './hooks/use-yield-data';
 import type { YieldSectionProps, YieldFilters } from './types';
 
@@ -48,6 +49,10 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
 
   // Get privacy mode from wallet store
   const privacyMode = useWalletStore((state) => state.privacyMode);
+
+  // Get view mode from wallet store for persistence
+  const viewMode = useWalletStore((state) => state.yieldViewMode);
+  const setViewMode = useWalletStore((state) => state.setYieldViewMode);
 
   // Fetch and process data
   const {
