@@ -10,27 +10,27 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 2 of 3 (Card View & UX)
-Plan: 2 of 3 (Card View Components)
-Status: In progress
-Last activity: 2026-01-19 — Completed card view components (YieldGridCard, YieldCardGrid, YieldGridSkeleton)
+Plan: 4 of 3 (View Mode Integration)
+Status: Phase complete
+Last activity: 2026-01-19 — Completed view mode state integration and conditional rendering
 
-Progress: █████░░░░░░ 34%
+Progress: ██████░░░░ 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 6.3 min
+- Total plans completed: 7
+- Average duration: 5.7 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 - Performance Foundation | 4 | 4 | 7.8 min |
-| 02 - Card View & UX | 2 | 3 | 3.5 min |
+| 02 - Card View & UX | 3 | 4 | 2.8 min |
 | 03 - Advanced Filters | 0 | 6 | — |
 
-**Overall:** 6 of 16 plans complete (34%)
+**Overall:** 7 of 14 plans complete (50%)
 
 ## Accumulated Context
 
@@ -54,6 +54,9 @@ Progress: █████░░░░░░ 34%
 - **[02-02]** Use type guards (isConsolidatedMarket) to handle union types safely
 - **[02-02]** Card view components follow NFT section pattern for consistency
 - **[02-02]** Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop
+- **[02-04]** Use Zustand selectors for view mode state to prevent unnecessary re-renders
+- **[02-04]** Both views receive same filtered opportunities array for consistency
+- **[02-04]** Card view gets isLoading prop for skeleton, list view handles internally
 
 ### Pending Todos
 
@@ -65,8 +68,8 @@ Progress: █████░░░░░░ 34%
 
 ## Session Continuity
 
-Last session: 2026-01-19T22:07:40Z
-Stopped at: Completed Plan 02-02 (Card View Components)
+Last session: 2026-01-19T22:12:26Z
+Stopped at: Completed Plan 02-04 (View Mode Integration)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
@@ -109,9 +112,9 @@ Resume file: None
 | FILT-02 | Category filter works | 1 | ✅ Verified | 01-02 |
 | FILT-03 | Token filter works | 1 | ✅ Verified | 01-02 |
 | VIEW-01 | List view displays protocols | 1 | ✅ Verified | 01-02 |
-| VIEW-02 | Card view grid layout | 2 | Pending | - |
-| VIEW-03 | View toggle button | 2 | Pending | - |
-| VIEW-04 | Card view aesthetic | 2 | Pending | - |
+| VIEW-02 | Card view grid layout | 2 | ✅ Complete | 02-02, 02-04 |
+| VIEW-03 | View toggle button | 2 | ✅ Complete | 02-03, 02-04 |
+| VIEW-04 | Card view aesthetic | 2 | ✅ Complete | 02-02 |
 | FILT-04 | APY range filter | 3 | Pending | - |
 | FILT-05 | TVL threshold filter | 3 | Pending | - |
 | FILT-06 | APY preset buttons | 3 | Pending | - |
@@ -122,4 +125,4 @@ Resume file: None
 | UX-04 | Clear filters button | 3 | Pending | - |
 | UX-05 | Filter state persistence | 3 | Pending | - |
 
-**Progress:** 9 of 22 requirements verified (41%)
+**Progress:** 12 of 22 requirements verified (55%)
