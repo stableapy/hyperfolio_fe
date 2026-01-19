@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useDeferredValue } from 'react';
+import { useState, useMemo, useDeferredValue, useCallback } from 'react';
 import { Check, X } from 'lucide-react';
 import {
   Popover,
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { List, type RowComponentProps } from 'react-window';
 import { ProtocolLogo } from './protocol-logo';
 import { TokenLogo } from './token-logo';
 import { getProtocolLogoPath } from './utils';
@@ -32,6 +33,10 @@ interface MultiSelectFilterProps {
   disabled?: boolean;
   placeholder?: string;
 }
+
+// Item height for virtualized list (in pixels)
+// Based on py-2 (16px) + content (~32px) = ~48px total
+const ITEM_HEIGHT = 48;
 
 export function MultiSelectFilter({
   triggerLabel,
@@ -49,12 +54,12 @@ export function MultiSelectFilter({
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
 
-  const handleToggle = (value: string) => {
+  const handleToggle = useCallback((value: string) => {
     const updated = selectedValues.includes(value)
       ? selectedValues.filter((v) => v !== value)
       : [...selectedValues, value];
     onSelectionChange(updated);
-  };
+  }, [selectedValues, onSelectionChange]);
 
   const handleClear = () => {
     onSelectionChange([]);
@@ -67,6 +72,61 @@ export function MultiSelectFilter({
       item.label.toLowerCase().includes(normalizedQuery)
     );
   }, [items, normalizedQuery]);
+
+  // Virtualized row component
+  const Row = ({
+    index,
+    style,
+    items: rowItems,
+    selectedValues: rowSelectedValues,
+    onToggle: rowOnToggle,
+    showProtocolLogo: rowShowProtocolLogo,
+    showTokenLogo: rowShowTokenLogo,
+  }: RowComponentProps<{
+    items: FilterOption[];
+    selectedValues: string[];
+    onToggle: (value: string) => void;
+    showProtocolLogo: boolean;
+    showTokenLogo: boolean;
+  }>) => {
+    const item = rowItems[index];
+    const isSelected = rowSelectedValues.includes(item.value);
+
+    return (
+      <div style={style} className="px-2 py-2">
+        <CommandItem
+          value={item.label}
+          onSelect={() => rowOnToggle(item.value)}
+          className="flex items-center gap-2"
+        >
+          <Checkbox checked={isSelected} className="size-4" />
+          {rowShowProtocolLogo && (
+            <ProtocolLogo
+              src={getProtocolLogoPath(item.label)}
+              name={item.label}
+              className="size-5"
+            />
+          )}
+          {rowShowTokenLogo && (
+            <TokenLogo
+              src={item.logoURI || ''}
+              symbol={item.label}
+              className="size-5"
+            />
+          )}
+          <span className="flex-1 text-sm">{item.label}</span>
+          {item.count && (
+            <span className="text-theme-text-muted text-xs opacity-60">
+              ({item.count})
+            </span>
+          )}
+          {isSelected && (
+            <Check className="size-4 text-theme-accent" />
+          )}
+        </CommandItem>
+      </div>
+    );
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -95,44 +155,31 @@ export function MultiSelectFilter({
             className="h-9 border-theme-border/50"
           />
           <CommandList className="max-h-[300px]">
-            <CommandEmpty>No items found.</CommandEmpty>
             <CommandGroup>
-              {filteredItems.map((item) => {
-                const isSelected = selectedValues.includes(item.value);
-                return (
-                  <CommandItem
-                    key={item.value}
-                    value={item.label}
-                    onSelect={() => handleToggle(item.value)}
-                    className="flex items-center gap-2 px-2 py-2"
-                  >
-                    <Checkbox checked={isSelected} className="size-4" />
-                    {showProtocolLogo && (
-                      <ProtocolLogo
-                        src={getProtocolLogoPath(item.label)}
-                        name={item.label}
-                        className="size-5"
-                      />
-                    )}
-                    {showTokenLogo && (
-                      <TokenLogo
-                        src={item.logoURI || ''}
-                        symbol={item.label}
-                        className="size-5"
-                      />
-                    )}
-                    <span className="flex-1 text-sm">{item.label}</span>
-                    {item.count && (
-                      <span className="text-theme-text-muted text-xs opacity-60">
-                        ({item.count})
-                      </span>
-                    )}
-                    {isSelected && (
-                      <Check className="size-4 text-theme-accent" />
-                    )}
-                  </CommandItem>
-                );
-              })}
+              {filteredItems.length > 0 ? (
+                <div
+                  style={{
+                    height: `${Math.min(filteredItems.length * ITEM_HEIGHT, 300)}px`,
+                  }}
+                >
+                  <List
+                    rowComponent={Row}
+                    rowCount={filteredItems.length}
+                    rowHeight={ITEM_HEIGHT}
+                    rowProps={{
+                      items: filteredItems,
+                      selectedValues,
+                      onToggle: handleToggle,
+                      showProtocolLogo,
+                      showTokenLogo,
+                    }}
+                    overscanCount={3}
+                    style={{ height: 300, width: '100%' }}
+                  />
+                </div>
+              ) : (
+                <CommandEmpty>No items found.</CommandEmpty>
+              )}
             </CommandGroup>
           </CommandList>
           {selectedValues.length > 0 && (
