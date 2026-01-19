@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/tooltip';
 import { ProtocolLogo } from './protocol-logo';
 import type { YieldDisplayItem } from './types';
+import { isConsolidatedMarket } from './types';
 import {
   formatApyDisplay,
-  formatApyPercentage,
   getProtocolLogoPath,
 } from './utils';
 import { useMemo } from 'react';
@@ -32,14 +32,6 @@ function formatTvlCompact(tvlUsd?: number): string | null {
     return `$${(tvlUsd / 1_000).toFixed(1)}K`;
   }
   return `$${tvlUsd.toFixed(0)}`;
-}
-
-/**
- * Gets primary APY value from an APY object
- */
-function getApyValue(apy?: { baseApy?: number; totalApy?: number }): number {
-  if (!apy) return 0;
-  return apy.totalApy ?? apy.baseApy ?? 0;
 }
 
 /**
@@ -90,17 +82,30 @@ function getTokenDisplay(item: YieldDisplayItem): {
 export function YieldGridCard({ opportunity }: YieldGridCardProps) {
   const tokenDisplay = useMemo(() => getTokenDisplay(opportunity), [opportunity]);
   const logoPath = useMemo(() => getProtocolLogoPath(opportunity.protocol.name), [opportunity.protocol.name]);
-  const apyValue = useMemo(
-    () => getApyValue(opportunity.apy),
-    [opportunity.apy]
-  );
+
+  // Handle APY display differently for consolidated markets vs regular opportunities
+  const apyDisplay = useMemo(() => {
+    if (isConsolidatedMarket(opportunity)) {
+      // For consolidated lending markets, show supply APY primarily
+      const supplyApy = opportunity.supplyApy;
+      if (supplyApy) {
+        return formatApyDisplay(supplyApy.baseApy, supplyApy.totalApy);
+      }
+      // Fallback to borrow APY if no supply
+      const borrowApy = opportunity.borrowApy;
+      if (borrowApy) {
+        return formatApyDisplay(borrowApy.baseApy, borrowApy.totalApy);
+      }
+      return { base: null, total: null, isSame: true };
+    } else {
+      // Regular opportunity - use standard apy property
+      return formatApyDisplay(opportunity.apy.baseApy, opportunity.apy.totalApy);
+    }
+  }, [opportunity]);
+
   const tvl = useMemo(
     () => formatTvlCompact(opportunity.pool.tvlUsd || opportunity.pool.liquidityUsd),
     [opportunity.pool.tvlUsd, opportunity.pool.liquidityUsd]
-  );
-  const apyDisplay = useMemo(
-    () => formatApyDisplay(opportunity.apy.baseApy, opportunity.apy.totalApy),
-    [opportunity.apy.baseApy, opportunity.apy.totalApy]
   );
 
   return (
