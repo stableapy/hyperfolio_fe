@@ -94,6 +94,8 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
         <YieldFilterBar
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           availableProtocols={filterOptions.protocols}
           availableTokens={filterOptions.tokens}
           disabled={showLoading}
