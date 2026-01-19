@@ -9,24 +9,24 @@ Requirements for yield section performance and UX improvements.
 
 ### Performance
 
-- [x] **PERF-01**: First load completes without noticeable lag
-- [x] **PERF-02**: Filter selection doesn't freeze UI
-- [x] **PERF-03**: Filter changes complete under 100ms
-- [x] **PERF-04**: UI maintains 60fps during interactions
-- [x] **PERF-05**: Data handling optimized to prevent unnecessary re-renders
+- [ ] **PERF-01**: First load completes without noticeable lag
+- [ ] **PERF-02**: Filter selection doesn't freeze UI
+- [ ] **PERF-03**: Filter changes complete under 100ms
+- [ ] **PERF-04**: UI maintains 60fps during interactions
+- [ ] **PERF-05**: Data handling optimized to prevent unnecessary re-renders
 
 ### Views
 
-- [x] **VIEW-01**: List view displays protocols in table format (existing, verified working)
+- [ ] **VIEW-01**: List view displays protocols in table format (existing, verify working)
 - [ ] **VIEW-02**: Card view displays protocols in grid layout (2-3 col desktop, 1 col mobile)
 - [ ] **VIEW-03**: View toggle button switches between list and card views
 - [ ] **VIEW-04**: Card view maintains minimalistic-geeky aesthetic (between rich and simple)
 
 ### Filters - Existing
 
-- [x] **FILT-01**: Protocol multi-select filter works (existing, verified working)
-- [x] **FILT-02**: Category multi-select filter works (existing, verified working)
-- [x] **FILT-03**: Token multi-select filter works (existing, verified working)
+- [ ] **FILT-01**: Protocol multi-select filter works (existing, verify working)
+- [ ] **FILT-02**: Category multi-select filter works (existing, verify working)
+- [ ] **FILT-03**: Token multi-select filter works (existing, verify working)
 
 ### Filters - New
 
@@ -76,18 +76,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | Phase 1 | Complete |
-| PERF-02 | Phase 1 | Complete |
-| PERF-03 | Phase 1 | Complete |
-| PERF-04 | Phase 1 | Complete |
-| PERF-05 | Phase 1 | Complete |
-| VIEW-01 | Phase 1 | Complete |
+| PERF-01 | Phase 1 | Gaps Found |
+| PERF-02 | Phase 1 | Gaps Found |
+| PERF-03 | Phase 1 | Gaps Found |
+| PERF-04 | Phase 1 | Gaps Found |
+| PERF-05 | Phase 1 | Gaps Found |
+| VIEW-01 | Phase 1 | Gaps Found |
 | VIEW-02 | Phase 2 | Pending |
 | VIEW-03 | Phase 2 | Pending |
 | VIEW-04 | Phase 2 | Pending |
-| FILT-01 | Phase 1 | Complete |
-| FILT-02 | Phase 1 | Complete |
-| FILT-03 | Phase 1 | Complete |
+| FILT-01 | Phase 1 | Gaps Found |
+| FILT-02 | Phase 1 | Gaps Found |
+| FILT-03 | Phase 1 | Gaps Found |
 | FILT-04 | Phase 3 | Pending |
 | FILT-05 | Phase 3 | Pending |
 | FILT-06 | Phase 3 | Pending |
