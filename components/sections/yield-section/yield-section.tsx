@@ -16,9 +16,13 @@ import type { YieldSectionProps, YieldFilters } from './types';
 /**
  * Main YieldSection component
  * Displays yield opportunities across Hyperliquid protocols
- * with filtering, sorting, and statistics
+ * with filtering, sorting, pagination, and statistics
  */
 export function YieldSection({ isLoading = false }: YieldSectionProps) {
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
   // Combined filter state
   const [filters, setFilters] = useState<YieldFilters>({
     selectedCategories: [],
@@ -37,15 +41,34 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
 
   const [, startTransition] = useTransition();
 
-  // Handle filter changes
+  // Handle filter changes - reset to page 1 when filters change
   const handleFiltersChange = useCallback(
     (updates: Partial<YieldFilters>) => {
       startTransition(() => {
         setFilters((prev) => ({ ...prev, ...updates }));
+        setPage(1); // Reset to first page when filters change
       });
     },
     [startTransition]
   );
+
+  // Handle page change
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(newPage);
+      // Scroll to top of yield section
+      document
+        .getElementById('yield-section')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    },
+    []
+  );
+
+  // Handle page size change
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Reset to first page when page size changes
+  }, []);
 
   // Get privacy mode from wallet store
   const privacyMode = useWalletStore((state) => state.privacyMode);
@@ -54,7 +77,7 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
   const viewMode = useWalletStore((state) => state.yieldViewMode);
   const setViewMode = useWalletStore((state) => state.setYieldViewMode);
 
-  // Fetch and process data
+  // Fetch and process data with pagination
   const {
     opportunities,
     filterOptions,
@@ -62,7 +85,8 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
     error,
     hasData,
     stats,
-  } = useYieldData(filters);
+    pagination,
+  } = useYieldData(filters, { page, pageSize });
 
   // Show loading state until data is ready
   const showLoading = (isLoading || isDataLoading) && !hasData;
@@ -77,6 +101,14 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
       filters.searchQuery.trim() !== '',
     [filters]
   );
+
+  // Calculate showing range (e.g., "Showing 1-50 of 200")
+  const showingRange = useMemo(() => {
+    if (pagination.totalItems === 0) return null;
+    const start = (pagination.page - 1) * pagination.pageSize + 1;
+    const end = Math.min(start + pagination.pageSize - 1, pagination.totalItems);
+    return `${start}-${end} of ${pagination.totalItems}`;
+  }, [pagination]);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
@@ -103,7 +135,7 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
 
         {/* Yield Opportunities List */}
         <TooltipProvider>
-          <TerminalCard showHeader title="yield --list">
+          <TerminalCard showHeader title="yield --list" id="yield-section">
             <div className="divide-theme-border/30 divide-y">
               {/* Error State */}
               {error && !showLoading && (
@@ -133,6 +165,53 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
                       ? 'Try adjusting your filters'
                       : 'Yield opportunities will appear here'}
                   </div>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {!showLoading && !error && hasData && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between border-b border-theme-border/30 px-4 py-3">
+                  {/* Showing info */}
+                  <div className="text-theme-text-muted font-mono text-sm">
+                    {showingRange && `Showing ${showingRange} opportunities`}
+                  </div>
+
+                  {/* Pagination buttons */}
+                  <div className="flex items-center gap-2">
+                    {/* Previous button */}
+                    <button
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={!pagination.hasPrev}
+                      className="font-mono text-xs disabled:text-theme-text-muted disabled:cursor-not-allowed hover:text-theme-text-secondary text-theme-text-secondary"
+                    >
+                      Previous
+                    </button>
+
+                    {/* Page indicator */}
+                    <span className="font-mono text-sm text-theme-text-secondary">
+                      Page {pagination.page} of {pagination.totalPages}
+                    </span>
+
+                    {/* Next button */}
+                    <button
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={!pagination.hasNext}
+                      className="font-mono text-xs disabled:text-theme-text-muted disabled:cursor-not-allowed hover:text-theme-text-secondary text-theme-text-secondary"
+                    >
+                      Next
+                    </button>
+                  </div>
+
+                  {/* Page size selector */}
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="border-theme-border/30 bg-card text-theme-text-secondary font-mono text-xs rounded border px-2 py-1"
+                  >
+                    <option value={25}>25 per page</option>
+                    <option value={50}>50 per page</option>
+                    <option value={100}>100 per page</option>
+                  </select>
                 </div>
               )}
 
