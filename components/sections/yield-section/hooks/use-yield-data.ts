@@ -1,5 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { YieldResponse, YieldOpportunity } from '@/lib/types/api';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import type {
+  YieldResponse,
+  YieldOpportunity,
+  PaginatedYieldResponse,
+  YieldPaginationParams,
+} from '@/lib/types/api';
 import type {
   UseYieldDataReturn,
   ConsolidatedLendingMarket,
@@ -7,23 +12,6 @@ import type {
   YieldFilters,
 } from '../types';
 import { secureFetch } from '@/lib/api/fetch';
-import { extractTokenSymbolsFromDisplayItem } from '../utils';
-
-const STABLECOIN_SYMBOLS = [
-  'USDC',
-  'USDT',
-  'DAI',
-  'BUSD',
-  'TUSD',
-  'FEI',
-  'sUSD',
-  'USD',
-];
-
-const COLLATOR = new Intl.Collator('en', {
-  numeric: true,
-  sensitivity: 'base',
-});
 
 /**
  * Structured error information from the API
@@ -40,17 +28,6 @@ interface YieldError {
   status?: number;
   troubleshooting?: string[];
   isMockData?: boolean;
-}
-
-interface NormalizedDisplayItem {
-  item: YieldDisplayItem;
-  category: YieldDisplayItem['category'];
-  protocolName: string;
-  tokenSymbols: string[];
-  searchText: string;
-  isStablecoin: boolean;
-  isHype: boolean;
-  hasValidApy: boolean;
 }
 
 /**
@@ -182,205 +159,99 @@ function hasValidDisplayItemApy(item: YieldDisplayItem): boolean {
 }
 
 /**
- * Custom hook to fetch, filter, and sort yield opportunities
+ * Custom hook to fetch paginated yield opportunities with server-side filtering
  *
  * @param filters - Combined filter state
+ * @param pagination - Pagination state (page, pageSize)
  * @returns Filtered and sorted opportunities with loading state and statistics
  */
-export function useYieldData(filters: YieldFilters): UseYieldDataReturn {
-  // Fetch yield data
-  const { data, isLoading, error, errorDetails } = useFetchYieldData();
-
-  const deferredFilters = filters;
-
-  const normalizedFilters = useMemo(() => {
-    const selectedCategoriesSet =
-      deferredFilters.selectedCategories.length > 0
-        ? new Set(deferredFilters.selectedCategories)
-        : new Set();
-    const selectedProtocolsSet =
-      deferredFilters.selectedProtocols.length > 0
-        ? new Set(deferredFilters.selectedProtocols)
-        : new Set();
-    const selectedTokensSet =
-      deferredFilters.selectedTokens.length > 0
-        ? new Set(deferredFilters.selectedTokens)
-        : new Set();
-
-    return {
-      searchQuery: deferredFilters.searchQuery.trim().toLowerCase(),
-      selectedCategories: selectedCategoriesSet,
-      selectedProtocols: selectedProtocolsSet,
-      selectedTokens: selectedTokensSet,
-      stablecoinOnly: deferredFilters.stablecoinOnly,
-      hypeOnly: deferredFilters.hypeOnly,
+export function useYieldData(
+  filters: YieldFilters,
+  pagination: { page: number; pageSize: number }
+): UseYieldDataReturn {
+  // Build API params from filters and pagination
+  const apiParams = useMemo<YieldPaginationParams>(() => {
+    const params: YieldPaginationParams = {
+      page: pagination.page,
+      page_size: pagination.pageSize,
     };
+
+    // Add search query if present
+    if (filters.searchQuery.trim()) {
+      params.search = filters.searchQuery.trim();
+    }
+
+    // Add categories filter if present
+    if (filters.selectedCategories.length > 0) {
+      params.categories = filters.selectedCategories;
+    }
+
+    // Add protocols filter if present
+    if (filters.selectedProtocols.length > 0) {
+      params.protocols = filters.selectedProtocols;
+    }
+
+    // Add tokens filter if present
+    if (filters.selectedTokens.length > 0) {
+      params.token_addresses = filters.selectedTokens;
+    }
+
+    // Add sort order
+    params.sort_by = 'apy';
+    params.sort_order = filters.sortOrder;
+
+    return params;
   }, [
-    deferredFilters.searchQuery,
-    deferredFilters.selectedCategories.length,
-    deferredFilters.selectedProtocols.length,
-    deferredFilters.selectedTokens.length,
-    deferredFilters.stablecoinOnly,
-    deferredFilters.hypeOnly,
+    filters.searchQuery,
+    filters.selectedCategories,
+    filters.selectedProtocols,
+    filters.selectedTokens,
+    filters.sortOrder,
+    pagination.page,
+    pagination.pageSize,
   ]);
 
-  const normalizedDisplayItems = useMemo<NormalizedDisplayItem[]>(() => {
-    if (!data?.opportunities?.length) return [];
+  // Fetch paginated yield data from backend
+  const { data, isLoading, error, errorDetails } = useFetchYieldData(apiParams);
 
-    const preFiltered = data.opportunities.filter((opp) => {
+  // Consolidate lending opportunities for display
+  const displayItems = useMemo<YieldDisplayItem[]>(() => {
+    if (!data?.data?.length) return [];
+
+    // Filter to only items with valid APY
+    const withValidApy = data.data.filter((opp) => {
       return (
         (opp.apy?.totalApy !== null && opp.apy?.totalApy !== undefined) ||
         (opp.apy?.baseApy !== null && opp.apy?.baseApy !== undefined)
       );
     });
 
-    const consolidated = consolidateLendingOpportunities(preFiltered);
-
-    return consolidated.map((item) => {
-      const tokenSymbols = extractTokenSymbolsFromDisplayItem(item);
-      const searchText = tokenSymbols.join(' ').toLowerCase();
-      const isStablecoin = tokenSymbols.some((symbol) =>
-        STABLECOIN_SYMBOLS.some((stable) => symbol.includes(stable))
-      );
-      const isHype =
-        item.protocol.id === 'hyperliquid' ||
-        tokenSymbols.some((symbol) => symbol.includes('HYPE'));
-      const hasValidApy = hasValidDisplayItemApy(item);
-
-      return {
-        item,
-        category: item.category,
-        protocolName: item.protocol.name,
-        tokenSymbols,
-        searchText,
-        isStablecoin,
-        isHype,
-        hasValidApy,
-      };
-    });
+    // Consolidate lending markets
+    return consolidateLendingOpportunities(withValidApy);
   }, [data]);
 
-  // Filter and sort opportunities with AND logic
-  const filteredDisplayItems = useMemo(() => {
-    if (normalizedDisplayItems.length === 0) return [];
-
-    const hasSearchQuery = normalizedFilters.searchQuery.length > 0;
-    const hasCategoryFilters = normalizedFilters.selectedCategories.size > 0;
-    const hasProtocolFilters = normalizedFilters.selectedProtocols.size > 0;
-    const hasTokenFilters = normalizedFilters.selectedTokens.size > 0;
-
-    // Early return: If no filters active, only filter by valid APY
-    if (
-      !hasSearchQuery &&
-      !hasCategoryFilters &&
-      !hasProtocolFilters &&
-      !hasTokenFilters &&
-      !normalizedFilters.stablecoinOnly &&
-      !normalizedFilters.hypeOnly
-    ) {
-      return normalizedDisplayItems.filter((item) => item.hasValidApy);
-    }
-
-    const results: NormalizedDisplayItem[] = [];
-
-    for (const item of normalizedDisplayItems) {
-      // 7. Filter out opportunities without valid APY data (check first - cheapest)
-      if (!item.hasValidApy) {
-        continue;
-      }
-
-      // 2. Categories filter (usually first to check)
-      if (
-        hasCategoryFilters &&
-        !normalizedFilters.selectedCategories.has(item.category)
-      ) {
-        continue;
-      }
-
-      // 1. Search query filter (more expensive, check after category)
-      if (
-        hasSearchQuery &&
-        !item.searchText.includes(normalizedFilters.searchQuery)
-      ) {
-        continue;
-      }
-
-      // 3. Protocols filter
-      if (
-        hasProtocolFilters &&
-        !normalizedFilters.selectedProtocols.has(item.protocolName)
-      ) {
-        continue;
-      }
-
-      // 4. Tokens filter (loop check, do last)
-      if (hasTokenFilters) {
-        let matchesToken = false;
-        for (const symbol of item.tokenSymbols) {
-          if (normalizedFilters.selectedTokens.has(symbol)) {
-            matchesToken = true;
-            break;
-          }
-        }
-        if (!matchesToken) {
-          continue;
-        }
-      }
-
-      // 5. Stablecoin filter
-      if (normalizedFilters.stablecoinOnly && !item.isStablecoin) {
-        continue;
-      }
-
-      // 6. HYPE filter
-      if (normalizedFilters.hypeOnly && !item.isHype) {
-        continue;
-      }
-
-      results.push(item);
-    }
-
-    return results;
-  }, [normalizedDisplayItems, normalizedFilters]);
-
-  // Sort filtered items
-  const displayItems = useMemo(() => {
-    const items = filteredDisplayItems.map((entry) => entry.item);
-    const sortOrder = deferredFilters.sortOrder;
-    items.sort((a, b) => {
-      const apyA = getDisplayItemApy(a);
-      const apyB = getDisplayItemApy(b);
-      return sortOrder === 'desc' ? apyB - apyA : apyA - apyB;
-    });
-    return items;
-  }, [filteredDisplayItems, deferredFilters.sortOrder]);
-
+  // Build filter options from backend metadata
   const { protocols, tokens } = useMemo(() => {
-    const protocolMap = new Map<string, number>();
-    const tokenMap = new Map<string, number>();
+    if (!data?.metadata) {
+      return { protocols: [], tokens: [] };
+    }
 
-    normalizedDisplayItems.forEach((item) => {
-      protocolMap.set(
-        item.protocolName,
-        (protocolMap.get(item.protocolName) || 0) + 1
-      );
-      item.tokenSymbols.forEach((symbol) => {
-        tokenMap.set(symbol, (tokenMap.get(symbol) || 0) + 1);
-      });
-    });
+    const protocols =
+      data.metadata.protocols.map((name) => ({
+        value: name,
+        label: name,
+      })) || [];
 
-    const protocols = Array.from(protocolMap.entries())
-      .map(([name, count]) => ({ value: name, label: name, count }))
-      .sort((a, b) => b.count - a.count || COLLATOR.compare(a.label, b.label));
-
-    const tokens = Array.from(tokenMap.entries())
-      .map(([symbol, count]) => ({ value: symbol, label: symbol, count }))
-      .sort((a, b) => COLLATOR.compare(a.label, b.label));
+    const tokens =
+      data.metadata.tokens.map((symbol) => ({
+        value: symbol,
+        label: symbol,
+      })) || [];
 
     return { protocols, tokens };
-  }, [normalizedDisplayItems]);
+  }, [data]);
 
-  // Calculate statistics
+  // Calculate statistics from current page data
   const stats = useMemo(() => {
     const apyValues = displayItems
       .map((item) => getDisplayItemApy(item))
@@ -393,11 +264,11 @@ export function useYieldData(filters: YieldFilters): UseYieldDataReturn {
         : 0;
 
     return {
-      totalCount: displayItems.length,
+      totalCount: data?.pagination?.total_items || 0,
       highestApy,
       averageApy,
     };
-  }, [displayItems]);
+  }, [displayItems, data]);
 
   const hasData = displayItems.length > 0;
 
@@ -410,6 +281,14 @@ export function useYieldData(filters: YieldFilters): UseYieldDataReturn {
     errorDetails: errorDetails || undefined,
     isMockData: (data as any)?._meta?.isMock === true,
     filterOptions: { protocols, tokens },
+    pagination: {
+      page: data?.pagination?.page || pagination.page,
+      pageSize: data?.pagination?.page_size || pagination.pageSize,
+      totalPages: data?.pagination?.total_pages || 1,
+      totalItems: data?.pagination?.total_items || 0,
+      hasNext: data?.pagination?.has_next || false,
+      hasPrev: data?.pagination?.has_prev || false,
+    },
   };
 }
 
@@ -505,17 +384,47 @@ function getUserFriendlyError(error: YieldError): string {
 }
 
 /**
- * Internal hook to fetch yield data from API with retry logic
+ * Internal hook to fetch paginated yield data from API with retry logic
  */
-function useFetchYieldData() {
-  const [data, setData] = useState<YieldResponse | null>(null);
+function useFetchYieldData(params: YieldPaginationParams) {
+  const [data, setData] = useState<PaginatedYieldResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<YieldError | null>(null);
 
+  // Build query string from params
+  const queryString = useMemo(() => {
+    const searchParams = new URLSearchParams();
+
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params.search) searchParams.append('search', params.search);
+    if (params.categories?.length)
+      params.categories.forEach((c) => searchParams.append('categories', c));
+    if (params.protocols?.length)
+      params.protocols.forEach((p) => searchParams.append('protocols', p));
+    if (params.token_addresses?.length)
+      params.token_addresses.forEach((t) =>
+        searchParams.append('token_addresses', t)
+      );
+    if (params.min_value !== undefined)
+      searchParams.append('min_value', params.min_value.toString());
+    if (params.max_value !== undefined)
+      searchParams.append('max_value', params.max_value.toString());
+    if (params.sort_by) searchParams.append('sort_by', params.sort_by);
+    if (params.sort_order) searchParams.append('sort_order', params.sort_order);
+
+    return searchParams.toString();
+  }, [params]);
+
+  // Use ref to track fetch state and prevent race conditions
+  const isMountedRef = useRef(true);
+  const retryCountRef = useRef(0);
+
   useEffect(() => {
-    let isMounted = true;
-    let retryCount = 0;
+    isMountedRef.current = true;
+    retryCountRef.current = 0;
 
     async function fetchData(attempt: number): Promise<void> {
       try {
@@ -523,7 +432,8 @@ function useFetchYieldData() {
         setError(null);
         setErrorDetails(null);
 
-        const response = await secureFetch('/api/yield/all', {
+        const url = `/api/yield/${queryString ? `?${queryString}` : ''}`;
+        const response = await secureFetch(url, {
           headers: {
             accept: 'application/json',
           },
@@ -537,15 +447,15 @@ function useFetchYieldData() {
           throw parsedError;
         }
 
-        const result = (await response.json()) as YieldResponse;
+        const result = (await response.json()) as PaginatedYieldResponse;
 
-        if (isMounted) {
+        if (isMountedRef.current) {
           setData(result);
           setError(null);
           setErrorDetails(null);
         }
       } catch (err) {
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         // Extract error information - handle both Error instances and plain objects
         let yieldError: YieldError;
@@ -604,12 +514,12 @@ function useFetchYieldData() {
 
         // Determine if we should retry
         const shouldRetry =
-          retryCount < RETRY_CONFIG.maxAttempts &&
+          retryCountRef.current < RETRY_CONFIG.maxAttempts &&
           yieldError.errorType === 'NETWORK_ERROR' &&
           attempt < RETRY_CONFIG.maxAttempts;
 
         if (shouldRetry) {
-          const delay = getRetryDelay(retryCount + 1);
+          const delay = getRetryDelay(retryCountRef.current + 1);
           console.warn(
             `[useYieldData] Attempt ${attempt}/${RETRY_CONFIG.maxAttempts} failed. Retrying in ${delay}ms...`,
             {
@@ -619,7 +529,7 @@ function useFetchYieldData() {
             }
           );
 
-          retryCount++;
+          retryCountRef.current++;
           await sleep(delay);
           return fetchData(attempt + 1);
         }
@@ -663,7 +573,7 @@ function useFetchYieldData() {
 
         console.error('[useYieldData] Failed to fetch yield data:', logData);
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setIsLoading(false);
         }
       }
@@ -673,9 +583,9 @@ function useFetchYieldData() {
     fetchData(1);
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, []);
+  }, [queryString]);
 
   return { data, isLoading, error, errorDetails };
 }

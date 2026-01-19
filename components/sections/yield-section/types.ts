@@ -206,9 +206,18 @@ export interface UseYieldDataReturn {
   errorDetails?: YieldError;
   /** Whether the current data is mock data */
   isMockData?: boolean;
-  /** Dynamic filter options extracted from data */
+  /** Dynamic filter options from backend metadata */
   filterOptions: {
     protocols: FilterOption[];
     tokens: FilterOption[];
+  };
+  /** Pagination state */
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }
