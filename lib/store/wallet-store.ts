@@ -158,6 +158,9 @@ export const useWalletStore = create<WalletState>()(
       walletsChangedTrigger: 0,
       privacyMode: false,
       yieldViewMode: 'list',
+      setYieldViewMode: (mode: 'list' | 'card') => {
+        set({ yieldViewMode: mode });
+      },
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
@@ -411,10 +414,6 @@ export const useWalletStore = create<WalletState>()(
 
       togglePrivacyMode: () => {
         set((state) => ({ privacyMode: !state.privacyMode }));
-      },
-
-      setYieldViewMode: (mode: 'list' | 'card') => {
-        set({ yieldViewMode: mode });
       },
 
       // Streaming actions
