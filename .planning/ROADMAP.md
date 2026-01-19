@@ -22,12 +22,13 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 3. List view displays protocols correctly with working filters (protocol, category, token)
 4. Data handling is optimized with memoization to prevent unnecessary re-renders
 
-**Plans:** 3 plans in 2 waves
+**Plans:** 4 plans in 3 waves
 - [x] 01-01-PLAN.md — Measure baseline performance with React DevTools Profiler
 - [x] 01-02-PLAN.md — Verify existing filters (protocol, category, token) work correctly
 - [x] 01-03-PLAN.md — Consolidate results and confirm Phase 1 completion
+- [x] 01-04-PLAN.md — Fix dropdown performance gap with virtualization and CSS-only logo fallback
 
-**Completed:** 2025-01-19
+**Completed:** 2025-01-19 (including gap closure)
 
 ---
 
@@ -68,7 +69,7 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 
 | Phase | Status | Plans | Completed |
 |-------|--------|-------|-----------|
-| 1 - Performance Foundation | Gaps Found | 3 | — |
+| 1 - Performance Foundation | ✓ Complete | 4/4 | 100% |
 | 2 - Card View Implementation | Not started | 0 | — |
 | 3 - Advanced Filters & UX | Not started | 0 | — |
 
