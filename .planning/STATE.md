@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-19 — Completed view mode state integration and conditional rendering
+Last activity: 2026-01-19 — Completed quick task 001: Adapt frontend for paginated yield endpoint
 
 Progress: ██████░░░░ 50%
 
@@ -65,6 +65,12 @@ Progress: ██████░░░░ 50%
 ### Blockers/Concerns
 
 (None - dropdown performance gap successfully closed, all PERF requirements now actually met)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Adapt frontend for paginated /yield/ endpoint | 2026-01-19 | b75c7cd | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
 
 ## Session Continuity
 

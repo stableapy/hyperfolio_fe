@@ -76,6 +76,7 @@ Each task was committed atomically:
 2. **Task 2: Refactor use-yield-data.ts for server-side filtering and pagination** - `7d40737` (feat)
 3. **Task 3: Add pagination UI and update yield-section component** - `11f50e4` (feat)
 4. **Task 4: Add paginated yield API endpoint** - `009e768` (feat)
+5. **Fix: Remove id prop from TerminalCard and clean up unused code** - `b75c7cd` (fix)
 
 **Plan metadata:** (to be committed after summary)
 
@@ -101,7 +102,14 @@ None - plan executed exactly as written.
 
 ## Issues Encountered
 
-None - all tasks completed without issues.
+1. **TypeScript error: `id` prop not supported on TerminalCard**
+   - Fixed by removing the `id` prop and adding a wrapper div with `id="yield-section"`
+   - This allows smooth scroll functionality to work properly
+
+2. **Unused imports and variables**
+   - Removed unused `YieldResponse`, `setSelectedSwapToken` imports
+   - Removed unused utility functions: `hasValidApyData`, `isValidApyValue`, `hasValidDisplayItemApy`, `hasMessage`
+   - All TypeScript errors resolved
 
 ## User Setup Required
 
