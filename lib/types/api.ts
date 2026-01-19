@@ -402,3 +402,73 @@ export interface YieldResponse {
   lastUpdated: string;
   totalCount: number;
 }
+
+/**
+ * Pagination metadata for paginated yield response
+ */
+export interface YieldPaginationMeta {
+  /** Current page number (1-indexed) */
+  page: number;
+  /** Number of items per page */
+  page_size: number;
+  /** Total number of items across all pages */
+  total_items: number;
+  /** Total number of pages */
+  total_pages: number;
+  /** Whether there is a next page */
+  has_next: boolean;
+  /** Whether there is a previous page */
+  has_prev: boolean;
+}
+
+/**
+ * Response metadata for yield opportunities
+ */
+export interface YieldResponseMeta {
+  /** Last updated timestamp */
+  last_updated: string;
+  /** Available categories in the dataset */
+  categories: string[];
+  /** Available protocols in the dataset */
+  protocols: string[];
+  /** Available tokens in the dataset */
+  tokens: string[];
+}
+
+/**
+ * Paginated yield response from the new /api/yield/ endpoint
+ */
+export interface PaginatedYieldResponse {
+  /** Array of yield opportunities for the current page */
+  data: YieldOpportunity[];
+  /** Pagination metadata */
+  pagination: YieldPaginationMeta;
+  /** Response metadata with available filter options */
+  metadata: YieldResponseMeta;
+}
+
+/**
+ * Query parameters for paginated yield API requests
+ */
+export interface YieldPaginationParams {
+  /** Page number (default: 1) */
+  page?: number;
+  /** Number of items per page (default: 50) */
+  page_size?: number;
+  /** Search query for protocol/token name */
+  search?: string;
+  /** Filter by categories (e.g., ['lending', 'amm']) */
+  categories?: string[];
+  /** Filter by protocol names (e.g., ['hyperliquid', 'gleec']) */
+  protocols?: string[];
+  /** Filter by token addresses */
+  token_addresses?: string[];
+  /** Filter by minimum APY value */
+  min_value?: number;
+  /** Filter by maximum APY value */
+  max_value?: number;
+  /** Sort field (e.g., 'apy', 'tvl') */
+  sort_by?: string;
+  /** Sort order: 'asc' or 'desc' */
+  sort_order?: 'asc' | 'desc';
+}
