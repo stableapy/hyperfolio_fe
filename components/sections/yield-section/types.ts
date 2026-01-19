@@ -82,6 +82,11 @@ export type YieldCategoryFilter =
   | 'derivatives';
 
 /**
+ * View mode for yield section display
+ */
+export type YieldViewMode = 'list' | 'card';
+
+/**
  * Combined filter state for yield section
  */
 export interface YieldFilters {
