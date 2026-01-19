@@ -44,7 +44,11 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 3. Card view maintains minimalistic-geeky aesthetic (between rich and simple)
 4. View preference persists across page refreshes
 
-**Plans:** (created by /gsd:plan-phase)
+**Plans:** 4 plans in 3 waves
+- [ ] 02-01-PLAN.md — Add view mode state to wallet store with persistence
+- [ ] 02-02-PLAN.md — Create card view components (YieldGridCard, YieldCardGrid, YieldGridSkeleton)
+- [ ] 02-03-PLAN.md — Add view toggle button to filter bar
+- [ ] 02-04-PLAN.md — Wire view mode state and conditional rendering in yield section
 
 ---
 
@@ -70,7 +74,7 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 | Phase | Status | Plans | Completed |
 |-------|--------|-------|-----------|
 | 1 - Performance Foundation | ✓ Complete | 4/4 | 100% |
-| 2 - Card View Implementation | Not started | 0 | — |
+| 2 - Card View Implementation | Ready to execute | 4 | — |
 | 3 - Advanced Filters & UX | Not started | 0 | — |
 
 ---
