@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type {
-  YieldResponse,
   YieldOpportunity,
   PaginatedYieldResponse,
   YieldPaginationParams,
@@ -129,33 +128,6 @@ function getDisplayItemApy(item: YieldDisplayItem): number {
     return item.supplyApy?.totalApy ?? item.supplyApy?.baseApy ?? 0;
   }
   return item.apy.totalApy ?? item.apy.baseApy ?? 0;
-}
-
-/**
- * Checks if an APY value is valid
- */
-function isValidApyValue(apy?: number | null): boolean {
-  return apy !== null && apy !== undefined && !Number.isNaN(apy);
-}
-
-/**
- * Checks if an APY object contains any valid values
- */
-function hasValidApyData(
-  apy?: { baseApy?: number; totalApy?: number } | null
-): boolean {
-  if (!apy) return false;
-  return isValidApyValue(apy.totalApy) || isValidApyValue(apy.baseApy);
-}
-
-/**
- * Checks if a display item has any valid APY data
- */
-function hasValidDisplayItemApy(item: YieldDisplayItem): boolean {
-  if (item.type === 'market') {
-    return hasValidApyData(item.supplyApy) || hasValidApyData(item.borrowApy);
-  }
-  return hasValidApyData(item.apy);
 }
 
 /**
@@ -464,7 +436,6 @@ function useFetchYieldData(params: YieldPaginationParams) {
         const errorObj = err as any;
         const hasErrorType =
           errorObj && typeof errorObj === 'object' && 'errorType' in errorObj;
-        const hasMessage = errorObj && (errorObj.message || errorObj.error);
 
         if (hasErrorType) {
           // Already a YieldError (from parseErrorResponse)

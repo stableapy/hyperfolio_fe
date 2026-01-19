@@ -35,7 +35,7 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
   });
 
   // State for pre-filling swap widget (for future swap click functionality)
-  const [selectedSwapToken, setSelectedSwapToken] = useState<
+  const [selectedSwapToken] = useState<
     { address: string; symbol: string; chainId: number } | undefined
   >(undefined);
 
@@ -134,9 +134,10 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
         />
 
         {/* Yield Opportunities List */}
-        <TooltipProvider>
-          <TerminalCard showHeader title="yield --list" id="yield-section">
-            <div className="divide-theme-border/30 divide-y">
+        <div id="yield-section">
+          <TooltipProvider>
+            <TerminalCard showHeader title="yield --list">
+              <div className="divide-theme-border/30 divide-y">
               {/* Error State */}
               {error && !showLoading && (
                 <div className="py-8 text-center">
@@ -228,6 +229,7 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
             </div>
           </TerminalCard>
         </TooltipProvider>
+      </div>
       </div>
 
       {/* Right: Sticky Swap Widget - Hidden on mobile, shown on lg+ */}
