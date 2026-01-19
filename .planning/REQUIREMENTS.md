@@ -18,9 +18,9 @@ Requirements for yield section performance and UX improvements.
 ### Views
 
 - [ ] **VIEW-01**: List view displays protocols in table format (existing, verify working)
-- [ ] **VIEW-02**: Card view displays protocols in grid layout (2-3 col desktop, 1 col mobile)
-- [ ] **VIEW-03**: View toggle button switches between list and card views
-- [ ] **VIEW-04**: Card view maintains minimalistic-geeky aesthetic (between rich and simple)
+- [x] **VIEW-02**: Card view displays protocols in grid layout (2-3 col desktop, 1 col mobile)
+- [x] **VIEW-03**: View toggle button switches between list and card views
+- [x] **VIEW-04**: Card view maintains minimalistic-geeky aesthetic (between rich and simple)
 
 ### Filters - Existing
 
@@ -82,9 +82,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-04 | Phase 1 | Gaps Found |
 | PERF-05 | Phase 1 | Gaps Found |
 | VIEW-01 | Phase 1 | Gaps Found |
-| VIEW-02 | Phase 2 | Pending |
-| VIEW-03 | Phase 2 | Pending |
-| VIEW-04 | Phase 2 | Pending |
+| VIEW-02 | Phase 2 | Complete |
+| VIEW-03 | Phase 2 | Complete |
+| VIEW-04 | Phase 2 | Complete |
 | FILT-01 | Phase 1 | Gaps Found |
 | FILT-02 | Phase 1 | Gaps Found |
 | FILT-03 | Phase 1 | Gaps Found |
