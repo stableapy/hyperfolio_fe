@@ -10,27 +10,27 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 2 of 3 (Card View & UX)
-Plan: 3 of 3 (View Toggle Button)
+Plan: 2 of 3 (Card View Components)
 Status: In progress
-Last activity: 2026-01-19 — Completed view toggle button implementation
+Last activity: 2026-01-19 — Completed card view components (YieldGridCard, YieldCardGrid, YieldGridSkeleton)
 
-Progress: ██████░░░░░░ 38%
+Progress: █████░░░░░░ 34%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 6
-- Average duration: 5.8 min
+- Average duration: 6.3 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 - Performance Foundation | 4 | 4 | 7.8 min |
-| 02 - Card View & UX | 2 | 3 | 1.3 min |
+| 02 - Card View & UX | 2 | 3 | 3.5 min |
 | 03 - Advanced Filters | 0 | 6 | — |
 
-**Overall:** 6 of 16 plans complete (38%)
+**Overall:** 6 of 16 plans complete (34%)
 
 ## Accumulated Context
 
@@ -50,9 +50,10 @@ Progress: ██████░░░░░░ 38%
 - **[02-01]** Default to 'list' view mode for backwards compatibility with existing users
 - **[02-01]** Use Zustand's existing persist middleware for view mode storage
 - **[02-01]** Type-safe union type 'list' | 'card' for view mode state
-- **[02-03]** Optional viewMode and onViewModeChange props maintain backwards compatibility during transition
-- **[02-03]** Conditional rendering based on callback availability ensures graceful degradation
-- **[02-03]** Terminal-style button pattern: border, overflow-hidden, border-r separator, active state bg-theme-purple/10
+- **[02-02]** Show supply APY primarily for consolidated lending markets with borrow APY fallback
+- **[02-02]** Use type guards (isConsolidatedMarket) to handle union types safely
+- **[02-02]** Card view components follow NFT section pattern for consistency
+- **[02-02]** Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop
 
 ### Pending Todos
 
@@ -64,8 +65,8 @@ Progress: ██████░░░░░░ 38%
 
 ## Session Continuity
 
-Last session: 2026-01-19T22:06:48Z
-Stopped at: Completed Plan 02-03 (View Toggle Button)
+Last session: 2026-01-19T22:07:40Z
+Stopped at: Completed Plan 02-02 (Card View Components)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
