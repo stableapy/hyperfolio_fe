@@ -136,9 +136,15 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
                 </div>
               )}
 
-              {/* Yield Cards */}
+              {/* Yield Opportunities - List or Card View */}
               {!showLoading && !error && (
-                <VirtualizedYieldList opportunities={opportunities} />
+                <>
+                  {viewMode === 'card' ? (
+                    <YieldCardGrid opportunities={opportunities} isLoading={showLoading} />
+                  ) : (
+                    <VirtualizedYieldList opportunities={opportunities} />
+                  )}
+                </>
               )}
             </div>
           </TerminalCard>
