@@ -22,7 +22,10 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 3. List view displays protocols correctly with working filters (protocol, category, token)
 4. Data handling is optimized with memoization to prevent unnecessary re-renders
 
-**Plans:** (created by /gsd:plan-phase)
+**Plans:** 3 plans in 2 waves
+- [ ] 01-01-PLAN.md — Measure baseline performance with React DevTools Profiler
+- [ ] 01-02-PLAN.md — Verify existing filters (protocol, category, token) work correctly
+- [ ] 01-03-PLAN.md — Consolidate results and confirm Phase 1 completion
 
 ---
 
@@ -61,11 +64,11 @@ This roadmap optimizes the yield section for performance and UX, fixing lag/free
 
 ## Progress
 
-| Phase | Status | Completed |
-|-------|--------|-----------|
-| 1 - Performance Foundation | Not started | — |
-| 2 - Card View Implementation | Not started | — |
-| 3 - Advanced Filters & UX | Not started | — |
+| Phase | Status | Plans | Completed |
+|-------|--------|-------|-----------|
+| 1 - Performance Foundation | Planned | 3 | — |
+| 2 - Card View Implementation | Not started | 0 | — |
+| 3 - Advanced Filters & UX | Not started | 0 | — |
 
 ---
 *Roadmap for milestone: v1.0*
