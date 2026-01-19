@@ -130,6 +130,10 @@ export interface YieldFilterBarProps {
   availableTokens: FilterOption[];
   /** Whether the filter bar should be disabled */
   disabled?: boolean;
+  /** Current view mode ('list' or 'card') */
+  viewMode?: YieldViewMode;
+  /** Callback when view mode changes */
+  onViewModeChange?: (mode: YieldViewMode) => void;
 }
 
 /**
