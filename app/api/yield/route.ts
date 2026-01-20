@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
   // Build backend URL with query parameters
   const searchParams = request.nextUrl.searchParams;
   const queryString = searchParams.toString();
-  const backendUrl = `${API_URL}/yield/${queryString ? `?${queryString}` : ''}`;
+  const backendUrl = `${API_URL}/yield${queryString ? `?${queryString}` : ''}`;
 
   // Check for missing API key
   if (!API_KEY) {
