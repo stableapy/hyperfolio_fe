@@ -4,7 +4,11 @@ import { useMemo, useState, useEffect } from 'react';
 import { TerminalCard } from '@/components/ui/terminal-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -17,7 +21,11 @@ import { MultiSelectFilter } from './multi-select-filter';
 import { ResetAllButton } from './reset-all-button';
 import { useHyperEvmTokens } from '@/hooks/use-hyperevm-tokens';
 import { TokenLogo } from './token-logo';
-import type { YieldFilterBarProps, YieldCategoryFilter, FilterOption } from './types';
+import type {
+  YieldFilterBarProps,
+  YieldCategoryFilter,
+  FilterOption,
+} from './types';
 
 const CATEGORIES: Array<{
   value: Exclude<YieldCategoryFilter, 'all'>;
@@ -124,7 +132,8 @@ export function YieldFilterBar({
   }, [hyperEvmTokens]);
 
   const tokenAddressMap = useMemo(() => {
-    if (!hyperEvmTokens) return new Map<string, { symbol: string; logoURI?: string }>();
+    if (!hyperEvmTokens)
+      return new Map<string, { symbol: string; logoURI?: string }>();
     return new Map(
       hyperEvmTokens.map((token) => [
         token.address.toLowerCase(),
@@ -178,7 +187,9 @@ export function YieldFilterBar({
 
   // Sort protocols alphabetically by name
   const sortedProtocols: FilterOption[] = useMemo(() => {
-    return [...availableProtocols].sort((a, b) => a.label.localeCompare(b.label));
+    return [...availableProtocols].sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
   }, [availableProtocols]);
 
   const hasActiveFilters =
@@ -216,20 +227,20 @@ export function YieldFilterBar({
           {/* Search Input */}
           <div className="relative flex-1">
             <Search className="text-theme-text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            type="text"
-            placeholder="Search token symbol..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onBlur={() => {
-              if (searchInput !== filters.searchQuery) {
-                onFiltersChange({ searchQuery: searchInput });
-              }
-            }}
-            aria-label="Search yield opportunities by token symbol"
-            disabled={disabled}
-            className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary placeholder:text-theme-text-muted h-9 pl-9 font-mono text-sm disabled:opacity-50"
-          />
+            <Input
+              type="text"
+              placeholder="Search token symbol..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onBlur={() => {
+                if (searchInput !== filters.searchQuery) {
+                  onFiltersChange({ searchQuery: searchInput });
+                }
+              }}
+              aria-label="Search yield opportunities by token symbol"
+              disabled={disabled}
+              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary placeholder:text-theme-text-muted h-9 pl-9 font-mono text-sm disabled:opacity-50"
+            />
           </div>
 
           {/* Multi-Select Dropdowns */}
@@ -240,7 +251,9 @@ export function YieldFilterBar({
               items={CATEGORIES}
               selectedValues={filters.selectedCategories}
               onSelectionChange={(values) =>
-                onFiltersChange({ selectedCategories: values as YieldCategoryFilter[] })
+                onFiltersChange({
+                  selectedCategories: values as YieldCategoryFilter[],
+                })
               }
               disabled={disabled}
               placeholder="Search categories..."
@@ -274,19 +287,19 @@ export function YieldFilterBar({
 
             {/* View Mode Toggle */}
             {onViewModeChange && (
-              <div className="flex bg-theme-card-bg border border-theme-border/70 rounded-sm overflow-hidden">
+              <div className="bg-theme-card-bg border-theme-border/70 flex overflow-hidden rounded-sm border">
                 <button
                   type="button"
                   onClick={() => onViewModeChange('card')}
                   disabled={disabled}
-                  className={`px-2.5 py-2 transition-all duration-150 border-r border-theme-border/50 ${
+                  className={`border-theme-border/50 border-r px-2.5 py-2 transition-all duration-150 ${
                     viewMode === 'card'
                       ? 'bg-theme-purple/10 text-theme-purple'
                       : 'text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-bg/50'
                   } disabled:opacity-50`}
                   aria-label="Switch to card view"
                 >
-                  <Grid3x3 className="w-4 h-4" />
+                  <Grid3x3 className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
@@ -299,7 +312,7 @@ export function YieldFilterBar({
                   } disabled:opacity-50`}
                   aria-label="Switch to list view"
                 >
-                  <List className="w-4 h-4" />
+                  <List className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -314,25 +327,25 @@ export function YieldFilterBar({
               }
               disabled={disabled}
             >
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <SelectTrigger
-                    className="bg-theme-bg/30 border-theme-border/50 hover:bg-theme-bg/50 hover:text-theme-text-primary data-[state=open]:bg-theme-accent/15 data-[state=open]:text-theme-accent data-[state=open]:border-theme-accent/40 h-9 rounded-sm px-3 font-mono text-xs text-theme-text-secondary shadow-none transition-colors"
+                    className="bg-theme-bg/30 border-theme-border/50 hover:bg-theme-bg/50 hover:text-theme-text-primary data-[state=open]:bg-theme-accent/15 data-[state=open]:text-theme-accent data-[state=open]:border-theme-accent/40 text-theme-text-secondary h-9 rounded-sm px-3 font-mono text-xs shadow-none transition-colors"
                     aria-label="Sort yield opportunities by APY"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-theme-text-muted text-[10px] uppercase tracking-wider">
+                      <span className="text-theme-text-muted text-[10px] tracking-wider uppercase">
                         APY
                       </span>
                       {filters.sortOrder === 'desc' ? (
-                        <TrendingDown className="size-3.5 text-theme-accent" />
+                        <TrendingDown className="text-theme-accent size-3.5" />
                       ) : (
-                        <TrendingUp className="size-3.5 text-theme-accent" />
+                        <TrendingUp className="text-theme-accent size-3.5" />
                       )}
                     </span>
                   </SelectTrigger>
                 </TooltipTrigger>
-                <TooltipContent className="bg-theme-bg border-theme-border border px-2 py-1 text-[10px] font-mono text-theme-text-secondary">
+                <TooltipContent className="bg-theme-bg border-theme-border text-theme-text-secondary border px-2 py-1 font-mono text-[10px]">
                   {filters.sortOrder === 'desc'
                     ? 'Currently sorting APY high → low (descending)'
                     : 'Currently sorting APY low → high (ascending)'}
@@ -341,8 +354,8 @@ export function YieldFilterBar({
               <SelectContent className="border-theme-border bg-theme-card-bg">
                 <SelectItem value="desc" className="font-mono text-xs">
                   <div className="flex items-center gap-2">
-                    <TrendingDown className="size-3.5 text-theme-accent" />
-                    <span className="text-theme-text-muted text-[10px] uppercase tracking-wider">
+                    <TrendingDown className="text-theme-accent size-3.5" />
+                    <span className="text-theme-text-muted text-[10px] tracking-wider uppercase">
                       APY
                     </span>
                     <span>High → Low</span>
@@ -350,8 +363,8 @@ export function YieldFilterBar({
                 </SelectItem>
                 <SelectItem value="asc" className="font-mono text-xs">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="size-3.5 text-theme-accent" />
-                    <span className="text-theme-text-muted text-[10px] uppercase tracking-wider">
+                    <TrendingUp className="text-theme-accent size-3.5" />
+                    <span className="text-theme-text-muted text-[10px] tracking-wider uppercase">
                       APY
                     </span>
                     <span>Low → High</span>
@@ -368,47 +381,49 @@ export function YieldFilterBar({
           </div>
         </div>
 
-        {tokenShortcuts.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-theme-text-muted font-mono text-[10px] uppercase tracking-wide">
-              Quick tokens
-            </span>
-            {tokenShortcuts.map((token) => {
-              const isSelected = filters.selectedTokens.includes(token.value);
-              return (
-                <button
-                  key={token.value}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    const updated = isSelected
-                      ? filters.selectedTokens.filter((value) => value !== token.value)
-                      : [...filters.selectedTokens, token.value];
-                    onFiltersChange({ selectedTokens: updated });
-                  }}
-                  className={`border-theme-border/50 flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase transition-colors ${
-                    isSelected
-                      ? 'bg-theme-accent/15 text-theme-accent border-theme-accent/50'
-                      : 'text-theme-text-secondary hover:text-theme-text-primary hover:border-theme-accent/50'
-                  } disabled:opacity-50`}
-                >
-                  {token.logoURI ? (
-                    <TokenLogo
-                      src={token.logoURI}
-                      symbol={token.label}
-                      className="size-4"
-                    />
-                  ) : null}
-                  <span>{token.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {tokenShortcuts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-theme-text font-mono text-[9px] tracking-wide uppercase">
+                Quick tokens
+              </span>
+              {tokenShortcuts.map((token) => {
+                const isSelected = filters.selectedTokens.includes(token.value);
+                return (
+                  <button
+                    key={token.value}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      const updated = isSelected
+                        ? filters.selectedTokens.filter(
+                            (value) => value !== token.value
+                          )
+                        : [...filters.selectedTokens, token.value];
+                      onFiltersChange({ selectedTokens: updated });
+                    }}
+                    className={`border-theme-border/50 flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase transition-colors ${
+                      isSelected
+                        ? 'bg-theme-accent/15 text-theme-accent border-theme-accent/50'
+                        : 'text-theme-text-secondary hover:text-theme-text-primary hover:border-theme-accent/50'
+                    } disabled:opacity-50`}
+                  >
+                    {token.logoURI ? (
+                      <TokenLogo
+                        src={token.logoURI}
+                        symbol={token.label}
+                        className="size-3.5"
+                      />
+                    ) : null}
+                    <span>{token.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-theme-text-muted font-mono text-[10px] uppercase tracking-wide">
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text font-mono text-[9px] tracking-wide uppercase">
               APY %
             </span>
             <Input
@@ -425,7 +440,7 @@ export function YieldFilterBar({
                 }
               }}
               disabled={disabled}
-              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-8 w-[86px] px-2 font-mono text-xs"
+              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-7 w-[72px] px-2 font-mono text-xs"
             />
             <span className="text-theme-text-muted text-xs">-</span>
             <Input
@@ -442,12 +457,12 @@ export function YieldFilterBar({
                 }
               }}
               disabled={disabled}
-              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-8 w-[86px] px-2 font-mono text-xs"
+              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-7 w-[72px] px-2 font-mono text-xs"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-theme-text-muted font-mono text-[10px] uppercase tracking-wide">
+          <div className="flex items-center gap-1.5">
+            <span className="text-theme-text font-mono text-[9px] tracking-wide uppercase">
               TVL $
             </span>
             <Input
@@ -464,7 +479,7 @@ export function YieldFilterBar({
                 }
               }}
               disabled={disabled}
-              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-8 w-[110px] px-2 font-mono text-xs"
+              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-7 w-[90px] px-2 font-mono text-xs"
             />
             <span className="text-theme-text-muted text-xs">-</span>
             <Input
@@ -481,7 +496,7 @@ export function YieldFilterBar({
                 }
               }}
               disabled={disabled}
-              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-8 w-[110px] px-2 font-mono text-xs"
+              className="bg-theme-bg/30 border-theme-border/50 text-theme-text-primary h-7 w-[90px] px-2 font-mono text-xs"
             />
           </div>
         </div>
