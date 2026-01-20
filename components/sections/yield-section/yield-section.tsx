@@ -28,6 +28,10 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
     selectedCategories: [],
     selectedProtocols: [],
     selectedTokens: [],
+    minApy: '',
+    maxApy: '',
+    minTvl: '',
+    maxTvl: '',
     stablecoinOnly: false,
     hypeOnly: false,
     searchQuery: '',
@@ -96,6 +100,10 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
       filters.selectedCategories.length > 0 ||
       filters.selectedProtocols.length > 0 ||
       filters.selectedTokens.length > 0 ||
+      filters.minApy.trim() !== '' ||
+      filters.maxApy.trim() !== '' ||
+      filters.minTvl.trim() !== '' ||
+      filters.maxTvl.trim() !== '' ||
       filters.stablecoinOnly ||
       filters.hypeOnly ||
       filters.searchQuery.trim() !== '',

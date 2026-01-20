@@ -35,7 +35,12 @@ interface YieldError {
 function getLendingMarketKey(opp: YieldOpportunity): string {
   const protocolId = opp.protocol.id;
   const underlyingSymbol =
-    opp.metadata.underlyingSymbol || opp.pool.symbol || 'unknown';
+    opp.metadata.underlyingSymbol ||
+    opp.pool.symbol ||
+    opp.pool.underlyingToken?.symbol ||
+    opp.pool.address ||
+    opp.pool.name ||
+    'unknown';
   return `${protocolId}:${underlyingSymbol.toLowerCase()}`;
 }
 
@@ -59,6 +64,12 @@ function consolidateLendingOpportunities(
 ): YieldDisplayItem[] {
   const lendingOpps = opportunities.filter((opp) => opp.category === 'lending');
   const otherOpps = opportunities.filter((opp) => opp.category !== 'lending');
+  const lendingNonMarketOpps = lendingOpps.filter(
+    (opp) => opp.type !== 'supply' && opp.type !== 'borrow'
+  );
+  const lendingMarketOpps = lendingOpps.filter(
+    (opp) => opp.type === 'supply' || opp.type === 'borrow'
+  );
 
   // Group lending by market key
   const marketMap = new Map<
@@ -66,7 +77,7 @@ function consolidateLendingOpportunities(
     { supply?: YieldOpportunity; borrow?: YieldOpportunity }
   >();
 
-  for (const opp of lendingOpps) {
+  for (const opp of lendingMarketOpps) {
     const key = getLendingMarketKey(opp);
     const existing = marketMap.get(key) || {};
 
@@ -116,7 +127,7 @@ function consolidateLendingOpportunities(
   }
 
   // Combine consolidated lending markets with other opportunities
-  return [...consolidatedMarkets, ...otherOpps];
+  return [...consolidatedMarkets, ...lendingNonMarketOpps, ...otherOpps];
 }
 
 /**
@@ -128,6 +139,59 @@ function getDisplayItemApy(item: YieldDisplayItem): number {
     return item.supplyApy?.totalApy ?? item.supplyApy?.baseApy ?? 0;
   }
   return item.apy.totalApy ?? item.apy.baseApy ?? 0;
+}
+
+function isTokenAddress(value: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(value);
+}
+
+function extractTokenSymbolsFromItem(item: YieldDisplayItem): string[] {
+  const symbols = new Set<string>();
+  const pool = item.pool;
+
+  if (item.metadata?.underlyingSymbol) {
+    symbols.add(item.metadata.underlyingSymbol);
+  }
+  if (pool.symbol) {
+    symbols.add(pool.symbol);
+  }
+  if (pool.underlyingToken?.symbol) {
+    symbols.add(pool.underlyingToken.symbol);
+  }
+  if (pool.token0?.symbol) {
+    symbols.add(pool.token0.symbol);
+  }
+  if (pool.token1?.symbol) {
+    symbols.add(pool.token1.symbol);
+  }
+  if (pool.collateralToken?.symbol) {
+    symbols.add(pool.collateralToken.symbol);
+  }
+
+  return Array.from(symbols);
+}
+
+function extractTokenAddressesFromItem(item: YieldDisplayItem): string[] {
+  const addresses = new Set<string>();
+  const pool = item.pool;
+
+  if (item.metadata?.underlyingToken) {
+    addresses.add(item.metadata.underlyingToken);
+  }
+  if (pool.underlyingToken?.address) {
+    addresses.add(pool.underlyingToken.address);
+  }
+  if (pool.token0?.address) {
+    addresses.add(pool.token0.address);
+  }
+  if (pool.token1?.address) {
+    addresses.add(pool.token1.address);
+  }
+  if (pool.collateralToken?.address) {
+    addresses.add(pool.collateralToken.address);
+  }
+
+  return Array.from(addresses);
 }
 
 /**
@@ -148,6 +212,12 @@ export function useYieldData(
       page_size: pagination.pageSize,
     };
 
+    const minApy = Number.parseFloat(filters.minApy);
+    const maxApy = Number.parseFloat(filters.maxApy);
+    const minTvl = Number.parseFloat(filters.minTvl);
+    const maxTvl = Number.parseFloat(filters.maxTvl);
+    const selectedTokenAddresses = filters.selectedTokens.filter(isTokenAddress);
+
     // Add search query if present
     if (filters.searchQuery.trim()) {
       params.search = filters.searchQuery.trim();
@@ -164,13 +234,18 @@ export function useYieldData(
     }
 
     // Add tokens filter if present
-    if (filters.selectedTokens.length > 0) {
-      params.token_addresses = filters.selectedTokens;
+    if (selectedTokenAddresses.length > 0) {
+      params.token_addresses = selectedTokenAddresses;
     }
 
     // Add sort order
     params.sort_by = 'apy';
     params.sort_order = filters.sortOrder;
+
+    if (Number.isFinite(minApy)) params.min_value = minApy;
+    if (Number.isFinite(maxApy)) params.max_value = maxApy;
+    if (Number.isFinite(minTvl)) params.min_tvl = minTvl;
+    if (Number.isFinite(maxTvl)) params.max_tvl = maxTvl;
 
     return params;
   }, [
@@ -178,6 +253,10 @@ export function useYieldData(
     filters.selectedCategories,
     filters.selectedProtocols,
     filters.selectedTokens,
+    filters.minApy,
+    filters.maxApy,
+    filters.minTvl,
+    filters.maxTvl,
     filters.sortOrder,
     pagination.page,
     pagination.pageSize,
@@ -186,7 +265,7 @@ export function useYieldData(
   // Fetch paginated yield data from backend
   const { data, isLoading, error, errorDetails } = useFetchYieldData(apiParams);
 
-  // Consolidate lending opportunities for display
+  // Consolidate lending opportunities for display and apply range filters/sort
   const displayItems = useMemo<YieldDisplayItem[]>(() => {
     if (!data?.data?.length) return [];
 
@@ -199,26 +278,241 @@ export function useYieldData(
     });
 
     // Consolidate lending markets
-    return consolidateLendingOpportunities(withValidApy);
-  }, [data]);
+    const consolidated = consolidateLendingOpportunities(withValidApy);
+
+    const minApy = Number.parseFloat(filters.minApy);
+    const maxApy = Number.parseFloat(filters.maxApy);
+    const minTvl = Number.parseFloat(filters.minTvl);
+    const maxTvl = Number.parseFloat(filters.maxTvl);
+
+    const hasMinApy = Number.isFinite(minApy);
+    const hasMaxApy = Number.isFinite(maxApy);
+    const hasMinTvl = Number.isFinite(minTvl);
+    const hasMaxTvl = Number.isFinite(maxTvl);
+
+    const selectedTokenAddresses = filters.selectedTokens
+      .filter(isTokenAddress)
+      .map((address) => address.toLowerCase());
+    const selectedTokenSymbols = filters.selectedTokens
+      .filter((token) => !isTokenAddress(token))
+      .map((symbol) => symbol.toUpperCase());
+
+    const filtered = consolidated.filter((item) => {
+      if (filters.selectedTokens.length > 0) {
+        const itemAddresses = extractTokenAddressesFromItem(item).map(
+          (address) => address.toLowerCase()
+        );
+        const itemSymbols = extractTokenSymbolsFromItem(item).map((symbol) =>
+          symbol.toUpperCase()
+        );
+        const matchesAddress =
+          selectedTokenAddresses.length > 0 &&
+          selectedTokenAddresses.some((address) =>
+            itemAddresses.includes(address)
+          );
+        const matchesSymbol =
+          selectedTokenSymbols.length > 0 &&
+          selectedTokenSymbols.some((symbol) => itemSymbols.includes(symbol));
+
+        if (!matchesAddress && !matchesSymbol) return false;
+      }
+
+      const apy = getDisplayItemApy(item);
+      const rawTvl = item.pool.tvlUsd ?? item.pool.liquidityUsd;
+      const tvl =
+        typeof rawTvl === 'number'
+          ? rawTvl
+          : rawTvl !== undefined
+            ? Number.parseFloat(String(rawTvl))
+            : Number.NaN;
+      const hasTvl = Number.isFinite(tvl);
+
+      if (hasMinApy && apy < minApy) return false;
+      if (hasMaxApy && apy > maxApy) return false;
+      if (hasMinTvl && hasTvl && tvl < minTvl) return false;
+      if (hasMaxTvl && hasTvl && tvl > maxTvl) return false;
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      const aApy = getDisplayItemApy(a);
+      const bApy = getDisplayItemApy(b);
+      return filters.sortOrder === 'asc' ? aApy - bApy : bApy - aApy;
+    });
+  }, [
+    data,
+    filters.minApy,
+    filters.maxApy,
+    filters.minTvl,
+    filters.maxTvl,
+    filters.sortOrder,
+    filters.selectedTokens,
+  ]);
 
   // Build filter options from backend metadata
   const { protocols, tokens } = useMemo(() => {
-    if (!data?.metadata) {
+    if (!data) {
       return { protocols: [], tokens: [] };
     }
 
-    const protocols =
-      data.metadata.protocols.map((name) => ({
-        value: name,
-        label: name,
-      })) || [];
+    const meta = data.metadata as
+      | undefined
+      | {
+          protocols?: string[];
+          tokens?: string[];
+          filters?: {
+            protocols?: Array<{ value: string; label?: string; count?: number }>;
+            tokenAddresses?: Array<{ value: string; label?: string; count?: number }>;
+          };
+        };
 
-    const tokens =
-      data.metadata.tokens.map((symbol) => ({
-        value: symbol,
-        label: symbol,
-      })) || [];
+    const protocolNames = Array.isArray(meta?.protocols) ? meta.protocols : [];
+    const tokenSymbols = Array.isArray(meta?.tokens) ? meta.tokens : [];
+    const protocolFilters = Array.isArray(meta?.filters?.protocols)
+      ? meta?.filters?.protocols
+      : [];
+    const tokenAddressFilters = Array.isArray(meta?.filters?.tokenAddresses)
+      ? meta?.filters?.tokenAddresses
+      : [];
+
+    const fallbackProtocols = new Set<string>();
+    const fallbackTokens = new Set<string>();
+    const protocolNameById = new Map<string, string>();
+    const protocolIdByName = new Map<string, string>();
+    const tokenCounts = new Map<string, number>();
+    const tokenOptionsByAddress = new Map<
+      string,
+      { value: string; label: string; count?: number }
+    >();
+
+    for (const opp of data.data || []) {
+      const protocolId = opp?.protocol?.id;
+      const protocolName = opp?.protocol?.name;
+
+      if (protocolId) {
+        fallbackProtocols.add(protocolId);
+      }
+
+      if (protocolName) {
+        if (protocolId) {
+          protocolNameById.set(protocolId, protocolName);
+        }
+        protocolIdByName.set(protocolName.toLowerCase(), protocolId || protocolName);
+      }
+
+      const pool = opp.pool;
+      const tokenCandidates = [
+        {
+          address: opp.metadata?.underlyingToken,
+          symbol: opp.metadata?.underlyingSymbol,
+        },
+        {
+          address: pool?.underlyingToken?.address,
+          symbol: pool?.underlyingToken?.symbol,
+        },
+        {
+          address: pool?.token0?.address,
+          symbol: pool?.token0?.symbol,
+        },
+        {
+          address: pool?.token1?.address,
+          symbol: pool?.token1?.symbol,
+        },
+        {
+          address: pool?.collateralToken?.address,
+          symbol: pool?.collateralToken?.symbol,
+        },
+      ];
+
+      for (const candidate of tokenCandidates) {
+        if (typeof candidate.address === 'string' && candidate.address.trim()) {
+          const normalized = candidate.address.trim().toLowerCase();
+          const existing = tokenOptionsByAddress.get(normalized);
+          const label =
+            candidate.symbol || existing?.label || candidate.address.trim();
+          tokenOptionsByAddress.set(normalized, {
+            value: normalized,
+            label,
+            count: (existing?.count || 0) + 1,
+          });
+          continue;
+        }
+
+        if (typeof candidate.symbol === 'string' && candidate.symbol.trim()) {
+          const normalized = candidate.symbol.trim();
+          fallbackTokens.add(normalized);
+          tokenCounts.set(normalized, (tokenCounts.get(normalized) || 0) + 1);
+        }
+      }
+
+    }
+
+    const protocolsSource =
+      protocolFilters.length > 0
+        ? protocolFilters.map((entry) => ({
+            value: entry.value,
+            label: entry.label || entry.value,
+            count: entry.count,
+          }))
+        : protocolNames.length > 0
+          ? protocolNames.map((name) => ({
+              value: name,
+              label: name,
+            }))
+          : Array.from(fallbackProtocols).map((name) => ({
+              value: name,
+              label: name,
+            }));
+    const addressTokensSource =
+      tokenAddressFilters.length > 0
+        ? tokenAddressFilters.map((entry) => ({
+            value: entry.value.toLowerCase(),
+            label: entry.label || entry.value,
+            count: entry.count,
+          }))
+        : Array.from(tokenOptionsByAddress.values());
+
+    const symbolTokensSource =
+      tokenSymbols.length > 0
+        ? tokenSymbols.map((symbol) => ({
+            value: symbol,
+            label: symbol,
+          }))
+        : Array.from(fallbackTokens).map((symbol) => ({
+            value: symbol,
+            label: symbol,
+            count: tokenCounts.get(symbol) || 0,
+          }));
+
+    const protocols = protocolsSource.map((protocol) => {
+      const normalized = protocol.value.toLowerCase();
+      const mappedId = protocolIdByName.get(normalized);
+      const value = mappedId || protocol.value;
+      const label = protocolNameById.get(value) || protocol.label;
+
+      return {
+        value,
+        label,
+        count: protocol.count,
+      };
+    });
+
+    const addressLabels = new Set(
+      addressTokensSource.map((token) => token.label.toUpperCase())
+    );
+    const mergedTokensSource = [
+      ...addressTokensSource,
+      ...symbolTokensSource.filter(
+        (token) => !addressLabels.has(token.label.toUpperCase())
+      ),
+    ];
+
+    const tokens = mergedTokensSource.map((token) => ({
+      value: token.value,
+      label: token.label,
+      count: token.count,
+    }));
 
     return { protocols, tokens };
   }, [data]);
@@ -235,8 +529,13 @@ export function useYieldData(
         ? apyValues.reduce((sum, apy) => sum + apy, 0) / apyValues.length
         : 0;
 
+    const paginationMeta = data?.pagination;
+    const totalItems = Number(
+      paginationMeta?.total_items ?? paginationMeta?.total ?? 0
+    );
+
     return {
-      totalCount: data?.pagination?.total_items || 0,
+      totalCount: totalItems,
       highestApy,
       averageApy,
     };
@@ -254,12 +553,17 @@ export function useYieldData(
     isMockData: (data as any)?._meta?.isMock === true,
     filterOptions: { protocols, tokens },
     pagination: {
-      page: data?.pagination?.page || pagination.page,
-      pageSize: data?.pagination?.page_size || pagination.pageSize,
-      totalPages: data?.pagination?.total_pages || 1,
-      totalItems: data?.pagination?.total_items || 0,
-      hasNext: data?.pagination?.has_next || false,
-      hasPrev: data?.pagination?.has_prev || false,
+      page:
+        Number(data?.pagination?.page ?? pagination.page) || pagination.page,
+      pageSize:
+        Number(data?.pagination?.page_size ?? pagination.pageSize) ||
+        pagination.pageSize,
+      totalPages: Number(data?.pagination?.total_pages) || 1,
+      totalItems: Number(
+        data?.pagination?.total_items ?? data?.pagination?.total ?? 0
+      ),
+      hasNext: Boolean(data?.pagination?.has_next ?? data?.pagination?.next),
+      hasPrev: Boolean(data?.pagination?.has_prev ?? data?.pagination?.prev),
     },
   };
 }
@@ -384,6 +688,10 @@ function useFetchYieldData(params: YieldPaginationParams) {
       searchParams.append('min_value', params.min_value.toString());
     if (params.max_value !== undefined)
       searchParams.append('max_value', params.max_value.toString());
+    if (params.min_tvl !== undefined)
+      searchParams.append('min_tvl', params.min_tvl.toString());
+    if (params.max_tvl !== undefined)
+      searchParams.append('max_tvl', params.max_tvl.toString());
     if (params.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params.sort_order) searchParams.append('sort_order', params.sort_order);
 

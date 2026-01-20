@@ -42,6 +42,7 @@ function getTokenDisplay(item: YieldDisplayItem): {
   tooltip?: string;
 } {
   const { pool, category, metadata } = item;
+  const poolAddress = pool.address;
 
   // AMM pools: show token pair
   if (category === 'amm' && pool.token0 && pool.token1) {
@@ -70,8 +71,20 @@ function getTokenDisplay(item: YieldDisplayItem): {
   }
 
   // Fallback to legacy fields
-  const symbol = metadata.underlyingSymbol || pool.symbol || 'Unknown';
-  return { symbol };
+  const fallbackSymbol =
+    metadata.underlyingSymbol || pool.symbol || pool.name || pool.address;
+  if (!fallbackSymbol) {
+    return { symbol: 'Unknown' };
+  }
+
+  if (poolAddress && fallbackSymbol === poolAddress && poolAddress.length > 10) {
+    return {
+      symbol: `${poolAddress.slice(0, 6)}...${poolAddress.slice(-4)}`,
+      tooltip: poolAddress,
+    };
+  }
+
+  return { symbol: fallbackSymbol };
 }
 
 /**

@@ -75,6 +75,8 @@ function createErrorResponse(
  * - token_addresses: Filter by token addresses
  * - min_value: Filter by minimum APY value
  * - max_value: Filter by maximum APY value
+ * - min_tvl: Filter by minimum TVL value
+ * - max_tvl: Filter by maximum TVL value
  * - sort_by: Sort field (e.g., 'apy', 'tvl')
  * - sort_order: Sort order ('asc' or 'desc')
  *

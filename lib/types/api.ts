@@ -408,17 +408,23 @@ export interface YieldResponse {
  */
 export interface YieldPaginationMeta {
   /** Current page number (1-indexed) */
-  page: number;
+  page: number | string;
   /** Number of items per page */
-  page_size: number;
+  page_size: number | string;
   /** Total number of items across all pages */
-  total_items: number;
+  total_items?: number;
+  /** Total number of items (alternate field name) */
+  total?: number;
   /** Total number of pages */
   total_pages: number;
   /** Whether there is a next page */
-  has_next: boolean;
+  has_next?: boolean;
   /** Whether there is a previous page */
-  has_prev: boolean;
+  has_prev?: boolean;
+  /** Next page link or cursor */
+  next?: string | null;
+  /** Previous page link or cursor */
+  prev?: string | null;
 }
 
 /**
@@ -426,13 +432,37 @@ export interface YieldPaginationMeta {
  */
 export interface YieldResponseMeta {
   /** Last updated timestamp */
-  last_updated: string;
+  last_updated?: string;
   /** Available categories in the dataset */
-  categories: string[];
+  categories?: string[];
   /** Available protocols in the dataset */
-  protocols: string[];
+  protocols?: string[];
   /** Available tokens in the dataset */
-  tokens: string[];
+  tokens?: string[];
+  /** Filter metadata returned by the backend */
+  filters?: {
+    categories?: Array<{
+      value: string;
+      label?: string;
+      count?: number;
+    }>;
+    protocols?: Array<{
+      value: string;
+      label?: string;
+      count?: number;
+    }>;
+    tokenAddresses?: Array<{
+      value: string;
+      label?: string;
+      count?: number;
+    }>;
+  };
+  /** Aggregate totals returned by the backend */
+  totals?: {
+    total_value_usd?: number;
+    total_apy?: number;
+    opportunity_count?: number;
+  };
 }
 
 /**
@@ -467,6 +497,10 @@ export interface YieldPaginationParams {
   min_value?: number;
   /** Filter by maximum APY value */
   max_value?: number;
+  /** Filter by minimum TVL value */
+  min_tvl?: number;
+  /** Filter by maximum TVL value */
+  max_tvl?: number;
   /** Sort field (e.g., 'apy', 'tvl') */
   sort_by?: string;
   /** Sort order: 'asc' or 'desc' */

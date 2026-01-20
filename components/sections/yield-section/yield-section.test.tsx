@@ -5,6 +5,7 @@ import {
   fireEvent,
   waitFor,
   cleanup,
+  act,
 } from '@testing-library/react';
 import { YieldCard } from './yield-card';
 import { YieldStats } from './yield-stats';
@@ -187,6 +188,10 @@ describe('YieldSection Components', () => {
         selectedCategories: [],
         selectedProtocols: [],
         selectedTokens: [],
+        minApy: '',
+        maxApy: '',
+        minTvl: '',
+        maxTvl: '',
         stablecoinOnly: false,
         hypeOnly: false,
         searchQuery: '',
@@ -213,6 +218,7 @@ describe('YieldSection Components', () => {
 
     it('should handle search input change', () => {
       const onFiltersChange = vi.fn();
+      vi.useFakeTimers();
       render(
         <YieldFilterBar {...defaultProps} onFiltersChange={onFiltersChange} />
       );
@@ -220,7 +226,12 @@ describe('YieldSection Components', () => {
       const searchInput = screen.getByPlaceholderText('Search token symbol...');
       fireEvent.change(searchInput, { target: { value: 'USDC' } });
 
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
       expect(onFiltersChange).toHaveBeenCalledWith({ searchQuery: 'USDC' });
+      vi.useRealTimers();
     });
 
     it('should filter by category when dropdown item is clicked', () => {
@@ -296,6 +307,10 @@ describe('YieldSection Components', () => {
         selectedCategories: [],
         selectedProtocols: [],
         selectedTokens: [],
+        minApy: '',
+        maxApy: '',
+        minTvl: '',
+        maxTvl: '',
         stablecoinOnly: false,
         hypeOnly: false,
         searchQuery: '',
@@ -308,6 +323,7 @@ describe('YieldSection Components', () => {
 
     it('should trigger search callback with empty string when cleared', () => {
       const onFiltersChange = vi.fn();
+      vi.useFakeTimers();
       render(
         <YieldFilterBar
           {...defaultProps}
@@ -319,7 +335,12 @@ describe('YieldSection Components', () => {
       const searchInput = screen.getByPlaceholderText('Search token symbol...');
       fireEvent.change(searchInput, { target: { value: '' } });
 
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
       expect(onFiltersChange).toHaveBeenCalledWith({ searchQuery: '' });
+      vi.useRealTimers();
     });
 
     it('should toggle stablecoin filter', () => {
@@ -353,6 +374,10 @@ describe('YieldSection Components', () => {
         selectedCategories: [],
         selectedProtocols: [],
         selectedTokens: [],
+        minApy: '',
+        maxApy: '',
+        minTvl: '',
+        maxTvl: '',
         stablecoinOnly: false,
         hypeOnly: false,
         searchQuery: '',

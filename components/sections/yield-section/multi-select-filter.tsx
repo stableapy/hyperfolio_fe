@@ -73,60 +73,62 @@ export function MultiSelectFilter({
     );
   }, [items, normalizedQuery]);
 
+  const renderItem = useCallback(
+    (item: FilterOption, isSelected: boolean) => (
+      <CommandItem
+        value={item.label}
+        onSelect={() => handleToggle(item.value)}
+        className="flex items-center gap-2"
+      >
+        <Checkbox checked={isSelected} className="size-4" />
+        {showProtocolLogo && (
+          <ProtocolLogo
+            src={getProtocolLogoPath(item.label)}
+            name={item.label}
+            className="size-5"
+          />
+        )}
+        {showTokenLogo && (
+          <TokenLogo
+            src={item.logoURI || ''}
+            symbol={item.label}
+            className="size-5"
+          />
+        )}
+        <span className="flex-1 text-sm">{item.label}</span>
+        {item.count && (
+          <span className="text-theme-text-muted text-xs opacity-60">
+            ({item.count})
+          </span>
+        )}
+        {isSelected && <Check className="size-4 text-theme-accent" />}
+      </CommandItem>
+    ),
+    [handleToggle, showProtocolLogo, showTokenLogo]
+  );
+
   // Virtualized row component
   const Row = ({
     index,
     style,
     items: rowItems,
     selectedValues: rowSelectedValues,
-    onToggle: rowOnToggle,
-    showProtocolLogo: rowShowProtocolLogo,
-    showTokenLogo: rowShowTokenLogo,
   }: RowComponentProps<{
     items: FilterOption[];
     selectedValues: string[];
-    onToggle: (value: string) => void;
-    showProtocolLogo: boolean;
-    showTokenLogo: boolean;
   }>) => {
     const item = rowItems[index];
     const isSelected = rowSelectedValues.includes(item.value);
 
     return (
       <div style={style} className="px-2 py-2">
-        <CommandItem
-          value={item.label}
-          onSelect={() => rowOnToggle(item.value)}
-          className="flex items-center gap-2"
-        >
-          <Checkbox checked={isSelected} className="size-4" />
-          {rowShowProtocolLogo && (
-            <ProtocolLogo
-              src={getProtocolLogoPath(item.label)}
-              name={item.label}
-              className="size-5"
-            />
-          )}
-          {rowShowTokenLogo && (
-            <TokenLogo
-              src={item.logoURI || ''}
-              symbol={item.label}
-              className="size-5"
-            />
-          )}
-          <span className="flex-1 text-sm">{item.label}</span>
-          {item.count && (
-            <span className="text-theme-text-muted text-xs opacity-60">
-              ({item.count})
-            </span>
-          )}
-          {isSelected && (
-            <Check className="size-4 text-theme-accent" />
-          )}
-        </CommandItem>
+        {renderItem(item, isSelected)}
       </div>
     );
   };
+
+  const listHeight = Math.min(filteredItems.length * ITEM_HEIGHT, 300);
+  const shouldVirtualize = filteredItems.length > 100;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -157,11 +159,7 @@ export function MultiSelectFilter({
           <CommandList className="max-h-[300px]">
             <CommandGroup>
               {filteredItems.length > 0 ? (
-                <div
-                  style={{
-                    height: `${Math.min(filteredItems.length * ITEM_HEIGHT, 300)}px`,
-                  }}
-                >
+                shouldVirtualize ? (
                   <List
                     rowComponent={Row}
                     rowCount={filteredItems.length}
@@ -169,14 +167,19 @@ export function MultiSelectFilter({
                     rowProps={{
                       items: filteredItems,
                       selectedValues,
-                      onToggle: handleToggle,
-                      showProtocolLogo,
-                      showTokenLogo,
                     }}
                     overscanCount={3}
-                    style={{ height: 300, width: '100%' }}
+                    style={{ height: listHeight, width: '100%' }}
                   />
-                </div>
+                ) : (
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {filteredItems.map((item) => (
+                      <div key={item.value} className="px-2 py-2">
+                        {renderItem(item, selectedValues.includes(item.value))}
+                      </div>
+                    ))}
+                  </div>
+                )
               ) : (
                 <CommandEmpty>No items found.</CommandEmpty>
               )}

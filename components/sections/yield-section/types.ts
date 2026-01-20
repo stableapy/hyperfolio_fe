@@ -96,6 +96,14 @@ export interface YieldFilters {
   selectedProtocols: string[];
   /** Multi-select token symbols */
   selectedTokens: string[];
+  /** Minimum APY filter (percent) */
+  minApy: string;
+  /** Maximum APY filter (percent) */
+  maxApy: string;
+  /** Minimum TVL filter (USD) */
+  minTvl: string;
+  /** Maximum TVL filter (USD) */
+  maxTvl: string;
   /** Show only stablecoin opportunities */
   stablecoinOnly: boolean;
   /** Show only HYPE opportunities */
