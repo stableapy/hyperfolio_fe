@@ -84,6 +84,10 @@ function createErrorResponse(
  * @returns JSON response with paginated yield opportunities or error details
  */
 export async function GET(request: NextRequest) {
+  console.log('[yield/route] GET request received');
+  console.log('[yield/route] URL:', request.url);
+  console.log('[yield/route] Search params:', request.nextUrl.searchParams.toString());
+
   const useMock = isMockModeEnabled();
 
   // If mock mode is explicitly enabled, return mock data

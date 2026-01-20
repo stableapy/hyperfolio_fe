@@ -404,7 +404,9 @@ function useFetchYieldData(params: YieldPaginationParams) {
         setError(null);
         setErrorDetails(null);
 
-        const url = `/api/yield/${queryString ? `?${queryString}` : ''}`;
+        const url = `/api/yield${queryString ? `?${queryString}` : ''}`;
+        console.log('[useYieldData] Fetching from URL:', url);
+
         const response = await secureFetch(url, {
           headers: {
             accept: 'application/json',
