@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { YieldStats } from './yield-stats';
 import { YieldFilterBar } from './yield-filter-bar';
 import { YieldListSkeleton } from './yield-list-skeleton';
+import { YieldGridSkeleton } from './yield-grid-skeleton';
 import { VirtualizedYieldList } from './virtualized-yield-list';
 import { YieldCardGrid } from './yield-card-grid';
 import { useYieldData } from './hooks/use-yield-data';
@@ -159,7 +160,9 @@ export function YieldSection({ isLoading = false }: YieldSectionProps) {
               )}
 
               {/* Loading State - Skeleton */}
-              {showLoading && !error && <YieldListSkeleton />}
+              {showLoading && !error && (
+                viewMode === 'card' ? <YieldGridSkeleton /> : <YieldListSkeleton />
+              )}
 
               {/* Empty State */}
               {!showLoading && !error && hasData === false && (

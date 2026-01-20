@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-19 — Completed quick task 001: Adapt frontend for paginated yield endpoint
+Last activity: 2026-01-20 — Completed quick task 002: Add skeleton loading for yield views
 
 Progress: ██████░░░░ 50%
 
@@ -20,7 +20,8 @@ Progress: ██████░░░░ 50%
 
 **Velocity:**
 - Total plans completed: 7
-- Average duration: 5.7 min
+- Total quick tasks completed: 2
+- Average duration: 5.4 min
 
 **By Phase:**
 
@@ -57,6 +58,7 @@ Progress: ██████░░░░ 50%
 - **[02-04]** Use Zustand selectors for view mode state to prevent unnecessary re-renders
 - **[02-04]** Both views receive same filtered opportunities array for consistency
 - **[02-04]** Card view gets isLoading prop for skeleton, list view handles internally
+- **[quick-002]** Skeleton loading state should respect view mode - show YieldGridSkeleton for card view, YieldListSkeleton for list view
 
 ### Pending Todos
 
@@ -71,11 +73,12 @@ Progress: ██████░░░░ 50%
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 001 | Adapt frontend for paginated /yield/ endpoint | 2026-01-19 | b75c7cd | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
+| 002 | Add skeleton loading for yield views | 2026-01-20 | 09330fc | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
 
 ## Session Continuity
 
-Last session: 2026-01-19T22:12:26Z
-Stopped at: Completed Plan 02-04 (View Mode Integration)
+Last session: 2026-01-20T17:39:21Z
+Stopped at: Completed Quick Task 002 (Add skeleton loading for yield views)
 Resume file: None
 
 ## Verified Requirements (Phase 1)

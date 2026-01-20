@@ -1,7 +1,7 @@
 /**
  * Number of skeleton items to display during loading
  */
-const SKELETON_ITEM_COUNT = 5;
+const SKELETON_ITEM_COUNT = 7;
 
 /**
  * YieldListSkeleton Component
