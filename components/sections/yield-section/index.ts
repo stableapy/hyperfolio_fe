@@ -11,6 +11,7 @@ export { YieldListSkeleton } from './yield-list-skeleton';
 export { ProtocolLogo } from './protocol-logo';
 export { MultiSelectFilter } from './multi-select-filter';
 export { ResetAllButton } from './reset-all-button';
+export { VirtualizedYieldList } from './virtualized-yield-list';
 
 // Hooks
 export { useYieldData } from './hooks/use-yield-data';

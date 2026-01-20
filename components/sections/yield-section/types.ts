@@ -82,6 +82,11 @@ export type YieldCategoryFilter =
   | 'derivatives';
 
 /**
+ * View mode for yield section display
+ */
+export type YieldViewMode = 'list' | 'card';
+
+/**
  * Combined filter state for yield section
  */
 export interface YieldFilters {
@@ -91,6 +96,14 @@ export interface YieldFilters {
   selectedProtocols: string[];
   /** Multi-select token symbols */
   selectedTokens: string[];
+  /** Minimum APY filter (percent) */
+  minApy: string;
+  /** Maximum APY filter (percent) */
+  maxApy: string;
+  /** Minimum TVL filter (USD) */
+  minTvl: string;
+  /** Maximum TVL filter (USD) */
+  maxTvl: string;
   /** Show only stablecoin opportunities */
   stablecoinOnly: boolean;
   /** Show only HYPE opportunities */
@@ -125,6 +138,10 @@ export interface YieldFilterBarProps {
   availableTokens: FilterOption[];
   /** Whether the filter bar should be disabled */
   disabled?: boolean;
+  /** Current view mode ('list' or 'card') */
+  viewMode?: YieldViewMode;
+  /** Callback when view mode changes */
+  onViewModeChange?: (mode: YieldViewMode) => void;
 }
 
 /**
@@ -197,9 +214,18 @@ export interface UseYieldDataReturn {
   errorDetails?: YieldError;
   /** Whether the current data is mock data */
   isMockData?: boolean;
-  /** Dynamic filter options extracted from data */
+  /** Dynamic filter options from backend metadata */
   filterOptions: {
     protocols: FilterOption[];
     tokens: FilterOption[];
+  };
+  /** Pagination state */
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }

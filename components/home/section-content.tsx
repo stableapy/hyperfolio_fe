@@ -66,16 +66,22 @@ export function SectionContent({
   activeSection,
   isLoading, // Legacy - kept for backwards compatibility
   isDataVisible,
-  isWalletDataLoading = isLoading,
+  isWalletDataLoading = isLoading ?? false,
   isPositionsLoading = false,
 }: SectionContentProps) {
   const config = SECTION_CONFIG[activeSection as keyof typeof SECTION_CONFIG];
 
+  // Ensure config is not undefined before using it
+  if (!config) {
+    console.error(`Invalid active section: ${activeSection}`);
+    return null;
+  }
+
   // Determine which loading state to use based on active section
   const sectionIsLoading =
     activeSection === 'defi'
-      ? isPositionsLoading // DeFi uses positions loading state
-      : isWalletDataLoading; // All other sections use wallet data loading state
+      ? (isPositionsLoading ?? false) // DeFi uses positions loading state
+      : (isWalletDataLoading ?? false); // All other sections use wallet data loading state
 
   return (
     <section

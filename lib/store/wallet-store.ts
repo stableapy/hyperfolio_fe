@@ -68,6 +68,10 @@ interface WalletState {
   // Privacy mode state
   privacyMode: boolean;
 
+  // Yield section view mode
+  yieldViewMode: 'list' | 'card';
+  setYieldViewMode: (mode: 'list' | 'card') => void;
+
   // Streaming state
   streaming: StreamingState;
 
@@ -153,6 +157,10 @@ export const useWalletStore = create<WalletState>()(
       syncTrigger: 0,
       walletsChangedTrigger: 0,
       privacyMode: false,
+      yieldViewMode: 'list',
+      setYieldViewMode: (mode: 'list' | 'card') => {
+        set({ yieldViewMode: mode });
+      },
 
       addWallet: (wallet) => {
         const newWallet: Wallet = {
@@ -600,6 +608,7 @@ export const useWalletStore = create<WalletState>()(
         wallets: state.wallets,
         selectedWalletId: state.selectedWalletId,
         privacyMode: state.privacyMode,
+        yieldViewMode: state.yieldViewMode,
       }),
     }
   )
