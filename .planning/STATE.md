@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-28 — Completed Quick Task 003: Add .hl DNS support to wallet dialog
+Last activity: 2026-01-28 — Completed Quick Task 004: Add wallet via URL parameter
 
 Progress: ██████░░░░ 50%
 
@@ -20,9 +20,9 @@ Progress: ██████░░░░ 50%
 
 **Velocity:**
 - Total plans completed: 7
-- Total quick tasks completed: 3
+- Total quick tasks completed: 4
 - Quick tasks in progress: 0
-- Average duration: 5.1 min
+- Average duration: 4.8 min
 
 **By Phase:**
 
@@ -64,6 +64,10 @@ Progress: ██████░░░░ 50%
 - **[quick-003]** Show resolved address in accent color to clearly indicate successful resolution
 - **[quick-003]** Preserve terminal UI aesthetic (0x prefix) even when entering .hl domains - it's a visual element, not input validation
 - **[quick-003]** Disable input field during resolution to prevent concurrent requests
+- **[quick-004]** Silently ignore invalid wallet addresses from URL parameter - no error shown to user
+- **[quick-004]** Clear URL parameter immediately after processing to prevent re-adding wallet on refresh
+- **[quick-004]** Use ref pattern (urlProcessedRef) to ensure URL is only processed once on mount
+- **[quick-004]** Support both 0x addresses and .hl/.hype domains via existing isValidWalletInput utility
 
 ### Pending Todos
 
@@ -80,11 +84,12 @@ Progress: ██████░░░░ 50%
 | 001 | Adapt frontend for paginated /yield/ endpoint | ✅ Complete | 2026-01-19 | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
 | 002 | Add skeleton loading for yield views | ✅ Complete | 2026-01-20 | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
 | 003 | Add .hl DNS support to wallet dialog | ✅ Complete | 2026-01-28 | [003-add-hl-dns-support-to-wallet-dialog](./quick/003-add-hl-dns-support-to-wallet-dialog/) |
+| 004 | Add wallet via URL parameter | ✅ Complete | 2026-01-28 | [004-add-wallet-via-url-param](./quick/004-add-wallet-via-url-param/) |
 
 ## Session Continuity
 
-Last session: 2026-01-28T09:53:48Z
-Stopped at: Completed Quick Task 003 (Add .hl DNS support to wallet dialog)
+Last session: 2026-01-28T11:03:26Z
+Stopped at: Completed Quick Task 004 (Add wallet via URL parameter)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
