@@ -35,7 +35,7 @@ export function WalletDropdown({
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2 min-w-0">
           <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary uppercase tracking-wider truncate max-w-[60px] sm:max-w-[100px]">
-            {selectedWallet ? formatAddress(selectedWallet.name) : 'all'}
+            {selectedWallet ? selectedWallet.name : 'all'}
           </span>
           <ChevronDown className={`w-3 h-3 text-theme-text-secondary transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
@@ -108,7 +108,7 @@ export function WalletDropdown({
                     style={{ backgroundColor: wallet.color }}
                   />
                   <div className="flex-1 text-left min-w-0">
-                    <span className="font-mono text-xs text-theme-text-primary block truncate uppercase tracking-wider">{formatAddress(wallet.name)}</span>
+                    <span className="font-mono text-xs text-theme-text-primary block truncate uppercase tracking-wider">{wallet.name}</span>
                     <span className="font-mono text-[9px] text-theme-text-muted block truncate">
                       {formatAddress(wallet.address)}
                     </span>
