@@ -29,6 +29,7 @@ key-decisions:
   - "Clear URL parameter immediately after processing to prevent re-adding on refresh"
   - "Use ref pattern (urlProcessedRef) to ensure URL is only processed once on mount"
   - "Support both 0x addresses and .hl/.hype domains via existing isValidWalletInput utility"
+  - "Use 100ms setTimeout to wait for Zustand persist hydration before processing URL"
 
 patterns-established:
   - "URL Parameter Pattern: useSearchParams + router.replace() for one-time URL processing"
@@ -63,6 +64,8 @@ completed: 2026-01-28
 ## Task Commits
 
 1. **Task 1: Add URL parameter wallet detection** - `a723580` (feat)
+2. **Fix lint errors** - `4e87ab7` (fix)
+3. **Fix duplicate wallet bug** - `a631fb5` (fix)
 
 **Plan metadata:** (none - will be added at end)
 
@@ -83,7 +86,9 @@ None - plan executed exactly as written.
 
 ## Issues Encountered
 
-None - implementation was straightforward with no blockers.
+**Duplicate wallet bug:** Initial implementation would add the same wallet multiple times when reloading the page with `?wallet=` parameter. This was because the URL processing effect ran before Zustand's persist middleware had hydrated the store from localStorage.
+
+**Fix:** Added a 100ms setTimeout delay to ensure the persist middleware has hydrated before checking for existing wallets. This ensures we check against the fully persisted wallet list and prevent duplicates.
 
 ## User Setup Required
 
