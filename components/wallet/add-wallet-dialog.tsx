@@ -28,16 +28,16 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
   const handleAddressBlur = () => {
     // Validate on blur - show error if invalid format
     if (address && !isValidWalletInput(address)) {
-      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl domain.")
+      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl/.hype domain.")
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate address format (accepts both 0x... and .hl domains)
+    // Validate address format (accepts both 0x... and .hl/.hype domains)
     if (!address || !isValidWalletInput(address)) {
-      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl domain.")
+      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl/.hype domain.")
       return
     }
 
@@ -118,7 +118,7 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
                   value={address}
                   onChange={(e) => handleAddressChange(e.target.value)}
                   onBlur={handleAddressBlur}
-                  placeholder="paste wallet address or .hl domain..."
+                  placeholder="paste address or .hl/.hype domain..."
                   className={`flex-1 px-3 py-3 bg-transparent font-mono text-sm text-theme-accent placeholder:text-theme-text-muted/50 focus:outline-none transition-all ${
                     addressError ? "text-[#ff4444]" : ""
                   }`}
@@ -133,7 +133,7 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
               </div>
             ) : (
               <p className="text-[10px] font-mono text-theme-text-muted">
-                # ethereum address (0x...) or .hl domain
+                # ethereum address (0x...) or .hl/.hype domain
               </p>
             )}
           </div>

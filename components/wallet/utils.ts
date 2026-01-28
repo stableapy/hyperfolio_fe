@@ -8,23 +8,32 @@ export function isValidEthereumAddress(address: string): boolean {
 }
 
 /**
- * Check if a string is a .hl domain name
+ * Check if a string is a naming service domain (.hl or .hype)
  *
- * .hl domains are Hyperliquid's naming service that resolve to Ethereum addresses.
+ * .hl and .hype domains resolve to Ethereum addresses via the backend.
  *
  * @param input - The string to check
- * @returns true if the input ends with ".hl" (case-insensitive)
+ * @returns true if the input ends with ".hl" or ".hype" (case-insensitive)
  *
  * @example
  * ```ts
- * isHLDomain("user.hl") // true
- * isHLDomain("USER.HL") // true
- * isHLDomain("0x1234...") // false
+ * isNamingServiceDomain("user.hl") // true
+ * isNamingServiceDomain("user.hype") // true
+ * isNamingServiceDomain("USER.HL") // true
+ * isNamingServiceDomain("0x1234...") // false
  * ```
  */
-export function isHLDomain(input: string): boolean {
+export function isNamingServiceDomain(input: string): boolean {
   if (!input || typeof input !== 'string') return false;
-  return input.trim().toLowerCase().endsWith('.hl');
+  const normalized = input.trim().toLowerCase();
+  return normalized.endsWith('.hl') || normalized.endsWith('.hype');
+}
+
+/**
+ * @deprecated Use isNamingServiceDomain instead
+ */
+export function isHLDomain(input: string): boolean {
+  return isNamingServiceDomain(input);
 }
 
 /**
@@ -44,19 +53,20 @@ export function formatAddressCompact(address: string): string {
 /**
  * Validate wallet address format
  *
- * Accepts either a valid Ethereum address (0x...) or a .hl domain.
- * The backend handles .hl domain resolution.
+ * Accepts either a valid Ethereum address (0x...) or a naming service domain (.hl or .hype).
+ * The backend handles domain resolution.
  *
  * @param input - The address or domain to validate
- * @returns true if valid Ethereum address or .hl domain
+ * @returns true if valid Ethereum address or naming service domain
  *
  * @example
  * ```ts
  * isValidWalletInput("0x1234...5678") // true
  * isValidWalletInput("user.hl") // true
+ * isValidWalletInput("user.hype") // true
  * isValidWalletInput("invalid") // false
  * ```
  */
 export function isValidWalletInput(input: string): boolean {
-  return isValidEthereumAddress(input) || isHLDomain(input);
+  return isValidEthereumAddress(input) || isNamingServiceDomain(input);
 }
