@@ -2,11 +2,11 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Plus, AlertCircle, Wallet, Loader2 } from "lucide-react"
+import { Plus, AlertCircle, Wallet } from "lucide-react"
 
 import { EscCloseButton } from "@/components/ui/esc-close-button"
 import { PRESET_COLORS } from "./constants"
-import { isValidEthereumAddress, formatAddress, resolveHLDomain, isHLDomain } from "./utils"
+import { isValidWalletInput } from "./utils"
 import type { AddWalletDialogProps } from "./types"
 
 export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps) {
@@ -14,71 +14,42 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
   const [address, setAddress] = useState("")
   const [selectedColor, setSelectedColor] = useState<string>(PRESET_COLORS[0])
   const [addressError, setAddressError] = useState("")
-  const [isResolving, setIsResolving] = useState(false)
-  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
 
   if (!isOpen) return null
 
   const handleAddressChange = (value: string) => {
     setAddress(value)
-    // Clear error and resolved address when user starts typing
+    // Clear error when user starts typing
     if (addressError) {
       setAddressError("")
     }
-    if (resolvedAddress) {
-      setResolvedAddress(null)
-    }
   }
 
-  const handleAddressBlur = async () => {
-    // Don't validate if empty or already resolving
-    if (!address || isResolving) return
-
-    // Check if input is a .hl domain
-    if (isHLDomain(address)) {
-      // Resolve .hl domain
-      setIsResolving(true)
-      setAddressError("")
-      try {
-        const resolved = await resolveHLDomain(address)
-        setResolvedAddress(resolved)
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to resolve .hl domain"
-        setAddressError(errorMessage)
-      } finally {
-        setIsResolving(false)
-      }
-      return
-    }
-
-    // Regular Ethereum address validation
-    if (!isValidEthereumAddress(address)) {
-      setAddressError("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters.")
+  const handleAddressBlur = () => {
+    // Validate on blur - show error if invalid format
+    if (address && !isValidWalletInput(address)) {
+      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl domain.")
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Use resolved address if available, otherwise use input address
-    const finalAddress = resolvedAddress || address
-
-    // Validate address format
-    if (!finalAddress || !isValidEthereumAddress(finalAddress)) {
-      setAddressError("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters.")
+    // Validate address format (accepts both 0x... and .hl domains)
+    if (!address || !isValidWalletInput(address)) {
+      setAddressError("Invalid format. Enter a valid Ethereum address (0x...) or .hl domain.")
       return
     }
 
     // Use address as default name if no name provided
-    const walletName = name.trim() || formatAddress(finalAddress)
+    const walletName = name.trim() || address
 
-    // All validations passed
-    onAdd({ name: walletName, address: finalAddress, color: selectedColor })
+    // All validations passed - backend handles .hl domain resolution
+    onAdd({ name: walletName, address, color: selectedColor })
     setName("")
     setAddress("")
     setSelectedColor(PRESET_COLORS[0])
     setAddressError("")
-    setResolvedAddress(null)
     onClose()
   }
 
@@ -88,7 +59,6 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
     setAddress("")
     setSelectedColor(PRESET_COLORS[0])
     setAddressError("")
-    setResolvedAddress(null)
     onClose()
   }
 
@@ -152,29 +122,14 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
                   className={`flex-1 px-3 py-3 bg-transparent font-mono text-sm text-theme-accent placeholder:text-theme-text-muted/50 focus:outline-none transition-all ${
                     addressError ? "text-[#ff4444]" : ""
                   }`}
-                  disabled={isResolving}
                   required
                 />
-                {isResolving && (
-                  <div className="px-3 py-3 animate-pulse">
-                    <Loader2 className="w-4 h-4 text-theme-accent animate-spin" />
-                  </div>
-                )}
               </div>
             </div>
             {addressError ? (
               <div className="flex items-start gap-2 text-[10px] font-mono text-[#ff4444]">
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span># error: {addressError}</span>
-              </div>
-            ) : resolvedAddress ? (
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-theme-accent">
-                  # resolved: {formatAddress(resolvedAddress)}
-                </p>
-                <p className="text-[10px] font-mono text-theme-text-muted">
-                  # ethereum address (0x...) or .hl domain
-                </p>
               </div>
             ) : (
               <p className="text-[10px] font-mono text-theme-text-muted">
