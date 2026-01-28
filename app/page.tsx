@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AddWalletDialog } from '@/components/wallet';
 import { WelcomeModal } from '@/components/welcome-modal';
 import { ApiBanner } from '@/components/api-banner';
@@ -32,6 +33,61 @@ export default function Home() {
     selectWallet,
     removeWallet,
   } = useWalletStore();
+
+  // URL parameter handling - add wallet from ?wallet= parameter
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlProcessedRef = useRef(false);
+
+  useEffect(() => {
+    // Wait a short delay for Zustand persist to hydrate from localStorage
+    // This ensures we check against persisted wallets, not just initial empty state
+    const timer = setTimeout(() => {
+      // Only process URL once
+      if (urlProcessedRef.current) return;
+      urlProcessedRef.current = true;
+
+      const walletParam = searchParams.get('wallet');
+      if (!walletParam) return;
+
+      // Basic validation: check if it looks like a wallet address or domain
+      const isValidWallet = /^0x[a-fA-F0-9]{40}$|^[\w.-]+\.[a-z]{2,}$/i.test(walletParam.trim());
+      if (!isValidWallet) {
+        // Invalid format - silently ignore and clear URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('wallet');
+        router.replace(url.pathname + url.search);
+        return;
+      }
+
+      // Check if wallet already exists in the store (case-insensitive)
+      const walletExists = wallets.some(w =>
+        w.address.toLowerCase() === walletParam.toLowerCase()
+      );
+
+      if (walletExists) {
+        // Wallet already exists - just clear the URL parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('wallet');
+        router.replace(url.pathname + url.search);
+        return;
+      }
+
+      // Add the wallet with default values
+      addWallet({
+        name: walletParam, // Use address/domain as default name
+        address: walletParam,
+        color: '#6366f1', // Default indigo color
+      });
+
+      // Clear the URL parameter after adding (prevents re-adding on refresh)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('wallet');
+      router.replace(url.pathname + url.search);
+    }, 100); // 100ms delay is sufficient for localStorage hydration
+
+    return () => clearTimeout(timer);
+  }, [wallets, addWallet, searchParams, router]);
 
   // Track if data section is visible for animation
   const dataSectionRef = useRef<HTMLDivElement>(null);

@@ -37,6 +37,14 @@ export function WalletSelector({
   const selectedWallet = selectedWalletId 
     ? wallets.find(w => w.id === selectedWalletId) 
     : null
+  const getWalletDisplayName = (wallet: WalletInfo) => {
+    const name = wallet.name?.trim()
+    if (!name) return formatAddress(wallet.address)
+    if (wallet.address && name.toLowerCase() === wallet.address.toLowerCase()) {
+      return formatAddress(wallet.address)
+    }
+    return name
+  }
 
   const handleButtonClick = () => {
     // If no wallets, open add dialog directly
@@ -81,7 +89,7 @@ export function WalletSelector({
             {wallets.length === 0 
               ? '--add' 
               : selectedWallet 
-                ? selectedWallet.name 
+                ? getWalletDisplayName(selectedWallet) 
                 : '--all'}
           </span>
           {wallets.length > 0 && (
@@ -149,7 +157,9 @@ export function WalletSelector({
                     style={{ backgroundColor: wallet.color }}
                   />
                   <div className="flex-1 text-left min-w-0">
-                    <span className="font-mono text-xs text-theme-text-primary block truncate">{wallet.name}</span>
+                    <span className="font-mono text-xs text-theme-text-primary block truncate">
+                      {getWalletDisplayName(wallet)}
+                    </span>
                     <span className="font-mono text-[9px] text-theme-text-muted block truncate">
                       {formatAddress(wallet.address)}
                     </span>
@@ -187,4 +197,3 @@ export function WalletSelector({
     </div>
   )
 }
-

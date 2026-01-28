@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-20 — Completed quick task 002: Add skeleton loading for yield views
+Last activity: 2026-01-28 — Completed Quick Task 004: Add wallet via URL parameter
 
 Progress: ██████░░░░ 50%
 
@@ -20,8 +20,9 @@ Progress: ██████░░░░ 50%
 
 **Velocity:**
 - Total plans completed: 7
-- Total quick tasks completed: 2
-- Average duration: 5.4 min
+- Total quick tasks completed: 4
+- Quick tasks in progress: 0
+- Average duration: 4.8 min
 
 **By Phase:**
 
@@ -59,6 +60,14 @@ Progress: ██████░░░░ 50%
 - **[02-04]** Both views receive same filtered opportunities array for consistency
 - **[02-04]** Card view gets isLoading prop for skeleton, list view handles internally
 - **[quick-002]** Skeleton loading state should respect view mode - show YieldGridSkeleton for card view, YieldListSkeleton for list view
+- **[quick-003]** 10-second timeout for .hl domain resolution API calls to prevent UI hanging
+- **[quick-003]** Show resolved address in accent color to clearly indicate successful resolution
+- **[quick-003]** Preserve terminal UI aesthetic (0x prefix) even when entering .hl domains - it's a visual element, not input validation
+- **[quick-003]** Disable input field during resolution to prevent concurrent requests
+- **[quick-004]** Silently ignore invalid wallet addresses from URL parameter - no error shown to user
+- **[quick-004]** Clear URL parameter immediately after processing to prevent re-adding wallet on refresh
+- **[quick-004]** Use ref pattern (urlProcessedRef) to ensure URL is only processed once on mount
+- **[quick-004]** Support both 0x addresses and .hl/.hype domains via existing isValidWalletInput utility
 
 ### Pending Todos
 
@@ -68,17 +77,19 @@ Progress: ██████░░░░ 50%
 
 (None - dropdown performance gap successfully closed, all PERF requirements now actually met)
 
-### Quick Tasks Completed
+### Quick Tasks
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 001 | Adapt frontend for paginated /yield/ endpoint | 2026-01-19 | b75c7cd | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
-| 002 | Add skeleton loading for yield views | 2026-01-20 | 09330fc | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
+| # | Description | Status | Date | Directory |
+|---|-------------|--------|------|-----------|
+| 001 | Adapt frontend for paginated /yield/ endpoint | ✅ Complete | 2026-01-19 | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
+| 002 | Add skeleton loading for yield views | ✅ Complete | 2026-01-20 | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
+| 003 | Add .hl DNS support to wallet dialog | ✅ Complete | 2026-01-28 | [003-add-hl-dns-support-to-wallet-dialog](./quick/003-add-hl-dns-support-to-wallet-dialog/) |
+| 004 | Add wallet via URL parameter | ✅ Complete | 2026-01-28 | [004-add-wallet-via-url-param](./quick/004-add-wallet-via-url-param/) |
 
 ## Session Continuity
 
-Last session: 2026-01-20T17:39:21Z
-Stopped at: Completed Quick Task 002 (Add skeleton loading for yield views)
+Last session: 2026-01-28T11:03:26Z
+Stopped at: Completed Quick Task 004 (Add wallet via URL parameter)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
