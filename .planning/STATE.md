@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-20 — Completed quick task 002: Add skeleton loading for yield views
+Last activity: 2026-01-28 — Planning quick task 003: Add .hl DNS support to wallet dialog
 
 Progress: ██████░░░░ 50%
 
@@ -21,6 +21,7 @@ Progress: ██████░░░░ 50%
 **Velocity:**
 - Total plans completed: 7
 - Total quick tasks completed: 2
+- Quick tasks in progress: 1
 - Average duration: 5.4 min
 
 **By Phase:**
@@ -62,23 +63,24 @@ Progress: ██████░░░░ 50%
 
 ### Pending Todos
 
-(None)
+- **[quick-003]** Add .hl DNS support to wallet dialog (planned, not executed)
 
 ### Blockers/Concerns
 
 (None - dropdown performance gap successfully closed, all PERF requirements now actually met)
 
-### Quick Tasks Completed
+### Quick Tasks
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 001 | Adapt frontend for paginated /yield/ endpoint | 2026-01-19 | b75c7cd | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
-| 002 | Add skeleton loading for yield views | 2026-01-20 | 09330fc | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
+| # | Description | Status | Date | Directory |
+|---|-------------|--------|------|-----------|
+| 001 | Adapt frontend for paginated /yield/ endpoint | ✅ Complete | 2026-01-19 | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
+| 002 | Add skeleton loading for yield views | ✅ Complete | 2026-01-20 | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
+| 003 | Add .hl DNS support to wallet dialog | 📋 Planned | 2026-01-28 | [003-add-hl-dns-support-to-wallet-dialog](./quick/003-add-hl-dns-support-to-wallet-dialog/) |
 
 ## Session Continuity
 
-Last session: 2026-01-20T17:39:21Z
-Stopped at: Completed Quick Task 002 (Add skeleton loading for yield views)
+Last session: 2026-01-28T10:44:00Z
+Stopped at: Planning Quick Task 003 (Add .hl DNS support to wallet dialog)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
