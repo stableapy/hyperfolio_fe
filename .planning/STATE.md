@@ -12,7 +12,7 @@ See: .planning/PROJECT.md
 Phase: 2 of 3 (Card View & UX)
 Plan: 4 of 3 (View Mode Integration)
 Status: Phase complete
-Last activity: 2026-01-28 — Planning quick task 003: Add .hl DNS support to wallet dialog
+Last activity: 2026-01-28 — Completed Quick Task 003: Add .hl DNS support to wallet dialog
 
 Progress: ██████░░░░ 50%
 
@@ -20,9 +20,9 @@ Progress: ██████░░░░ 50%
 
 **Velocity:**
 - Total plans completed: 7
-- Total quick tasks completed: 2
-- Quick tasks in progress: 1
-- Average duration: 5.4 min
+- Total quick tasks completed: 3
+- Quick tasks in progress: 0
+- Average duration: 5.1 min
 
 **By Phase:**
 
@@ -60,10 +60,14 @@ Progress: ██████░░░░ 50%
 - **[02-04]** Both views receive same filtered opportunities array for consistency
 - **[02-04]** Card view gets isLoading prop for skeleton, list view handles internally
 - **[quick-002]** Skeleton loading state should respect view mode - show YieldGridSkeleton for card view, YieldListSkeleton for list view
+- **[quick-003]** 10-second timeout for .hl domain resolution API calls to prevent UI hanging
+- **[quick-003]** Show resolved address in accent color to clearly indicate successful resolution
+- **[quick-003]** Preserve terminal UI aesthetic (0x prefix) even when entering .hl domains - it's a visual element, not input validation
+- **[quick-003]** Disable input field during resolution to prevent concurrent requests
 
 ### Pending Todos
 
-- **[quick-003]** Add .hl DNS support to wallet dialog (planned, not executed)
+(None)
 
 ### Blockers/Concerns
 
@@ -75,12 +79,12 @@ Progress: ██████░░░░ 50%
 |---|-------------|--------|------|-----------|
 | 001 | Adapt frontend for paginated /yield/ endpoint | ✅ Complete | 2026-01-19 | [001-adapt-frontend-paginated-yield](./quick/001-adapt-frontend-paginated-yield/) |
 | 002 | Add skeleton loading for yield views | ✅ Complete | 2026-01-20 | [002-add-skeleton-loading-yield-views](./quick/002-add-skeleton-loading-yield-views/) |
-| 003 | Add .hl DNS support to wallet dialog | 📋 Planned | 2026-01-28 | [003-add-hl-dns-support-to-wallet-dialog](./quick/003-add-hl-dns-support-to-wallet-dialog/) |
+| 003 | Add .hl DNS support to wallet dialog | ✅ Complete | 2026-01-28 | [003-add-hl-dns-support-to-wallet-dialog](./quick/003-add-hl-dns-support-to-wallet-dialog/) |
 
 ## Session Continuity
 
-Last session: 2026-01-28T10:44:00Z
-Stopped at: Planning Quick Task 003 (Add .hl DNS support to wallet dialog)
+Last session: 2026-01-28T09:53:48Z
+Stopped at: Completed Quick Task 003 (Add .hl DNS support to wallet dialog)
 Resume file: None
 
 ## Verified Requirements (Phase 1)
