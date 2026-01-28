@@ -33,7 +33,7 @@ export function WalletDropdown({
           <span className="font-mono text-[10px] sm:text-xs text-theme-accent font-bold">&gt;</span>
           <Wallet className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-theme-accent shrink-0" />
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2 min-w-0">
           <span className="font-mono text-[10px] sm:text-xs text-theme-text-primary uppercase tracking-wider truncate max-w-[60px] sm:max-w-[100px]">
             {selectedWallet ? formatAddress(selectedWallet.name) : 'all'}
           </span>
@@ -101,14 +101,14 @@ export function WalletDropdown({
                     onSelectWallet(wallet.id)
                     onClose()
                   }}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 min-h-[40px]"
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 min-h-[40px] min-w-0"
                 >
-                  <div 
-                    className="w-2 h-2 rounded-sm shrink-0" 
+                  <div
+                    className="w-2 h-2 rounded-sm shrink-0"
                     style={{ backgroundColor: wallet.color }}
                   />
                   <div className="flex-1 text-left min-w-0">
-                    <span className="font-mono text-xs text-theme-text-primary block truncate uppercase tracking-wider">{wallet.name}</span>
+                    <span className="font-mono text-xs text-theme-text-primary block truncate uppercase tracking-wider">{formatAddress(wallet.name)}</span>
                     <span className="font-mono text-[9px] text-theme-text-muted block truncate">
                       {formatAddress(wallet.address)}
                     </span>
