@@ -2,11 +2,11 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Plus, AlertCircle, Wallet } from "lucide-react"
+import { Plus, AlertCircle, Wallet, Loader2 } from "lucide-react"
 
 import { EscCloseButton } from "@/components/ui/esc-close-button"
 import { PRESET_COLORS } from "./constants"
-import { isValidEthereumAddress, formatAddress } from "./utils"
+import { isValidEthereumAddress, formatAddress, resolveHLDomain } from "./utils"
 import type { AddWalletDialogProps } from "./types"
 
 export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps) {
@@ -14,42 +14,72 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
   const [address, setAddress] = useState("")
   const [selectedColor, setSelectedColor] = useState<string>(PRESET_COLORS[0])
   const [addressError, setAddressError] = useState("")
+  const [isResolving, setIsResolving] = useState(false)
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
 
   if (!isOpen) return null
 
   const handleAddressChange = (value: string) => {
     setAddress(value)
-    // Clear error when user starts typing
+    // Clear error and resolved address when user starts typing
     if (addressError) {
       setAddressError("")
     }
+    if (resolvedAddress) {
+      setResolvedAddress(null)
+    }
   }
 
-  const handleAddressBlur = () => {
-    // Validate address when user leaves the field
-    if (address && !isValidEthereumAddress(address)) {
+  const handleAddressBlur = async () => {
+    // Don't validate if empty or already resolving
+    if (!address || isResolving) return
+
+    // Check if input is a .hl domain (case-insensitive)
+    const normalizedAddress = address.trim().toLowerCase()
+    if (normalizedAddress.endsWith(".hl")) {
+      // Resolve .hl domain
+      setIsResolving(true)
+      setAddressError("")
+      try {
+        const resolved = await resolveHLDomain(address)
+        setResolvedAddress(resolved)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to resolve .hl domain"
+        setAddressError(errorMessage)
+      } finally {
+        setIsResolving(false)
+      }
+      return
+    }
+
+    // Regular Ethereum address validation
+    if (!isValidEthereumAddress(address)) {
       setAddressError("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters.")
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    // Use resolved address if available, otherwise use input address
+    const finalAddress = resolvedAddress || address
+
     // Validate address format
-    if (!address || !isValidEthereumAddress(address)) {
+    if (!finalAddress || !isValidEthereumAddress(finalAddress)) {
       setAddressError("Invalid Ethereum address format. Must be 0x followed by 40 hexadecimal characters.")
       return
     }
-    
+
     // Use address as default name if no name provided
-    const walletName = name.trim() || formatAddress(address)
-    
+    const walletName = name.trim() || formatAddress(finalAddress)
+
     // All validations passed
-    onAdd({ name: walletName, address, color: selectedColor })
+    onAdd({ name: walletName, address: finalAddress, color: selectedColor })
     setName("")
     setAddress("")
     setSelectedColor(PRESET_COLORS[0])
     setAddressError("")
+    setResolvedAddress(null)
     onClose()
   }
 
@@ -59,6 +89,7 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
     setAddress("")
     setSelectedColor(PRESET_COLORS[0])
     setAddressError("")
+    setResolvedAddress(null)
     onClose()
   }
 
@@ -118,12 +149,18 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
                   value={address}
                   onChange={(e) => handleAddressChange(e.target.value)}
                   onBlur={handleAddressBlur}
-                  placeholder="paste wallet address..." 
+                  placeholder="paste wallet address or .hl domain..."
                   className={`flex-1 px-3 py-3 bg-transparent font-mono text-sm text-theme-accent placeholder:text-theme-text-muted/50 focus:outline-none transition-all ${
                     addressError ? "text-[#ff4444]" : ""
                   }`}
+                  disabled={isResolving}
                   required
                 />
+                {isResolving && (
+                  <div className="px-3 py-3 animate-pulse">
+                    <Loader2 className="w-4 h-4 text-theme-accent animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
             {addressError ? (
@@ -131,9 +168,18 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span># error: {addressError}</span>
               </div>
+            ) : resolvedAddress ? (
+              <div className="space-y-1">
+                <p className="text-[10px] font-mono text-theme-accent">
+                  # resolved: {formatAddress(resolvedAddress)}
+                </p>
+                <p className="text-[10px] font-mono text-theme-text-muted">
+                  # ethereum address (0x...) or .hl domain
+                </p>
+              </div>
             ) : (
               <p className="text-[10px] font-mono text-theme-text-muted">
-                # ethereum address (0x...)
+                # ethereum address (0x...) or .hl domain
               </p>
             )}
           </div>
