@@ -8,6 +8,26 @@ export function isValidEthereumAddress(address: string): boolean {
 }
 
 /**
+ * Check if a string is a .hl domain name
+ *
+ * .hl domains are Hyperliquid's naming service that resolve to Ethereum addresses.
+ *
+ * @param input - The string to check
+ * @returns true if the input ends with ".hl" (case-insensitive)
+ *
+ * @example
+ * ```ts
+ * isHLDomain("user.hl") // true
+ * isHLDomain("USER.HL") // true
+ * isHLDomain("0x1234...") // false
+ * ```
+ */
+export function isHLDomain(input: string): boolean {
+  if (!input || typeof input !== "string") return false
+  return input.trim().toLowerCase().endsWith(".hl")
+}
+
+/**
  * Format address for display (shortened version)
  */
 export function formatAddress(address: string): string {

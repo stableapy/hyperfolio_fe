@@ -6,7 +6,7 @@ import { Plus, AlertCircle, Wallet, Loader2 } from "lucide-react"
 
 import { EscCloseButton } from "@/components/ui/esc-close-button"
 import { PRESET_COLORS } from "./constants"
-import { isValidEthereumAddress, formatAddress, resolveHLDomain } from "./utils"
+import { isValidEthereumAddress, formatAddress, resolveHLDomain, isHLDomain } from "./utils"
 import type { AddWalletDialogProps } from "./types"
 
 export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps) {
@@ -34,9 +34,8 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
     // Don't validate if empty or already resolving
     if (!address || isResolving) return
 
-    // Check if input is a .hl domain (case-insensitive)
-    const normalizedAddress = address.trim().toLowerCase()
-    if (normalizedAddress.endsWith(".hl")) {
+    // Check if input is a .hl domain
+    if (isHLDomain(address)) {
       // Resolve .hl domain
       setIsResolving(true)
       setAddressError("")
