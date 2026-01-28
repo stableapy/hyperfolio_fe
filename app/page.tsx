@@ -9,8 +9,6 @@ import { PortfolioHero } from '@/components/portfolio-hero';
 import { SwapWidgetModal } from '@/components/swap-widget';
 import { SeoFooter } from '@/components/seo-footer';
 import { useWalletStore } from '@/lib/store/wallet-store';
-import { isValidWalletInput } from '@/components/wallet/utils';
-import { PRESET_COLORS } from '@/components/wallet/constants';
 
 // Home page components
 import {
@@ -49,8 +47,9 @@ export default function Home() {
     const walletParam = searchParams.get('wallet');
     if (!walletParam) return;
 
-    // Validate the wallet input (supports 0x addresses and .hl/.hype domains)
-    if (!isValidWalletInput(walletParam)) {
+    // Basic validation: check if it looks like a wallet address or domain
+    const isValidWallet = /^0x[a-fA-F0-9]{40}$|^[\w.-]+\.[a-z]{2,}$/i.test(walletParam.trim());
+    if (!isValidWallet) {
       // Invalid format - silently ignore and clear URL
       const url = new URL(window.location.href);
       url.searchParams.delete('wallet');
@@ -75,7 +74,7 @@ export default function Home() {
     addWallet({
       name: walletParam, // Use address/domain as default name
       address: walletParam,
-      color: PRESET_COLORS[0], // Use first preset color
+      color: '#6366f1', // Default indigo color
     });
 
     // Clear the URL parameter after adding (prevents re-adding on refresh)
