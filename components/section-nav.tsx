@@ -11,9 +11,10 @@ import {
 interface SectionNavProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  sections?: SectionNavItem[];
 }
 
-const SECTIONS = [
+export const SECTION_NAV_ITEMS = [
   {
     id: 'tokens',
     label: 'Tokens',
@@ -56,11 +57,14 @@ const SECTIONS = [
     icon: Clock,
     ariaLabel: 'View transaction history',
   },
-];
+] as const;
+
+type SectionNavItem = (typeof SECTION_NAV_ITEMS)[number];
 
 export function SectionNav({
   activeSection,
   onSectionChange,
+  sections = SECTION_NAV_ITEMS,
 }: SectionNavProps) {
   return (
     <TooltipProvider>
@@ -69,7 +73,7 @@ export function SectionNav({
         aria-label="Portfolio sections"
         role="tablist"
       >
-        {SECTIONS.map((section) => {
+        {sections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
 
