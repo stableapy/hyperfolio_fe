@@ -74,6 +74,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
         let stats:
           | {
               weightedApyPercent?: number;
+              healthRatio?: number;
               estimatedYield?: {
                 daily: string;
                 weekly: string;
@@ -88,11 +89,13 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
           let dailyYield = 0;
           let weeklyYield = 0;
           let monthlyYield = 0;
+          let healthRatio: number | undefined;
 
           filteredPositions.forEach((pos) => {
             const posValue = parseFloat(pos.totalValueUSD || '0');
             const posApy = extractApy(pos.details);
             const posYield = extractEstimatedYield(pos.details);
+            const posHealthRatio = extractHealthRatio(pos as Record<string, unknown>);
 
             // Only include supplied positions in yield calculations (borrows are expenses, not income)
             if (pos.positionType !== 'borrowed') {
@@ -107,6 +110,14 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
                 monthlyYield += parseFloat(posYield.monthly) || 0;
               }
             }
+
+            if (posHealthRatio !== undefined) {
+              // Use the lowest health ratio as the protocol-level indicator
+              healthRatio =
+                healthRatio === undefined
+                  ? posHealthRatio
+                  : Math.min(healthRatio, posHealthRatio);
+            }
           });
 
           const weightedApyPercent =
@@ -114,10 +125,21 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
               ? totalWeightedApy / totalValueForApy
               : undefined;
 
+          const protocolHealthRatio =
+            healthRatio ??
+            extractHealthRatio(
+              (protocol.protocolStats as Record<string, unknown> | undefined) ||
+                (protocol as unknown as Record<string, unknown>)
+            );
+
           // Only include stats if we have meaningful data
-          if (weightedApyPercent !== undefined && weightedApyPercent > 0) {
+          if (
+            (weightedApyPercent !== undefined && weightedApyPercent > 0) ||
+            protocolHealthRatio !== undefined
+          ) {
             stats = {
               weightedApyPercent,
+              healthRatio: protocolHealthRatio,
               estimatedYield:
                 dailyYield > 0 || weeklyYield > 0 || monthlyYield > 0
                   ? {
@@ -343,6 +365,19 @@ function extractEstimatedYield(
       weekly: String(yield_.weekly || '0.00'),
       monthly: String(yield_.monthly || '0.00'),
     };
+  }
+  return undefined;
+}
+
+function extractHealthRatio(details: Record<string, unknown>): number | undefined {
+  const direct = details?.healthRatio ?? details?.health_ratio;
+  const nested = (details?.details as Record<string, unknown> | undefined)?.healthRatio ??
+    (details?.details as Record<string, unknown> | undefined)?.health_ratio;
+  const raw = direct ?? nested;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
+  if (typeof raw === 'string') {
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
 }

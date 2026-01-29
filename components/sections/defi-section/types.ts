@@ -33,6 +33,7 @@ export interface ProtocolGroup {
   positions: DeFiPositionDisplay[];
   stats?: {
     weightedApyPercent?: number;
+    healthRatio?: number;
     estimatedYield?: {
       daily: string;
       weekly: string;

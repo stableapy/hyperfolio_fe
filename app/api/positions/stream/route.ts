@@ -391,9 +391,25 @@ function mergeProtocolStats(
 
   const existingYield = existing.estimatedYield as Record<string, string> | undefined
   const incomingYield = incoming.estimatedYield as Record<string, string> | undefined
+  const parseHealthRatio = (value: unknown): number | undefined => {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value)
+      return Number.isFinite(parsed) ? parsed : undefined
+    }
+    return undefined
+  }
+
+  const existingHealth = parseHealthRatio(existing.healthRatio)
+  const incomingHealth = parseHealthRatio(incoming.healthRatio)
+  const mergedHealthRatio =
+    existingHealth !== undefined && incomingHealth !== undefined
+      ? Math.min(existingHealth, incomingHealth)
+      : existingHealth ?? incomingHealth ?? null
 
   return {
     weightedApyPercent: null, // Will be recalculated
+    healthRatio: mergedHealthRatio,
     positionsWithApy: 
       ((existing.positionsWithApy as number) || 0) + 
       ((incoming.positionsWithApy as number) || 0),
@@ -416,4 +432,3 @@ function mergeProtocolStats(
     },
   }
 }
-

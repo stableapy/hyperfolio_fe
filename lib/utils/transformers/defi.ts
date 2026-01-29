@@ -29,6 +29,7 @@ export interface DeFiPositionDisplay {
 
 export interface ProtocolStats {
   weightedApyPercent: number | null
+  healthRatio?: number | null
   positionsWithApy: number
   totalPositions: number
   estimatedYield: EstimatedYield

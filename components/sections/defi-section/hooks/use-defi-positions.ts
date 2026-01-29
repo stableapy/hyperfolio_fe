@@ -77,6 +77,10 @@ export function useDefiPositions({
               : undefined;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const details = pos.details as any;
+            const positionDetails =
+              pos.healthRatio !== undefined
+                ? { ...details, healthRatio: pos.healthRatio }
+                : details;
 
             return {
               id: pos.id,
@@ -98,7 +102,7 @@ export function useDefiPositions({
                 : 0,
               rewards: extractRewards(details),
               logo: protocol.logo,
-              positionDetails: details,
+              positionDetails,
               protocolUrl: protocol.url,
               estimatedYield: details?.estimatedYield
                 ? {
@@ -116,6 +120,24 @@ export function useDefiPositions({
 
         allPositions.push(...positionsForGroup);
 
+        const computedHealthRatio = extractProtocolHealthRatio(positionsForGroup);
+        const stats = protocol.protocolStats
+          ? {
+              weightedApyPercent:
+                protocol.protocolStats.weightedApyPercent ?? undefined,
+              healthRatio:
+                computedHealthRatio ??
+                extractHealthRatio(
+                  protocol.protocolStats as Record<string, unknown>
+                ),
+              estimatedYield: protocol.protocolStats.estimatedYield,
+            }
+          : computedHealthRatio !== undefined
+            ? {
+                healthRatio: computedHealthRatio,
+              }
+            : undefined;
+
         groups.push({
           id: protocol.id,
           name: protocol.name,
@@ -123,13 +145,7 @@ export function useDefiPositions({
           url: protocol.url || '',
           totalValue: positionsForGroup.reduce((sum, p) => sum + p.current, 0),
           positions: positionsForGroup,
-          stats: protocol.protocolStats
-            ? {
-                weightedApyPercent:
-                  protocol.protocolStats.weightedApyPercent ?? undefined,
-                estimatedYield: protocol.protocolStats.estimatedYield,
-              }
-            : undefined,
+          stats,
         });
       });
 
@@ -188,4 +204,32 @@ function extractRewards(details: any): number {
       ? parseFloat(details.uncollectedFees.usdValue)
       : Number(details.uncollectedFees.usdValue);
   return Number.isNaN(value) ? 0 : value;
+}
+
+function extractHealthRatio(
+  details?: Record<string, unknown>
+): number | undefined {
+  const raw = details?.healthRatio ?? details?.health_ratio;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
+  if (typeof raw === 'string') {
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function extractProtocolHealthRatio(
+  positions: DeFiPositionDisplay[]
+): number | undefined {
+  let minHealthRatio: number | undefined;
+  positions.forEach((position) => {
+    const ratio = extractHealthRatio(
+      position.positionDetails as Record<string, unknown> | undefined
+    );
+    if (ratio === undefined) return;
+    minHealthRatio = minHealthRatio === undefined
+      ? ratio
+      : Math.min(minHealthRatio, ratio);
+  });
+  return minHealthRatio;
 }

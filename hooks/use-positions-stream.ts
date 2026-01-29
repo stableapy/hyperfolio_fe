@@ -12,6 +12,7 @@ export interface StreamProtocolGroup {
   positions: StreamPositionDisplay[]
   stats?: {
     weightedApyPercent: number | null
+    healthRatio?: number | null
     positionsWithApy: number
     totalPositions: number
     estimatedYield: {
@@ -52,6 +53,7 @@ export interface StreamedProtocol {
   positions: StreamedPosition[]
   protocolStats: {
     weightedApyPercent: number | null
+    healthRatio?: number | null
     positionsWithApy: number
     totalPositions: number
     estimatedYield: {
@@ -179,6 +181,7 @@ export function usePositionsStream({
       }),
       stats: protocol.protocolStats ? {
         weightedApyPercent: protocol.protocolStats.weightedApyPercent,
+        healthRatio: protocol.protocolStats.healthRatio ?? undefined,
         positionsWithApy: protocol.protocolStats.positionsWithApy,
         totalPositions: protocol.protocolStats.totalPositions,
         estimatedYield: protocol.protocolStats.estimatedYield,
@@ -417,4 +420,3 @@ function extractEstimatedYield(details: Record<string, unknown>): { daily: strin
   }
   return undefined
 }
-

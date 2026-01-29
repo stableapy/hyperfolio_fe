@@ -64,6 +64,42 @@ export function ProtocolCard({
 
           {/* Right: Value + APY + Chevron */}
           <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+            {/* Health Ratio Badge */}
+            {protocol.stats?.healthRatio !== undefined &&
+              protocol.stats.healthRatio !== null && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className={`flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] sm:px-2 sm:py-1 sm:text-xs ${getHealthRatioClasses(
+                          protocol.stats.healthRatio
+                        )}`}
+                      >
+                        <span className="text-theme-text-muted">HR</span>
+                        <span className="tabular-nums">
+                          {formatHealthRatioBadge(protocol.stats.healthRatio)}
+                        </span>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-theme-bg border-theme-border border p-3">
+                      <div className="space-y-1 font-mono text-xs">
+                        <div className="text-theme-accent mb-2 font-bold">
+                          <span className="text-theme-accent">&gt;</span>{' '}
+                          health --ratio
+                        </div>
+                        <div className="text-theme-text-muted">
+                          Collateral safety indicator. If health ratio falls
+                          below 1, the position is liquidated.
+                        </div>
+                        <div className="text-theme-text-primary mt-2 tabular-nums">
+                          value: {formatHealthRatioFull(protocol.stats.healthRatio)}
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
             {/* Protocol-level APY Badge */}
             {protocol.stats?.weightedApyPercent &&
               protocol.stats.weightedApyPercent > 0 && (
@@ -297,4 +333,25 @@ export function ProtocolCard({
       )}
     </TerminalCard>
   );
+}
+
+function formatHealthRatioFull(value: number): string {
+  if (!Number.isFinite(value)) return '--';
+  return value >= 10 ? value.toFixed(1) : value.toFixed(2);
+}
+
+function formatHealthRatioBadge(value: number): string {
+  if (!Number.isFinite(value)) return '--';
+  if (value > 10) return '>10';
+  return value >= 10 ? '10' : value.toFixed(2);
+}
+
+function getHealthRatioClasses(value: number): string {
+  if (value < 2) {
+    return 'border-red-500/30 bg-red-500/10 text-red-300';
+  }
+  if (value < 4) {
+    return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300';
+  }
+  return 'border-green-500/30 bg-green-500/10 text-green-300';
 }
