@@ -61,6 +61,7 @@ export default function TelegramApp() {
     sdkLoaded: false,
     controllerReady: false,
   });
+  const richAdsInitRef = useRef(false);
 
   const walletParam = useMemo(() => {
     const wallet = searchParams.get('wallet') || searchParams.get('address');
@@ -122,10 +123,10 @@ export default function TelegramApp() {
       if (interstitialTriggeredRef.current) return;
       interstitialTriggeredRef.current = true;
 
-      const controller = (window as Window & { TelegramAdsController?: any })
-        .TelegramAdsController;
-      if (!controller?.triggerInterstitialBanner) return;
-      controller.triggerInterstitialBanner().catch(() => {});
+      const instance = (window as Window & { richadsController?: any })
+        .richadsController;
+      if (!instance?.triggerInterstitialBanner) return;
+      instance.triggerInterstitialBanner().catch(() => {});
     };
 
     document.addEventListener('pointerdown', handleFirstTap, { once: true });
@@ -135,14 +136,43 @@ export default function TelegramApp() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initRichAds = () => {
+      if (richAdsInitRef.current) return;
+      const Controller = (window as Window & { TelegramAdsController?: any })
+        .TelegramAdsController;
+      if (!Controller) return;
+      try {
+        const instance = new Controller();
+        instance.initialize({ pubId: '1000656', appId: '5934' });
+        (window as Window & { richadsController?: any }).richadsController =
+          instance;
+        richAdsInitRef.current = true;
+      } catch {
+        // Ignore init failures to allow retry.
+      }
+    };
+
+    initRichAds();
+    const interval = setInterval(initRichAds, 500);
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window === 'undefined') return;
-      const controller = (window as Window & { TelegramAdsController?: any })
+      const Controller = (window as Window & { TelegramAdsController?: any })
         .TelegramAdsController;
+      const instance = (window as Window & { richadsController?: any })
+        .richadsController;
       setAdDebug({
-        sdkLoaded: !!(window as Window & { TelegramAdsController?: any })
-          .TelegramAdsController,
-        controllerReady: !!controller?.initialize,
+        sdkLoaded: !!Controller,
+        controllerReady: !!instance?.triggerInterstitialBanner,
       });
     }, 1500);
 
@@ -183,10 +213,6 @@ export default function TelegramApp() {
         src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"
         strategy="afterInteractive"
       />
-      <Script id="richads-init" strategy="afterInteractive">
-        {`window.TelegramAdsController = new TelegramAdsController();
-window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
-      </Script>
 
       {wallets.length > 0 && <DefiStreamProvider />}
       {wallets.length > 0 && <WalletDataStreamProvider />}
