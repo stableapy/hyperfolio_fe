@@ -12,6 +12,11 @@ import { SectionNav, SECTION_NAV_ITEMS } from '@/components/section-nav';
 import { WalletSelector } from '@/components/portfolio-hero/wallet-selector';
 import { isValidWalletInput } from '@/components/wallet/utils';
 import { useWalletStore } from '@/lib/store/wallet-store';
+import {
+  calculateStreamingTotalValue,
+  calculateWalletTotalValue,
+  formatValue,
+} from '@/components/portfolio-hero/utils';
 
 const TELEGRAM_SECTIONS = SECTION_NAV_ITEMS.filter((section) =>
   ['tokens', 'defi', 'hypercore', 'nfts'].includes(section.id)
@@ -45,6 +50,9 @@ export default function TelegramApp() {
     selectedWalletId,
     selectWallet,
     removeWallet,
+    walletData,
+    streaming,
+    privacyMode,
   } = useWalletStore();
 
   const searchParams = useSearchParams();
@@ -63,6 +71,35 @@ export default function TelegramApp() {
     const startapp = searchParams.get('startapp');
     return extractWalletCandidate(wallet || startapp);
   }, [searchParams]);
+
+  const totalValue = useMemo(() => {
+    if (selectedWalletId) {
+      const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
+      if (!selectedWallet) return 0;
+      const data = walletData[selectedWallet.address];
+      const baseValue = data ? calculateWalletTotalValue(data) : 0;
+      const streamingValue = calculateStreamingTotalValue(
+        streaming.streamedProtocols,
+        [selectedWallet.address]
+      );
+      return baseValue + streamingValue;
+    }
+
+    let aggregateValue = 0;
+    wallets.forEach((wallet) => {
+      const data = walletData[wallet.address];
+      if (data) {
+        aggregateValue += calculateWalletTotalValue(data);
+      }
+    });
+
+    const streamingValue = calculateStreamingTotalValue(
+      streaming.streamedProtocols
+    );
+    return aggregateValue + streamingValue;
+  }, [selectedWalletId, wallets, walletData, streaming.streamedProtocols]);
+
+  const formattedTotal = formatValue(totalValue, privacyMode);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -167,20 +204,32 @@ export default function TelegramApp() {
               <p className="text-theme-text-muted font-mono text-xs">
                 hyperfolio_telegram
               </p>
-              <h1 className="text-theme-text-primary font-mono text-lg">
-                Hyperfolio TG
-              </h1>
+              <div className="text-theme-text-primary font-mono text-xl sm:text-2xl tabular-nums leading-tight">
+                ${formattedTotal.intPart}
+                {formattedTotal.decPart}
+              </div>
+              <div className="text-theme-text-muted font-mono text-[10px] uppercase tracking-wider">
+                total portfolio value
+              </div>
             </div>
-            <WalletSelector
-              wallets={wallets}
-              selectedWalletId={selectedWalletId}
-              isOpen={isWalletSelectorOpen}
-              onToggle={() => setIsWalletSelectorOpen(!isWalletSelectorOpen)}
-              onClose={() => setIsWalletSelectorOpen(false)}
-              onSelectWallet={selectWallet}
-              onRemoveWallet={removeWallet}
-              onAddWallet={() => setIsAddWalletOpen(true)}
-            />
+            <div className="flex items-center gap-2">
+              <span className="border-theme-border/70 bg-theme-card-bg text-theme-text-muted flex items-center gap-1 rounded-sm border px-2 py-1 font-mono text-[10px]">
+                wallets
+                <span className="text-theme-accent tabular-nums">
+                  {wallets.length}
+                </span>
+              </span>
+              <WalletSelector
+                wallets={wallets}
+                selectedWalletId={selectedWalletId}
+                isOpen={isWalletSelectorOpen}
+                onToggle={() => setIsWalletSelectorOpen(!isWalletSelectorOpen)}
+                onClose={() => setIsWalletSelectorOpen(false)}
+                onSelectWallet={selectWallet}
+                onRemoveWallet={removeWallet}
+                onAddWallet={() => setIsAddWalletOpen(true)}
+              />
+            </div>
           </div>
 
           <form
