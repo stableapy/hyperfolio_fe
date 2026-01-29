@@ -8,6 +8,7 @@ import { ApiBanner } from '@/components/api-banner';
 import { PortfolioHero } from '@/components/portfolio-hero';
 import { SwapWidgetModal } from '@/components/swap-widget';
 import { SeoFooter } from '@/components/seo-footer';
+import { TelegramCtaToast } from '@/components/telegram-cta-toast';
 import { useWalletStore } from '@/lib/store/wallet-store';
 
 // Home page components
@@ -174,6 +175,7 @@ export default function Home() {
 
   return (
     <main className="bg-theme-bg min-h-screen">
+      <TelegramCtaToast />
       {/* API Promotion Banner - Top of page */}
       <ApiBanner />
 

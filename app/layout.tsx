@@ -18,6 +18,7 @@ import { config } from '@/lib/wagmi/config';
 import { generatePageToken } from '@/lib/api/token';
 import { TokenProvider } from '@/components/token-provider';
 import { validateAndLogEnvironment } from '@/lib/utils/env-validation';
+import { Toaster } from '@/components/ui/toaster';
 
 // Validate environment variables at app startup
 validateAndLogEnvironment();
@@ -269,6 +270,7 @@ export default async function RootLayout({
         <Providers initialState={initialState}>
           <TokenProvider initialToken={apiToken} />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

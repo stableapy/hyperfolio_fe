@@ -57,11 +57,6 @@ export default function TelegramApp() {
   const [quickError, setQuickError] = useState('');
   const [isWalletSelectorOpen, setIsWalletSelectorOpen] = useState(false);
   const interstitialTriggeredRef = useRef(false);
-  const [adDebug, setAdDebug] = useState({
-    sdkLoaded: false,
-    controllerReady: false,
-  });
-  const richAdsInitRef = useRef(false);
 
   const walletParam = useMemo(() => {
     const wallet = searchParams.get('wallet') || searchParams.get('address');
@@ -122,61 +117,12 @@ export default function TelegramApp() {
     const handleFirstTap = () => {
       if (interstitialTriggeredRef.current) return;
       interstitialTriggeredRef.current = true;
-
-      const instance = (window as Window & { richadsController?: any })
-        .richadsController;
-      if (!instance?.triggerInterstitialBanner) return;
-      instance.triggerInterstitialBanner().catch(() => {});
     };
 
     document.addEventListener('pointerdown', handleFirstTap, { once: true });
     return () => {
       document.removeEventListener('pointerdown', handleFirstTap);
     };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const initRichAds = () => {
-      if (richAdsInitRef.current) return;
-      const Controller = (window as Window & { TelegramAdsController?: any })
-        .TelegramAdsController;
-      if (!Controller) return;
-      try {
-        const instance = new Controller();
-        instance.initialize({ pubId: '1000656', appId: '5934', debug: true });
-        (window as Window & { richadsController?: any }).richadsController =
-          instance;
-        richAdsInitRef.current = true;
-      } catch {
-        // Ignore init failures to allow retry.
-      }
-    };
-
-    initRichAds();
-    const interval = setInterval(initRichAds, 500);
-    const timeout = setTimeout(() => clearInterval(interval), 5000);
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window === 'undefined') return;
-      const Controller = (window as Window & { TelegramAdsController?: any })
-        .TelegramAdsController;
-      const instance = (window as Window & { richadsController?: any })
-        .richadsController;
-      setAdDebug({
-        sdkLoaded: !!Controller,
-        controllerReady: !!instance?.triggerInterstitialBanner,
-      });
-    }, 1500);
-
-    return () => clearTimeout(timer);
   }, []);
 
   const handleQuickSubmit = (event: React.FormEvent) => {
@@ -203,32 +149,12 @@ export default function TelegramApp() {
     setQuickError('');
   };
 
-  const handleAdClick = () => {
-    const instance = (window as Window & { richadsController?: any })
-      .richadsController;
-    if (!instance?.triggerInterstitialBanner) {
-      console.warn('RichAds controller missing.');
-      return;
-    }
-    instance
-      .triggerInterstitialBanner()
-      .then((result: unknown) => {
-        console.log('RichAds interstitial result:', result);
-      })
-      .catch((error: unknown) => {
-        console.warn('RichAds interstitial error:', error);
-      });
-  };
 
   return (
     <main className="bg-theme-bg min-h-screen pb-24">
       <Script
         src="https://telegram.org/js/telegram-web-app.js?59"
         strategy="beforeInteractive"
-      />
-      <Script
-        src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"
-        strategy="afterInteractive"
       />
 
       {wallets.length > 0 && <DefiStreamProvider />}
@@ -285,13 +211,6 @@ export default function TelegramApp() {
               >
                 --more
               </button>
-              <button
-                type="button"
-                onClick={handleAdClick}
-                className="border-theme-border/70 bg-theme-card-bg text-theme-text-muted hover:text-theme-text-primary flex-1 rounded-sm border px-3 py-2 font-mono text-xs"
-              >
-                --show-ad
-              </button>
             </div>
           </form>
           {quickError && (
@@ -306,10 +225,6 @@ export default function TelegramApp() {
             />
           </div>
 
-          <div className="rounded-sm border border-theme-border/60 bg-theme-card-bg/70 px-3 py-2 font-mono text-[10px] text-theme-text-muted">
-            ads_sdk: {adDebug.sdkLoaded ? 'loaded' : 'blocked'} | controller:{' '}
-            {adDebug.controllerReady ? 'ready' : 'missing'}
-          </div>
         </div>
       </div>
 
@@ -333,14 +248,6 @@ export default function TelegramApp() {
         )}
       </div>
 
-      <div
-        id="tg-ads-banner"
-        className="border-theme-border/70 bg-theme-bg/95 fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur-md"
-      >
-        <div className="text-theme-text-muted mx-auto flex min-h-[60px] w-full max-w-5xl items-center justify-center px-4 py-2 font-mono text-[10px]">
-          ads_loading...
-        </div>
-      </div>
     </main>
   );
 }

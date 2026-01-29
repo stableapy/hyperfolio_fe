@@ -81,7 +81,13 @@ export function ProtocolCard({
                         </span>
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-theme-bg border-theme-border border p-3">
+                    <TooltipContent
+                      side="bottom"
+                      align="end"
+                      sideOffset={6}
+                      collisionPadding={12}
+                      className="bg-theme-bg border-theme-border border p-3 max-w-[240px] break-words"
+                    >
                       <div className="space-y-1 font-mono text-xs">
                         <div className="text-theme-accent mb-2 font-bold">
                           <span className="text-theme-accent">&gt;</span>{' '}
