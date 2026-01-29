@@ -20,7 +20,7 @@ function getSecurityHeaders(): Record<string, string> {
   const cspHeader = [
     "default-src 'self'",
     // Scripts: self, inline scripts, eval for Next.js, Google Analytics & Tag Manager
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://telegram.org",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://telegram.org https://richinfo.co",
     // Styles: allow inline for Tailwind/CSS-in-JS
     "style-src 'self' 'unsafe-inline'",
     // Images: self, data URLs, and common image CDNs

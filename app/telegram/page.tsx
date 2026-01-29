@@ -135,11 +135,25 @@ export default function TelegramApp() {
   };
 
   return (
-    <main className="min-h-screen bg-theme-bg">
+    <main className="min-h-screen bg-theme-bg pb-24">
       <Script
-        src="https://telegram.org/js/telegram-web-app.js"
+        src="https://telegram.org/js/telegram-web-app.js?56"
         strategy="beforeInteractive"
       />
+      <Script
+        src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"
+        strategy="afterInteractive"
+      />
+      <Script id="richads-init" strategy="afterInteractive">
+        {`window.TelegramAdsController = new TelegramAdsController();
+window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
+      </Script>
+      <Script id="richads-auto-interstitial" strategy="afterInteractive">
+        {`setTimeout(() => {
+  if (!window.TelegramAdsController || !window.TelegramAdsController.triggerInterstitialBanner) return;
+  window.TelegramAdsController.triggerInterstitialBanner().catch(() => {});
+}, 1200);`}
+      </Script>
 
       {wallets.length > 0 && <DefiStreamProvider />}
       {wallets.length > 0 && <WalletDataStreamProvider />}
@@ -231,6 +245,15 @@ export default function TelegramApp() {
             isPositionsLoading={loading.isPositionsLoading}
           />
         )}
+      </div>
+
+      <div
+        id="tg-ads-banner"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-theme-border/70 bg-theme-bg/95 backdrop-blur-md"
+      >
+        <div className="mx-auto flex min-h-[60px] w-full max-w-5xl items-center justify-center px-4 py-2 font-mono text-[10px] text-theme-text-muted">
+          ads_loading...
+        </div>
       </div>
     </main>
   );
