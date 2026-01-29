@@ -56,6 +56,7 @@ export default function TelegramApp() {
   const [quickWallet, setQuickWallet] = useState('');
   const [quickError, setQuickError] = useState('');
   const [isWalletSelectorOpen, setIsWalletSelectorOpen] = useState(false);
+  const interstitialTriggeredRef = useRef(false);
 
   const walletParam = useMemo(() => {
     const wallet = searchParams.get('wallet') || searchParams.get('address');
@@ -110,6 +111,25 @@ export default function TelegramApp() {
     tg.WebApp.expand();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleFirstTap = () => {
+      if (interstitialTriggeredRef.current) return;
+      interstitialTriggeredRef.current = true;
+
+      const controller = (window as Window & { TelegramAdsController?: any })
+        .TelegramAdsController;
+      if (!controller?.triggerInterstitialBanner) return;
+      controller.triggerInterstitialBanner().catch(() => {});
+    };
+
+    document.addEventListener('pointerdown', handleFirstTap, { once: true });
+    return () => {
+      document.removeEventListener('pointerdown', handleFirstTap);
+    };
+  }, []);
+
   const handleQuickSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const value = quickWallet.trim();
@@ -147,12 +167,6 @@ export default function TelegramApp() {
       <Script id="richads-init" strategy="afterInteractive">
         {`window.TelegramAdsController = new TelegramAdsController();
 window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
-      </Script>
-      <Script id="richads-auto-interstitial" strategy="afterInteractive">
-        {`setTimeout(() => {
-  if (!window.TelegramAdsController || !window.TelegramAdsController.triggerInterstitialBanner) return;
-  window.TelegramAdsController.triggerInterstitialBanner().catch(() => {});
-}, 1200);`}
       </Script>
 
       {wallets.length > 0 && <DefiStreamProvider />}
