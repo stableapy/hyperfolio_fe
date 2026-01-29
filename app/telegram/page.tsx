@@ -57,6 +57,10 @@ export default function TelegramApp() {
   const [quickError, setQuickError] = useState('');
   const [isWalletSelectorOpen, setIsWalletSelectorOpen] = useState(false);
   const interstitialTriggeredRef = useRef(false);
+  const [adDebug, setAdDebug] = useState({
+    sdkLoaded: false,
+    controllerReady: false,
+  });
 
   const walletParam = useMemo(() => {
     const wallet = searchParams.get('wallet') || searchParams.get('address');
@@ -130,6 +134,21 @@ export default function TelegramApp() {
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window === 'undefined') return;
+      const controller = (window as Window & { TelegramAdsController?: any })
+        .TelegramAdsController;
+      setAdDebug({
+        sdkLoaded: !!(window as Window & { TelegramAdsController?: any })
+          .TelegramAdsController,
+        controllerReady: !!controller?.initialize,
+      });
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleQuickSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const value = quickWallet.trim();
@@ -155,9 +174,9 @@ export default function TelegramApp() {
   };
 
   return (
-    <main className="min-h-screen bg-theme-bg pb-24">
+    <main className="bg-theme-bg min-h-screen pb-24">
       <Script
-        src="https://telegram.org/js/telegram-web-app.js?56"
+        src="https://telegram.org/js/telegram-web-app.js?59"
         strategy="beforeInteractive"
       />
       <Script
@@ -172,14 +191,14 @@ window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
       {wallets.length > 0 && <DefiStreamProvider />}
       {wallets.length > 0 && <WalletDataStreamProvider />}
 
-      <div className="sticky top-0 z-40 w-full border-b border-theme-border/70 bg-theme-bg/95 backdrop-blur-md">
+      <div className="border-theme-border/70 bg-theme-bg/95 sticky top-0 z-40 w-full border-b backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-mono text-xs text-theme-text-muted">
+              <p className="text-theme-text-muted font-mono text-xs">
                 hyperfolio_telegram
               </p>
-              <h1 className="font-mono text-lg text-theme-text-primary">
+              <h1 className="text-theme-text-primary font-mono text-lg">
                 Hyperfolio TG
               </h1>
             </div>
@@ -207,28 +226,26 @@ window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
                 if (quickError) setQuickError('');
               }}
               placeholder="Paste wallet or .hl/.hype"
-              className="w-full flex-1 rounded-sm border border-theme-border/70 bg-theme-card-bg px-3 py-2 font-mono text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:border-theme-accent/50 focus:outline-none"
+              className="border-theme-border/70 bg-theme-card-bg text-theme-text-primary placeholder:text-theme-text-muted/60 focus:border-theme-accent/50 w-full flex-1 rounded-sm border px-3 py-2 font-mono text-xs focus:outline-none"
             />
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 rounded-sm border border-theme-accent/50 bg-theme-accent/10 px-3 py-2 font-mono text-xs text-theme-accent hover:bg-theme-accent/20"
+                className="border-theme-accent/50 bg-theme-accent/10 text-theme-accent hover:bg-theme-accent/20 flex-1 rounded-sm border px-3 py-2 font-mono text-xs"
               >
                 --add
               </button>
               <button
                 type="button"
                 onClick={() => setIsAddWalletOpen(true)}
-                className="flex-1 rounded-sm border border-theme-border/70 bg-theme-card-bg px-3 py-2 font-mono text-xs text-theme-text-muted hover:text-theme-text-primary"
+                className="border-theme-border/70 bg-theme-card-bg text-theme-text-muted hover:text-theme-text-primary flex-1 rounded-sm border px-3 py-2 font-mono text-xs"
               >
                 --more
               </button>
             </div>
           </form>
           {quickError && (
-            <p className="font-mono text-[10px] text-[#ff4444]">
-              {quickError}
-            </p>
+            <p className="font-mono text-[10px] text-[#ff4444]">{quickError}</p>
           )}
 
           <div className="overflow-x-auto">
@@ -237,6 +254,11 @@ window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
               onSectionChange={setActiveSection}
               sections={TELEGRAM_SECTIONS}
             />
+          </div>
+
+          <div className="rounded-sm border border-theme-border/60 bg-theme-card-bg/70 px-3 py-2 font-mono text-[10px] text-theme-text-muted">
+            ads_sdk: {adDebug.sdkLoaded ? 'loaded' : 'blocked'} | controller:{' '}
+            {adDebug.controllerReady ? 'ready' : 'missing'}
           </div>
         </div>
       </div>
@@ -263,9 +285,9 @@ window.TelegramAdsController.initialize({ pubId: "1000656", appId: "5934" });`}
 
       <div
         id="tg-ads-banner"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-theme-border/70 bg-theme-bg/95 backdrop-blur-md"
+        className="border-theme-border/70 bg-theme-bg/95 fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur-md"
       >
-        <div className="mx-auto flex min-h-[60px] w-full max-w-5xl items-center justify-center px-4 py-2 font-mono text-[10px] text-theme-text-muted">
+        <div className="text-theme-text-muted mx-auto flex min-h-[60px] w-full max-w-5xl items-center justify-center px-4 py-2 font-mono text-[10px]">
           ads_loading...
         </div>
       </div>
