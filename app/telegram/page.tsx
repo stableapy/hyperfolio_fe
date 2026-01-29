@@ -145,7 +145,7 @@ export default function TelegramApp() {
       if (!Controller) return;
       try {
         const instance = new Controller();
-        instance.initialize({ pubId: '1000656', appId: '5934' });
+        instance.initialize({ pubId: '1000656', appId: '5934', debug: true });
         (window as Window & { richadsController?: any }).richadsController =
           instance;
         richAdsInitRef.current = true;
