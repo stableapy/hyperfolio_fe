@@ -203,6 +203,23 @@ export default function TelegramApp() {
     setQuickError('');
   };
 
+  const handleAdClick = () => {
+    const instance = (window as Window & { richadsController?: any })
+      .richadsController;
+    if (!instance?.triggerInterstitialBanner) {
+      console.warn('RichAds controller missing.');
+      return;
+    }
+    instance
+      .triggerInterstitialBanner()
+      .then((result: unknown) => {
+        console.log('RichAds interstitial result:', result);
+      })
+      .catch((error: unknown) => {
+        console.warn('RichAds interstitial error:', error);
+      });
+  };
+
   return (
     <main className="bg-theme-bg min-h-screen pb-24">
       <Script
@@ -267,6 +284,13 @@ export default function TelegramApp() {
                 className="border-theme-border/70 bg-theme-card-bg text-theme-text-muted hover:text-theme-text-primary flex-1 rounded-sm border px-3 py-2 font-mono text-xs"
               >
                 --more
+              </button>
+              <button
+                type="button"
+                onClick={handleAdClick}
+                className="border-theme-border/70 bg-theme-card-bg text-theme-text-muted hover:text-theme-text-primary flex-1 rounded-sm border px-3 py-2 font-mono text-xs"
+              >
+                --show-ad
               </button>
             </div>
           </form>
