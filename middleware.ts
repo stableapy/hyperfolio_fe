@@ -24,11 +24,13 @@ function getSecurityHeaders(): Record<string, string> {
     // Styles: allow inline for Tailwind/CSS-in-JS
     "style-src 'self' 'unsafe-inline'",
     // Images: self, data URLs, and common image CDNs
-    "img-src 'self' data: https: blob:",
+    "img-src 'self' data: https: blob: https://richinfo.co https://*.richinfo.co https://richads.com https://*.richads.com",
     // Fonts: self and data URLs
     "font-src 'self' data:",
     // Connect: self, analytics, API, Web3 providers, external services
-    "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.google-analytics.com https://*.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com https://analytics.google.com ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*",
+    "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.google-analytics.com https://*.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com https://analytics.google.com https://richinfo.co https://*.richinfo.co https://richads.com https://*.richads.com ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*",
+    // Frames: allow ad iframes when needed
+    "frame-src 'self' https://richinfo.co https://*.richinfo.co https://richads.com https://*.richads.com",
     // Media: self only
     "media-src 'self'",
     // Objects: none (prevent plugins)
