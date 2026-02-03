@@ -354,7 +354,7 @@ export interface YieldPoolInfo {
   /** Second token in AMM pair (only for category: 'amm') */
   token1?: PoolTokenDetails;
   /** Primary asset for single-asset positions (lending, staking, yield, derivatives) */
-  underlyingToken?: PoolTokenDetails;
+  underlyingToken?: PoolTokenDetails | string;
   /** Settlement/collateral token (derivatives only) */
   collateralToken?: PoolTokenDetails;
 }

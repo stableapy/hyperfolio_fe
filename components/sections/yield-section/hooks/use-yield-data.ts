@@ -29,6 +29,18 @@ interface YieldError {
   isMockData?: boolean;
 }
 
+function getUnderlyingTokenSymbol(pool: YieldOpportunity['pool']): string | undefined {
+  const underlying = pool.underlyingToken;
+  if (!underlying || typeof underlying === 'string') return undefined;
+  return underlying.symbol;
+}
+
+function getUnderlyingTokenAddress(pool: YieldOpportunity['pool']): string | undefined {
+  const underlying = pool.underlyingToken;
+  if (!underlying) return undefined;
+  return typeof underlying === 'string' ? underlying : underlying.address;
+}
+
 /**
  * Generates a unique key for a lending market (protocol + underlying token)
  */
@@ -37,7 +49,7 @@ function getLendingMarketKey(opp: YieldOpportunity): string {
   const underlyingSymbol =
     opp.metadata.underlyingSymbol ||
     opp.pool.symbol ||
-    opp.pool.underlyingToken?.symbol ||
+    getUnderlyingTokenSymbol(opp.pool) ||
     opp.pool.address ||
     opp.pool.name ||
     'unknown';
@@ -155,8 +167,9 @@ function extractTokenSymbolsFromItem(item: YieldDisplayItem): string[] {
   if (pool.symbol) {
     symbols.add(pool.symbol);
   }
-  if (pool.underlyingToken?.symbol) {
-    symbols.add(pool.underlyingToken.symbol);
+  const underlyingSymbol = getUnderlyingTokenSymbol(pool);
+  if (underlyingSymbol) {
+    symbols.add(underlyingSymbol);
   }
   if (pool.token0?.symbol) {
     symbols.add(pool.token0.symbol);
@@ -178,8 +191,9 @@ function extractTokenAddressesFromItem(item: YieldDisplayItem): string[] {
   if (item.metadata?.underlyingToken) {
     addresses.add(item.metadata.underlyingToken);
   }
-  if (pool.underlyingToken?.address) {
-    addresses.add(pool.underlyingToken.address);
+  const underlyingAddress = getUnderlyingTokenAddress(pool);
+  if (underlyingAddress) {
+    addresses.add(underlyingAddress);
   }
   if (pool.token0?.address) {
     addresses.add(pool.token0.address);
@@ -408,8 +422,8 @@ export function useYieldData(
           symbol: opp.metadata?.underlyingSymbol,
         },
         {
-          address: pool?.underlyingToken?.address,
-          symbol: pool?.underlyingToken?.symbol,
+          address: pool ? getUnderlyingTokenAddress(pool) : undefined,
+          symbol: pool ? getUnderlyingTokenSymbol(pool) : undefined,
         },
         {
           address: pool?.token0?.address,

@@ -175,8 +175,9 @@ export function extractTokenSymbols(opp: YieldOpportunity): string[] {
   }
 
   // From single-asset positions
-  if (opp.pool.underlyingToken?.symbol) {
-    symbols.push(opp.pool.underlyingToken.symbol);
+  const underlyingToken = opp.pool.underlyingToken;
+  if (underlyingToken && typeof underlyingToken !== 'string' && underlyingToken.symbol) {
+    symbols.push(underlyingToken.symbol);
   }
 
   // From derivatives
@@ -214,8 +215,9 @@ export function extractTokenSymbolsFromDisplayItem(item: YieldDisplayItem): stri
     }
 
     // From single-asset positions
-    if (market.pool.underlyingToken?.symbol) {
-      symbols.push(market.pool.underlyingToken.symbol);
+    const underlyingToken = market.pool.underlyingToken;
+    if (underlyingToken && typeof underlyingToken !== 'string' && underlyingToken.symbol) {
+      symbols.push(underlyingToken.symbol);
     }
 
     // From derivatives

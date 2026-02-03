@@ -43,6 +43,11 @@ function getTokenDisplay(item: YieldDisplayItem): {
 } {
   const { pool, category, metadata } = item;
   const poolAddress = pool.address;
+  const underlyingToken =
+    pool.underlyingToken && typeof pool.underlyingToken !== 'string'
+      ? pool.underlyingToken
+      : undefined;
+  const underlyingSymbol = underlyingToken?.symbol || metadata.underlyingSymbol;
 
   // AMM pools: show token pair
   if (category === 'amm' && pool.token0 && pool.token1) {
@@ -53,20 +58,20 @@ function getTokenDisplay(item: YieldDisplayItem): {
 
   // Derivatives: show underlying + collateral if both exist
   if (category === 'derivatives' && pool.collateralToken) {
-    const underlying = pool.underlyingToken?.symbol || 'Asset';
+    const underlying = underlyingSymbol || 'Asset';
     const collateral = pool.collateralToken.symbol;
     const symbol = `${underlying} / ${collateral}`;
-    const tooltip = pool.underlyingToken
-      ? `${pool.underlyingToken.name} settled in ${pool.collateralToken.name}`
+    const tooltip = underlyingToken?.name
+      ? `${underlyingToken.name} settled in ${pool.collateralToken.name}`
       : `Settled in ${pool.collateralToken.name}`;
     return { symbol, tooltip };
   }
 
   // Single-asset positions: use underlyingToken if available
-  if (pool.underlyingToken) {
+  if (underlyingSymbol) {
     return {
-      symbol: pool.underlyingToken.symbol,
-      tooltip: pool.underlyingToken.name,
+      symbol: underlyingSymbol,
+      tooltip: underlyingToken?.name,
     };
   }
 
