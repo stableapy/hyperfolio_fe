@@ -15,9 +15,7 @@ import {
   SubscriptionApiError,
   verifyRecoveryCode,
 } from '@/lib/subscriptions/client';
-import {
-  hasPublicApiBaseUrl,
-} from '@/lib/subscriptions/config';
+import { hasPublicApiBaseUrl } from '@/lib/subscriptions/config';
 import {
   loadStoredApiCredentials,
   saveStoredApiCredentials,
@@ -28,7 +26,8 @@ import type {
 } from '@/lib/subscriptions/types';
 import { ApiKeyManager } from '@/components/subscriptions/api-key-manager';
 
-const PRICE_INTERVAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_INTERVAL || '/month';
+const PRICE_INTERVAL =
+  process.env.NEXT_PUBLIC_STRIPE_PRICE_INTERVAL || '/month';
 const BILLING_PLAN_IDS = ['starter', 'growth', 'scale'] as const;
 type BillingPlanId = (typeof BILLING_PLAN_IDS)[number];
 type RecoveryStep = 'email' | 'code' | 'session';
@@ -94,6 +93,34 @@ function formatApiError(error: unknown): string {
   return 'Unknown error';
 }
 
+function toBillingPlanId(
+  plan: string | null | undefined
+): BillingPlanId | null {
+  if (!plan) {
+    return null;
+  }
+
+  const normalized = plan.toLowerCase();
+  if (BILLING_PLAN_IDS.includes(normalized as BillingPlanId)) {
+    return normalized as BillingPlanId;
+  }
+
+  return null;
+}
+
+function getNextPlanId(plan: BillingPlanId | null): BillingPlanId | null {
+  if (!plan) {
+    return null;
+  }
+
+  const index = BILLING_PLAN_IDS.indexOf(plan);
+  if (index === -1 || index === BILLING_PLAN_IDS.length - 1) {
+    return null;
+  }
+
+  return BILLING_PLAN_IDS[index + 1];
+}
+
 export function BillingClient() {
   const searchParams = useSearchParams();
   const [billingMode, setBillingMode] = useState<'subscribe' | 'recover'>(
@@ -125,10 +152,13 @@ export function BillingClient() {
   const [isRotatingRecoveryKey, setIsRotatingRecoveryKey] = useState(false);
   const [isLoggingOutRecovery, setIsLoggingOutRecovery] = useState(false);
   const lastHandledSessionId = useRef<string | null>(null);
+  const portalTabRef = useRef<Window | null>(null);
 
   const sessionId = searchParams.get('session_id');
   const checkoutCancelled = searchParams.get('checkout') === 'cancelled';
   const planFromQuery = searchParams.get('plan');
+  const currentRecoveredPlanId = toBillingPlanId(recoveryMe?.plan);
+  const nextRecoveredPlanId = getNextPlanId(currentRecoveredPlanId);
 
   useEffect(() => {
     setStoredCredentials(loadStoredApiCredentials());
@@ -215,7 +245,9 @@ export function BillingClient() {
         const url = new URL(window.location.href);
         url.searchParams.delete('session_id');
         const nextQuery = url.searchParams.toString();
-        const nextUrl = nextQuery ? `${url.pathname}?${nextQuery}` : url.pathname;
+        const nextUrl = nextQuery
+          ? `${url.pathname}?${nextQuery}`
+          : url.pathname;
         window.history.replaceState({}, '', nextUrl);
       } catch (error) {
         setSessionExchangeError(formatApiError(error));
@@ -325,18 +357,37 @@ export function BillingClient() {
   };
 
   const handleOpenBillingPortal = async () => {
+    if (isOpeningPortal) {
+      return;
+    }
+
     setRecoveryError('');
     setRecoveryStatus('');
+
+    const portalWindow = window.open('', '_blank');
+    if (!portalWindow) {
+      setRecoveryError('Popup blocked. Please allow popups and try again.');
+      return;
+    }
+
+    portalWindow.document.title = 'Hyperfolio Billing Portal';
+    if (portalWindow.document.body) {
+      portalWindow.document.body.innerHTML =
+        '<p style="font-family: monospace; padding: 16px;">Opening Stripe billing portal...</p>';
+    }
+    portalTabRef.current = portalWindow;
+
     setIsOpeningPortal(true);
     try {
       const payload = await createPortalSession({
         returnUrl: `${window.location.origin}/billing`,
       });
-      const opened = window.open(payload.url, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        window.location.assign(payload.url);
-      }
+      portalWindow.location.href = payload.url;
     } catch (error) {
+      if (portalTabRef.current && !portalTabRef.current.closed) {
+        portalTabRef.current.close();
+      }
+      portalTabRef.current = null;
       setRecoveryError(formatApiError(error));
     } finally {
       setIsOpeningPortal(false);
@@ -411,9 +462,9 @@ export function BillingClient() {
             Subscribe And Manage Hyperfolio API Access
           </h1>
           <p className="text-theme-text-secondary mt-3 max-w-2xl font-mono text-sm leading-relaxed">
-            Select a plan, complete Stripe checkout, then manage your API key
-            on this page. Site API calls keep using the project key; your
-            personal key is for direct API usage.
+            Select a plan, complete Stripe checkout, then manage your API key on
+            this page. Site API calls keep using the project key; your personal
+            key is for direct API usage.
           </p>
         </div>
 
@@ -482,285 +533,387 @@ export function BillingClient() {
 
         {billingMode === 'recover' && (
           <section className="bg-theme-card-bg border-theme-border/70 mb-8 rounded-sm border p-5">
-          <h2 className="text-theme-text-primary mb-4 font-mono text-sm font-semibold">
-            Recover Existing Subscription
-          </h2>
-          <p className="text-theme-text-muted mb-4 font-mono text-xs">
-            Use OTP by email to restore access and open Stripe Billing Portal.
-          </p>
-
-          {isLoadingRecoveryMe ? (
-            <p className="text-theme-text-secondary font-mono text-xs">
-              Checking existing recovery session...
+            <h2 className="text-theme-text-primary mb-4 font-mono text-sm font-semibold">
+              Recover Existing Subscription
+            </h2>
+            <p className="text-theme-text-muted mb-4 font-mono text-xs">
+              Use OTP by email to restore access and open Stripe Billing Portal.
             </p>
-          ) : recoveryStep === 'session' && recoveryMe ? (
-            <div>
-              <p className="text-theme-text-secondary mb-3 font-mono text-xs">
-                Session active. You can manage billing and rotate your API key.
-              </p>
-              <div className="bg-theme-bg border-theme-border/70 mb-4 rounded-sm border p-3">
-                <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                  email: {recoveryMe.email}
-                </p>
-                <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                  plan: {recoveryMe.plan} | status: {recoveryMe.subscriptionStatus}
-                </p>
-                <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                  access active: {recoveryMe.accessActive ? 'yes' : 'no'}
-                </p>
-                <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                  limits: {recoveryMe.dailyLimit}/day,{' '}
-                  {recoveryMe.rateLimitPerSecond}/s
-                </p>
-                {recoveryMe.maskedApiKey && (
-                  <p className="text-theme-text-secondary font-mono text-xs">
-                    api key: {recoveryMe.maskedApiKey}
-                  </p>
-                )}
-              </div>
 
-              <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <button
-                  type="button"
-                  onClick={handleOpenBillingPortal}
-                  disabled={isOpeningPortal}
-                  className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isOpeningPortal ? 'opening portal...' : 'manage --subscription'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRotateKeyWithRecovery}
-                  disabled={isRotatingRecoveryKey}
-                  className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isRotatingRecoveryKey
-                    ? 'rotating...'
-                    : 'rotate --api-key (session)'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRecoveryLogout}
-                  disabled={isLoggingOutRecovery}
-                  className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isLoggingOutRecovery ? 'logging out...' : 'logout --session'}
-                </button>
-              </div>
-            </div>
-          ) : recoveryStep === 'email' ? (
-            <div>
-              <label className="text-theme-text-muted mb-2 block font-mono text-xs">
-                Enter your billing email
-              </label>
-              <input
-                type="email"
-                value={recoveryEmail}
-                onChange={(event) => setRecoveryEmail(event.target.value)}
-                placeholder="user@example.com"
-                className="bg-theme-bg border-theme-border/70 text-theme-text-primary w-full rounded-sm border px-3 py-2 font-mono text-sm outline-none"
-              />
-              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={handleRequestRecoveryCode}
-                  disabled={isRequestingRecoveryCode}
-                  className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isRequestingRecoveryCode ? 'sending otp...' : 'send --otp'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void refreshRecoveryMe()}
-                  className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold"
-                >
-                  check --existing-session
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-3">
-                <p className="text-theme-text-muted mb-2 font-mono text-xs">
-                  Enter OTP code sent to: {recoveryEmail}
+            {isLoadingRecoveryMe ? (
+              <p className="text-theme-text-secondary font-mono text-xs">
+                Checking existing recovery session...
+              </p>
+            ) : recoveryStep === 'session' && recoveryMe ? (
+              <div>
+                <p className="text-theme-text-secondary mb-3 font-mono text-xs">
+                  Session active. You can manage billing and rotate your API
+                  key.
                 </p>
+                <div className="bg-theme-bg border-theme-border/70 mb-4 rounded-sm border p-3">
+                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
+                    email: {recoveryMe.email}
+                  </p>
+                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
+                    plan: {recoveryMe.plan} | status:{' '}
+                    {recoveryMe.subscriptionStatus}
+                  </p>
+                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
+                    access active: {recoveryMe.accessActive ? 'yes' : 'no'}
+                  </p>
+                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
+                    limits: {recoveryMe.dailyLimit}/day,{' '}
+                    {recoveryMe.rateLimitPerSecond}/s
+                  </p>
+                  {recoveryMe.maskedApiKey && (
+                    <p className="text-theme-text-secondary font-mono text-xs">
+                      api key: {recoveryMe.maskedApiKey}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={handleOpenBillingPortal}
+                    disabled={isOpeningPortal}
+                    className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isOpeningPortal
+                      ? 'opening portal...'
+                      : 'manage --subscription'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRotateKeyWithRecovery}
+                    disabled={isRotatingRecoveryKey}
+                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isRotatingRecoveryKey
+                      ? 'rotating...'
+                      : 'rotate --api-key (session)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRecoveryLogout}
+                    disabled={isLoggingOutRecovery}
+                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isLoggingOutRecovery
+                      ? 'logging out...'
+                      : 'logout --session'}
+                  </button>
+                </div>
+
+                <div className="bg-theme-bg border-theme-border/70 rounded-sm border p-4">
+                  <p className="text-theme-text-primary mb-3 font-mono text-xs font-semibold">
+                    Plan comparison
+                  </p>
+                  <p className="text-theme-text-muted mb-4 font-mono text-xs">
+                    Your current plan is highlighted. Use{' '}
+                    <strong>manage --subscription</strong> to upgrade instantly
+                    in Stripe.
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {BILLING_PLAN_IDS.map((planId) => {
+                      const plan = PLAN_LABELS[planId];
+                      const isCurrentPlan = currentRecoveredPlanId === planId;
+                      const isRecommendedUpgrade =
+                        !isCurrentPlan && nextRecoveredPlanId === planId;
+
+                      return (
+                        <article
+                          key={`recover-${planId}`}
+                          className={`flex h-full flex-col rounded-xl border p-4 ${
+                            isCurrentPlan
+                              ? 'border-theme-accent bg-theme-accent/10 ring-theme-accent/40 shadow-[0_0_0_1px_var(--theme-accent)]'
+                              : isRecommendedUpgrade
+                                ? 'border-theme-accent/40 bg-theme-bg'
+                                : 'border-theme-border/70 bg-theme-bg'
+                          }`}
+                        >
+                          <div className="mb-4">
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <p className="text-theme-text-primary font-mono text-base font-semibold">
+                                {plan.title}
+                              </p>
+                              {isCurrentPlan ? (
+                                <span className="bg-theme-accent text-theme-bg rounded-full px-2 py-1 font-mono text-[10px] font-semibold tracking-wide uppercase">
+                                  current
+                                </span>
+                              ) : isRecommendedUpgrade ? (
+                                <span className="bg-theme-accent/15 text-theme-accent border-theme-accent/30 rounded-full border px-2 py-1 font-mono text-[10px] font-semibold tracking-wide uppercase">
+                                  recommended
+                                </span>
+                              ) : plan.badge ? (
+                                <span className="bg-theme-accent/15 text-theme-accent border-theme-accent/30 rounded-full border px-2 py-1 font-mono text-[10px] font-semibold tracking-wide uppercase">
+                                  {plan.badge}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="text-theme-text-muted min-h-[112px] font-mono text-xs leading-relaxed">
+                              {plan.summary}
+                            </p>
+                          </div>
+
+                          <div className="mb-4 flex items-end gap-1">
+                            <span className="text-theme-text-primary font-mono text-3xl font-bold tracking-tight">
+                              {plan.priceDisplay}
+                            </span>
+                            {plan.priceDisplay.trim().startsWith('$') && (
+                              <span className="text-theme-text-muted pb-1 font-mono text-xs">
+                                {PRICE_INTERVAL}
+                              </span>
+                            )}
+                          </div>
+
+                          <ul className="mb-4 flex-1 space-y-2">
+                            {plan.features.map((feature) => (
+                              <li
+                                key={`${planId}-${feature}`}
+                                className="text-theme-text-secondary flex items-start gap-2 font-mono text-[11px]"
+                              >
+                                <Check className="text-theme-accent mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <div
+                            className={`mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold ${
+                              isCurrentPlan
+                                ? 'bg-theme-accent text-theme-bg border-theme-accent'
+                                : isRecommendedUpgrade
+                                  ? 'border-theme-accent/40 text-theme-accent'
+                                  : 'border-theme-border/60 text-theme-text-secondary'
+                            }`}
+                          >
+                            {isCurrentPlan
+                              ? 'current plan'
+                              : isRecommendedUpgrade
+                                ? 'recommended upgrade'
+                                : 'available plan'}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <div className="mb-3">
+            ) : recoveryStep === 'email' ? (
+              <div>
                 <label className="text-theme-text-muted mb-2 block font-mono text-xs">
-                  otp code
+                  Enter your billing email
                 </label>
                 <input
-                  type="text"
-                  value={recoveryCode}
-                  onChange={(event) => setRecoveryCode(event.target.value)}
-                  placeholder="123456"
-                  className="bg-theme-bg border-theme-border/70 text-theme-text-primary w-full rounded-sm border px-3 py-2 font-mono text-sm tracking-[0.2em] outline-none"
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={(event) => setRecoveryEmail(event.target.value)}
+                  placeholder="user@example.com"
+                  className="bg-theme-bg border-theme-border/70 text-theme-text-primary w-full rounded-sm border px-3 py-2 font-mono text-sm outline-none"
                 />
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={handleRequestRecoveryCode}
+                    disabled={isRequestingRecoveryCode}
+                    className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isRequestingRecoveryCode ? 'sending otp...' : 'send --otp'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void refreshRecoveryMe()}
+                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold"
+                  >
+                    check --existing-session
+                  </button>
+                </div>
               </div>
-              <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <button
-                  type="button"
-                  onClick={handleVerifyRecoveryCode}
-                  disabled={isVerifyingRecoveryCode}
-                  className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isVerifyingRecoveryCode ? 'verifying...' : 'verify --otp'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRequestRecoveryCode}
-                  disabled={isRequestingRecoveryCode}
-                  className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  {isRequestingRecoveryCode ? 'resending...' : 'resend --otp'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBackToRecoveryEmailStep}
-                  className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                >
-                  back --email-step
-                </button>
+            ) : (
+              <div>
+                <div className="mb-3">
+                  <p className="text-theme-text-muted mb-2 font-mono text-xs">
+                    Enter OTP code sent to: {recoveryEmail}
+                  </p>
+                </div>
+                <div className="mb-3">
+                  <label className="text-theme-text-muted mb-2 block font-mono text-xs">
+                    otp code
+                  </label>
+                  <input
+                    type="text"
+                    value={recoveryCode}
+                    onChange={(event) => setRecoveryCode(event.target.value)}
+                    placeholder="123456"
+                    className="bg-theme-bg border-theme-border/70 text-theme-text-primary w-full rounded-sm border px-3 py-2 font-mono text-sm tracking-[0.2em] outline-none"
+                  />
+                </div>
+                <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={handleVerifyRecoveryCode}
+                    disabled={isVerifyingRecoveryCode}
+                    className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isVerifyingRecoveryCode ? 'verifying...' : 'verify --otp'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRequestRecoveryCode}
+                    disabled={isRequestingRecoveryCode}
+                    className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isRequestingRecoveryCode ? 'resending...' : 'resend --otp'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBackToRecoveryEmailStep}
+                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                  >
+                    back --email-step
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {recoveryStatus && (
-            <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-              {recoveryStatus}
-            </p>
-          )}
-          {recoveryDebugCode && (
-            <p className="mb-2 font-mono text-xs text-amber-400">
-              debug code: {recoveryDebugCode}
-            </p>
-          )}
-          {recoveryError && (
-            <p className="font-mono text-xs text-red-500">{recoveryError}</p>
-          )}
+            {recoveryStatus && (
+              <p className="text-theme-text-secondary mb-2 font-mono text-xs">
+                {recoveryStatus}
+              </p>
+            )}
+            {recoveryDebugCode && (
+              <p className="mb-2 font-mono text-xs text-amber-400">
+                debug code: {recoveryDebugCode}
+              </p>
+            )}
+            {recoveryError && (
+              <p className="font-mono text-xs text-red-500">{recoveryError}</p>
+            )}
           </section>
         )}
 
         {billingMode === 'subscribe' && (
           <section className="bg-theme-card-bg border-theme-border/70 mb-8 rounded-sm border p-5">
-          <h2 className="text-theme-text-primary mb-4 font-mono text-sm font-semibold">
-            Subscribe To Hyperfolio API
-          </h2>
-          <p className="text-theme-text-muted mb-4 font-mono text-xs">
-            Pick a plan, enter your billing email, then continue to Stripe
-            Checkout.
-          </p>
+            <h2 className="text-theme-text-primary mb-4 font-mono text-sm font-semibold">
+              Subscribe To Hyperfolio API
+            </h2>
+            <p className="text-theme-text-muted mb-4 font-mono text-xs">
+              Pick a plan, enter your billing email, then continue to Stripe
+              Checkout.
+            </p>
 
-          <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {BILLING_PLAN_IDS.map((planId) => {
-              const selected = selectedPlan === planId;
-              const plan = PLAN_LABELS[planId];
+            <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {BILLING_PLAN_IDS.map((planId) => {
+                const selected = selectedPlan === planId;
+                const plan = PLAN_LABELS[planId];
 
-              return (
-                <button
-                  key={planId}
-                  type="button"
-                  onClick={() => setSelectedPlan(planId)}
-                  className={`group h-full rounded-xl border p-4 text-left transition-all ${
-                    selected
-                      ? 'border-theme-accent bg-theme-accent/10 ring-theme-accent/40 shadow-[0_0_0_1px_var(--theme-accent)]'
-                      : 'border-theme-border/70 bg-theme-bg hover:border-theme-accent/50 hover:shadow-lg'
-                  } flex flex-col`}
-                >
-                  <div className="mb-4">
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <p className="text-theme-text-primary font-mono text-base font-semibold">
-                        {plan.title}
+                return (
+                  <button
+                    key={planId}
+                    type="button"
+                    onClick={() => setSelectedPlan(planId)}
+                    className={`group h-full rounded-xl border p-4 text-left transition-all ${
+                      selected
+                        ? 'border-theme-accent bg-theme-accent/10 ring-theme-accent/40 shadow-[0_0_0_1px_var(--theme-accent)]'
+                        : 'border-theme-border/70 bg-theme-bg hover:border-theme-accent/50 hover:shadow-lg'
+                    } flex flex-col`}
+                  >
+                    <div className="mb-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="text-theme-text-primary font-mono text-base font-semibold">
+                          {plan.title}
+                        </p>
+                        {plan.badge && (
+                          <span className="bg-theme-accent/15 text-theme-accent border-theme-accent/30 shrink-0 rounded-full border px-2 py-1 font-mono text-[10px] font-semibold tracking-wide uppercase">
+                            {plan.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`mt-1 min-h-[104px] font-mono text-xs leading-relaxed sm:min-h-[112px] ${
+                          selected
+                            ? 'text-theme-text-secondary'
+                            : 'text-theme-text-muted'
+                        }`}
+                      >
+                        {plan.summary}
                       </p>
-                      {plan.badge && (
-                        <span className="bg-theme-accent/15 text-theme-accent border-theme-accent/30 shrink-0 rounded-full border px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide">
-                          {plan.badge}
-                        </span>
-                      )}
                     </div>
-                    <p
-                      className={`mt-1 min-h-[104px] font-mono text-xs leading-relaxed sm:min-h-[112px] ${
+
+                    <div className="mb-4">
+                      <div className="flex items-end gap-1">
+                        <span className="text-theme-text-primary font-mono text-3xl font-bold tracking-tight">
+                          {plan.priceDisplay}
+                        </span>
+                        {plan.priceDisplay.trim().startsWith('$') && (
+                          <span className="text-theme-text-muted pb-1 font-mono text-xs">
+                            {PRICE_INTERVAL}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <ul className="mb-4 flex-1 space-y-2">
+                      {plan.features.map((feature) => (
+                        <li
+                          key={feature}
+                          className="text-theme-text-secondary flex items-start gap-2 font-mono text-[11px]"
+                        >
+                          <Check className="text-theme-accent mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div
+                      className={`mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold ${
                         selected
-                          ? 'text-theme-text-secondary'
-                          : 'text-theme-text-muted'
+                          ? 'bg-theme-accent text-theme-bg border-theme-accent'
+                          : 'border-theme-border/60 text-theme-text-secondary group-hover:border-theme-accent/40'
                       }`}
                     >
-                      {plan.summary}
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex items-end gap-1">
-                      <span className="text-theme-text-primary font-mono text-3xl font-bold tracking-tight">
-                        {plan.priceDisplay}
-                      </span>
-                      {plan.priceDisplay.trim().startsWith('$') && (
-                        <span className="text-theme-text-muted pb-1 font-mono text-xs">
-                          {PRICE_INTERVAL}
-                        </span>
-                      )}
+                      {selected ? 'selected plan' : 'select plan'}
                     </div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
 
-                  <ul className="mb-4 flex-1 space-y-2">
-                    {plan.features.map((feature) => (
-                      <li
-                        key={feature}
-                        className="text-theme-text-secondary flex items-start gap-2 font-mono text-[11px]"
-                      >
-                        <Check className="text-theme-accent mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+            <label className="text-theme-text-muted mb-2 block font-mono text-xs">
+              billing email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="user@example.com"
+              className="bg-theme-bg border-theme-border/70 text-theme-text-primary mb-4 w-full rounded-sm border px-3 py-2 font-mono text-sm outline-none"
+            />
 
-                  <div
-                    className={`mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold ${
-                      selected
-                        ? 'bg-theme-accent text-theme-bg border-theme-accent'
-                        : 'border-theme-border/60 text-theme-text-secondary group-hover:border-theme-accent/40'
-                    }`}
-                  >
-                    {selected ? 'selected plan' : 'select plan'}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+            <button
+              type="button"
+              onClick={handleCreateCheckout}
+              disabled={isCreatingSession}
+              className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-4 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+            >
+              {isCreatingSession
+                ? 'creating checkout session...'
+                : 'checkout --stripe'}
+            </button>
 
-          <label className="text-theme-text-muted mb-2 block font-mono text-xs">
-            billing email
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="user@example.com"
-            className="bg-theme-bg border-theme-border/70 text-theme-text-primary mb-4 w-full rounded-sm border px-3 py-2 font-mono text-sm outline-none"
-          />
+            {checkoutError && (
+              <p className="mt-3 font-mono text-xs text-red-500">
+                {checkoutError}
+              </p>
+            )}
 
-          <button
-            type="button"
-            onClick={handleCreateCheckout}
-            disabled={isCreatingSession}
-            className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-4 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-          >
-            {isCreatingSession
-              ? 'creating checkout session...'
-              : 'checkout --stripe'}
-          </button>
-
-          {checkoutError && (
-            <p className="mt-3 font-mono text-xs text-red-500">
-              {checkoutError}
-            </p>
-          )}
-
-          {!hasPublicApiBaseUrl() && (
-            <p className="text-theme-text-muted mt-3 font-mono text-xs">
-              Missing env variable `NEXT_PUBLIC_API_BASE_URL`.
-            </p>
-          )}
+            {!hasPublicApiBaseUrl() && (
+              <p className="text-theme-text-muted mt-3 font-mono text-xs">
+                Missing env variable `NEXT_PUBLIC_API_BASE_URL`.
+              </p>
+            )}
           </section>
         )}
 
@@ -770,7 +923,6 @@ export function BillingClient() {
             onCredentialsChange={setStoredCredentials}
           />
         )}
-
       </section>
     </main>
   );
