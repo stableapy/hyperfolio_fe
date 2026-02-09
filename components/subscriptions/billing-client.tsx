@@ -26,7 +26,7 @@ import { ApiKeyManager } from '@/components/subscriptions/api-key-manager';
 
 const PRICE_INTERVAL =
   process.env.NEXT_PUBLIC_STRIPE_PRICE_INTERVAL || '/month';
-const BILLING_PLAN_IDS = ['starter', 'growth', 'scale'] as const;
+const BILLING_PLAN_IDS = ['solo', 'starter', 'growth', 'scale'] as const;
 type BillingPlanId = (typeof BILLING_PLAN_IDS)[number];
 type RecoveryStep = 'email' | 'code' | 'session';
 
@@ -40,6 +40,19 @@ const PLAN_LABELS: Record<
     features: string[];
   }
 > = {
+  solo: {
+    title: 'Solo Dev',
+    summary:
+      'For individual developers shipping personal tools. Great for MVPs and low-traffic apps that need full API access at a lower cost.',
+    priceDisplay: process.env.NEXT_PUBLIC_STRIPE_PRICE_SOLO_DISPLAY || '$9',
+    features: [
+      '1,000 API calls/day',
+      '3 requests/second rate limit',
+      'Full access to all DeFi protocols',
+      'Wallet composition',
+      'Portfolio tracking',
+    ],
+  },
   starter: {
     title: 'Starter',
     summary:
@@ -47,10 +60,8 @@ const PLAN_LABELS: Record<
     priceDisplay: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_DISPLAY || '$29',
     features: [
       '5,000 API calls/day',
-      '3 requests/second rate limit',
-      'Full access to all DeFi protocols',
-      'Wallet composition',
-      'Portfolio tracking',
+      '5 requests/second rate limit',
+      'Everything in Solo',
     ],
   },
   growth: {
@@ -124,7 +135,7 @@ export function BillingClient() {
   const [billingMode, setBillingMode] = useState<'subscribe' | 'recover'>(
     'subscribe'
   );
-  const [selectedPlan, setSelectedPlan] = useState<BillingPlanId>('starter');
+  const [selectedPlan, setSelectedPlan] = useState<BillingPlanId>('solo');
   const [email, setEmail] = useState('');
   const [checkoutError, setCheckoutError] = useState('');
   const [sessionExchangeError, setSessionExchangeError] = useState('');
@@ -546,7 +557,7 @@ export function BillingClient() {
                     opens Stripe checkout in a new tab.
                   </p>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                     {BILLING_PLAN_IDS.map((planId) => {
                       const plan = PLAN_LABELS[planId];
                       const targetIndex = BILLING_PLAN_IDS.indexOf(planId);
@@ -774,7 +785,7 @@ export function BillingClient() {
               Checkout.
             </p>
 
-            <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {BILLING_PLAN_IDS.map((planId) => {
                 const selected = selectedPlan === planId;
                 const plan = PLAN_LABELS[planId];
