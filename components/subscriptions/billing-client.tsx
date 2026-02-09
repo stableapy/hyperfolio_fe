@@ -179,14 +179,11 @@ export function BillingClient() {
     }
 
     const normalizedPlan = planFromQuery.toLowerCase();
-    if (
-      BILLING_PLAN_IDS.includes(normalizedPlan as BillingPlanId) &&
-      normalizedPlan !== selectedPlan
-    ) {
+    if (BILLING_PLAN_IDS.includes(normalizedPlan as BillingPlanId)) {
       setSelectedPlan(normalizedPlan as BillingPlanId);
       setBillingMode('subscribe');
     }
-  }, [planFromQuery, selectedPlan]);
+  }, [planFromQuery]);
 
   const refreshRecoveryMe = async (silent = false): Promise<void> => {
     if (!silent) {
