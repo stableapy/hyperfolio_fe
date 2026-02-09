@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * API Banner component - Terminal-style promotional banner for the API
@@ -36,10 +36,8 @@ export function ApiBanner() {
           <span className="text-theme-border font-mono text-[10px]">|</span>
 
           {/* CTA Link - Terminal button style */}
-          <a
-            href="https://api.hyperfolio.xyz/docs"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/api-docs"
             className="group bg-theme-card-bg border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border transition-all duration-150"
           >
             {/* Icon section */}
@@ -53,9 +51,8 @@ export function ApiBanner() {
               <span className="text-theme-accent font-mono text-[10px] font-bold">
                 View Docs
               </span>
-              <ExternalLink className="text-theme-accent h-2.5 w-2.5 opacity-60 transition-opacity group-hover:opacity-100" />
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

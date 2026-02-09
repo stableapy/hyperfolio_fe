@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 
-const TOAST_KEY = 'hyperfolio_tg_toast_dismissed_v1';
+const TOAST_KEY = 'hyperfolio_updates_toast_dismissed_v2';
 
 export function TelegramCtaToast() {
   useEffect(() => {
@@ -12,19 +12,27 @@ export function TelegramCtaToast() {
 
     const timer = setTimeout(() => {
       toast({
-        title: 'Hyperfolio is now on Telegram',
+        title: 'What is new on Hyperfolio',
         description: (
-          <span>
-            Use the bot{' '}
-            <a
-              href="https://t.me/hyperfoliothebot"
-              target="_blank"
-              rel="noreferrer"
-              className="text-theme-accent underline"
-            >
-              @hyperfoliothebot
-            </a>
-          </span>
+          <div className="space-y-1">
+            <p className="text-sm">
+              - Use Hyperfolio directly on Telegram (mini app) via{' '}
+              <a
+                href="https://t.me/hyperfoliothebot"
+                target="_blank"
+                rel="noreferrer"
+                className="text-theme-accent underline"
+              >
+                @hyperfoliothebot
+              </a>
+            </p>
+            <p className="text-sm">
+              - Explore endpoints and pricing in{' '}
+              <a href="/api-docs" className="text-theme-accent underline">
+                API documentation
+              </a>
+            </p>
+          </div>
         ),
         duration: 12000,
         onOpenChange: (open) => {

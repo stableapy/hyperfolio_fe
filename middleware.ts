@@ -28,7 +28,7 @@ function getSecurityHeaders(): Record<string, string> {
     // Fonts: self and data URLs
     "font-src 'self' data:",
     // Connect: self, analytics, API, Web3 providers, external services
-    "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.google-analytics.com https://*.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com https://analytics.google.com ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*",
+    "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.google-analytics.com https://*.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com https://analytics.google.com http://localhost:3000 http://127.0.0.1:3000 ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*",
     // Media: self only
     "media-src 'self'",
     // Objects: none (prevent plugins)

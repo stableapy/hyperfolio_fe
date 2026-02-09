@@ -50,7 +50,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline';",
               "img-src 'self' data: https: blob:;",
               "font-src 'self' data:;",
-              "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.googletagmanager.com https://www.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*;",
+              "connect-src 'self' https://api.hyperfolio.xyz https://rpc.hyperlend.finance https://www.googletagmanager.com https://www.google-analytics.com https://*.walletconnect.com https://*.cloudfront.net https://raw.githubusercontent.com https://*.githubusercontent.com https://api.etherscan.io https://hyperliquid.xyz https://rpc.hyperliquid.xyz https://*.kyberswap.com http://localhost:3000 http://127.0.0.1:3000 ws://localhost:* wss://localhost:* ws://127.0.0.1:* wss://127.0.0.1:*;",
               "frame-src 'self' https://www.googletagmanager.com;",
               "object-src 'none';",
               "base-uri 'self';",

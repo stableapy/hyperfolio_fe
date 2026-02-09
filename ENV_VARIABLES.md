@@ -9,9 +9,15 @@ Copy the variables below to your `.env.local` file for local development.
 These variables are prefixed with `NEXT_PUBLIC_` and are exposed to the browser.
 
 ```env
+NEXT_PUBLIC_API_BASE_URL=https://api.hyperfolio.xyz
 NEXT_PUBLIC_API_URL=http://api.hyperfolio.xyz
 NEXT_PUBLIC_CHAIN_ID=1
 NEXT_PUBLIC_NETWORK_NAME=HyperEVM
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_xxx
+NEXT_PUBLIC_STRIPE_PRICE_STARTER_DISPLAY=$29
+NEXT_PUBLIC_STRIPE_PRICE_GROWTH_DISPLAY=$99
+NEXT_PUBLIC_STRIPE_PRICE_SCALE_DISPLAY=$299
+NEXT_PUBLIC_STRIPE_PRICE_INTERVAL=/month
 
 # GlueX Widget Integration
 NEXT_PUBLIC_GLUEX_INTEGRATOR=your_integrator_id
@@ -20,6 +26,16 @@ NEXT_PUBLIC_GLUEX_API_KEY=your_api_key
 # Wallet Connection (optional)
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 ```
+
+`NEXT_PUBLIC_API_BASE_URL` is used by the billing/subscription frontend flow (`/billing`) to call:
+
+- `POST /subscriptions/create-checkout-session`
+- `POST /subscriptions/api-key`
+- `POST /subscriptions/rotate-key`
+- `GET /token/list` (integration test helper)
+
+Pricing card display on `/billing` reads the optional public variables above.
+Note: backend `STRIPE_PRICE_*` values are Stripe price IDs, not readable amounts.
 
 ## Server-Only Variables
 
