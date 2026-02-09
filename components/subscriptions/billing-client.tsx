@@ -5,11 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import {
   checkTokenList,
-  createPortalSession,
   createCheckoutSession,
   getSubscriptionMe,
   getApiKeyFromSession,
-  logoutRecoverySession,
   requestRecoveryCode,
   rotateApiKeyWithRecovery,
   SubscriptionApiError,
@@ -148,11 +146,11 @@ export function BillingClient() {
   const [isRequestingRecoveryCode, setIsRequestingRecoveryCode] =
     useState(false);
   const [isVerifyingRecoveryCode, setIsVerifyingRecoveryCode] = useState(false);
-  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [isUpgradingPlan, setIsUpgradingPlan] = useState<BillingPlanId | null>(
+    null
+  );
   const [isRotatingRecoveryKey, setIsRotatingRecoveryKey] = useState(false);
-  const [isLoggingOutRecovery, setIsLoggingOutRecovery] = useState(false);
   const lastHandledSessionId = useRef<string | null>(null);
-  const portalTabRef = useRef<Window | null>(null);
 
   const sessionId = searchParams.get('session_id');
   const checkoutCancelled = searchParams.get('checkout') === 'cancelled';
@@ -339,11 +337,11 @@ export function BillingClient() {
 
     setIsVerifyingRecoveryCode(true);
     try {
-      const payload = await verifyRecoveryCode({
+      await verifyRecoveryCode({
         email: normalizedEmail,
         code: normalizedCode,
       });
-      setRecoveryStatus(`Recovery session active until ${payload.expiresAt}.`);
+      setRecoveryStatus('');
       setRecoveryStep('session');
       setBillingMode('recover');
       setRecoveryCode('');
@@ -356,41 +354,51 @@ export function BillingClient() {
     }
   };
 
-  const handleOpenBillingPortal = async () => {
-    if (isOpeningPortal) {
+  const handleRecoveryPlanCheckout = async (planId: BillingPlanId) => {
+    if (!recoveryMe) {
+      setRecoveryError('No active recovery session.');
+      return;
+    }
+
+    if (isUpgradingPlan) {
+      return;
+    }
+
+    if (!hasPublicApiBaseUrl()) {
+      setRecoveryError('NEXT_PUBLIC_API_BASE_URL is missing.');
       return;
     }
 
     setRecoveryError('');
     setRecoveryStatus('');
 
-    const portalWindow = window.open('', '_blank');
-    if (!portalWindow) {
+    const checkoutWindow = window.open('', '_blank');
+    if (!checkoutWindow) {
       setRecoveryError('Popup blocked. Please allow popups and try again.');
       return;
     }
 
-    portalWindow.document.title = 'Hyperfolio Billing Portal';
-    if (portalWindow.document.body) {
-      portalWindow.document.body.innerHTML =
-        '<p style="font-family: monospace; padding: 16px;">Opening Stripe billing portal...</p>';
+    checkoutWindow.document.title = 'Hyperfolio Checkout';
+    if (checkoutWindow.document.body) {
+      checkoutWindow.document.body.innerHTML =
+        '<p style="font-family: monospace; padding: 16px;">Opening Stripe checkout...</p>';
     }
-    portalTabRef.current = portalWindow;
-
-    setIsOpeningPortal(true);
+    setIsUpgradingPlan(planId);
     try {
-      const payload = await createPortalSession({
-        returnUrl: `${window.location.origin}/billing`,
+      const checkout = await createCheckoutSession({
+        planId,
+        email: recoveryMe.email,
+        successUrl: `${window.location.origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/billing/cancel`,
       });
-      portalWindow.location.href = payload.url;
+      checkoutWindow.location.href = checkout.checkoutUrl;
     } catch (error) {
-      if (portalTabRef.current && !portalTabRef.current.closed) {
-        portalTabRef.current.close();
+      if (!checkoutWindow.closed) {
+        checkoutWindow.close();
       }
-      portalTabRef.current = null;
       setRecoveryError(formatApiError(error));
     } finally {
-      setIsOpeningPortal(false);
+      setIsUpgradingPlan(null);
     }
   };
 
@@ -421,24 +429,6 @@ export function BillingClient() {
       setRecoveryError(formatApiError(error));
     } finally {
       setIsRotatingRecoveryKey(false);
-    }
-  };
-
-  const handleRecoveryLogout = async () => {
-    setRecoveryError('');
-    setRecoveryStatus('');
-    setIsLoggingOutRecovery(true);
-    try {
-      await logoutRecoverySession();
-      setRecoveryMe(null);
-      setRecoveryStep('email');
-      setRecoveryCode('');
-      setRecoveryDebugCode('');
-      setRecoveryStatus('Recovery session closed.');
-    } catch (error) {
-      setRecoveryError(formatApiError(error));
-    } finally {
-      setIsLoggingOutRecovery(false);
     }
   };
 
@@ -537,7 +527,8 @@ export function BillingClient() {
               Recover Existing Subscription
             </h2>
             <p className="text-theme-text-muted mb-4 font-mono text-xs">
-              Use OTP by email to restore access and open Stripe Billing Portal.
+              Use OTP by email to restore access, then pick a plan to upgrade in
+              Stripe checkout.
             </p>
 
             {isLoadingRecoveryMe ? (
@@ -546,81 +537,30 @@ export function BillingClient() {
               </p>
             ) : recoveryStep === 'session' && recoveryMe ? (
               <div>
-                <p className="text-theme-text-secondary mb-3 font-mono text-xs">
-                  Session active. You can manage billing and rotate your API
-                  key.
-                </p>
-                <div className="bg-theme-bg border-theme-border/70 mb-4 rounded-sm border p-3">
-                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                    email: {recoveryMe.email}
-                  </p>
-                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                    plan: {recoveryMe.plan} | status:{' '}
-                    {recoveryMe.subscriptionStatus}
-                  </p>
-                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                    access active: {recoveryMe.accessActive ? 'yes' : 'no'}
-                  </p>
-                  <p className="text-theme-text-secondary mb-2 font-mono text-xs">
-                    limits: {recoveryMe.dailyLimit}/day,{' '}
-                    {recoveryMe.rateLimitPerSecond}/s
-                  </p>
-                  {recoveryMe.maskedApiKey && (
-                    <p className="text-theme-text-secondary font-mono text-xs">
-                      api key: {recoveryMe.maskedApiKey}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <button
-                    type="button"
-                    onClick={handleOpenBillingPortal}
-                    disabled={isOpeningPortal}
-                    className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                  >
-                    {isOpeningPortal
-                      ? 'opening portal...'
-                      : 'manage --subscription'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRotateKeyWithRecovery}
-                    disabled={isRotatingRecoveryKey}
-                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                  >
-                    {isRotatingRecoveryKey
-                      ? 'rotating...'
-                      : 'rotate --api-key (session)'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRecoveryLogout}
-                    disabled={isLoggingOutRecovery}
-                    className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                  >
-                    {isLoggingOutRecovery
-                      ? 'logging out...'
-                      : 'logout --session'}
-                  </button>
-                </div>
-
                 <div className="bg-theme-bg border-theme-border/70 rounded-sm border p-4">
                   <p className="text-theme-text-primary mb-3 font-mono text-xs font-semibold">
                     Plan comparison
                   </p>
                   <p className="text-theme-text-muted mb-4 font-mono text-xs">
-                    Your current plan is highlighted. Use{' '}
-                    <strong>manage --subscription</strong> to upgrade instantly
-                    in Stripe.
+                    Your current plan is highlighted. Clicking another plan
+                    opens Stripe checkout in a new tab.
                   </p>
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {BILLING_PLAN_IDS.map((planId) => {
                       const plan = PLAN_LABELS[planId];
+                      const targetIndex = BILLING_PLAN_IDS.indexOf(planId);
+                      const currentIndex = currentRecoveredPlanId
+                        ? BILLING_PLAN_IDS.indexOf(currentRecoveredPlanId)
+                        : -1;
                       const isCurrentPlan = currentRecoveredPlanId === planId;
                       const isRecommendedUpgrade =
                         !isCurrentPlan && nextRecoveredPlanId === planId;
+                      const isUpgrade =
+                        currentIndex >= 0 && targetIndex > currentIndex;
+                      const isDowngrade =
+                        currentIndex >= 0 && targetIndex < currentIndex;
+                      const isCardLoading = isUpgradingPlan === planId;
 
                       return (
                         <article
@@ -680,26 +620,56 @@ export function BillingClient() {
                             ))}
                           </ul>
 
-                          <div
-                            className={`mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold ${
-                              isCurrentPlan
-                                ? 'bg-theme-accent text-theme-bg border-theme-accent'
-                                : isRecommendedUpgrade
-                                  ? 'border-theme-accent/40 text-theme-accent'
-                                  : 'border-theme-border/60 text-theme-text-secondary'
-                            }`}
-                          >
-                            {isCurrentPlan
-                              ? 'current plan'
-                              : isRecommendedUpgrade
-                                ? 'recommended upgrade'
-                                : 'available plan'}
-                          </div>
+                          {isCurrentPlan ? (
+                            <div className="bg-theme-accent text-theme-bg border-theme-accent mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold">
+                              current plan
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleRecoveryPlanCheckout(planId)
+                              }
+                              disabled={isUpgradingPlan !== null}
+                              className={`mt-auto rounded-md border px-3 py-2 text-center font-mono text-xs font-semibold disabled:opacity-60 ${
+                                isRecommendedUpgrade
+                                  ? 'bg-theme-accent/10 border-theme-accent/40 text-theme-accent'
+                                  : 'border-theme-border/60 text-theme-text-secondary hover:border-theme-accent/40 hover:text-theme-accent'
+                              }`}
+                            >
+                              {isCardLoading
+                                ? 'opening checkout...'
+                                : isUpgrade
+                                  ? 'upgrade plan'
+                                  : isDowngrade
+                                    ? 'switch plan'
+                                    : 'select plan'}
+                            </button>
+                          )}
                         </article>
                       );
                     })}
                   </div>
                 </div>
+
+                {!storedCredentials && (
+                  <div className="bg-theme-bg border-theme-border/70 mt-4 rounded-sm border p-4">
+                    <p className="text-theme-text-secondary mb-3 font-mono text-xs">
+                      API key not loaded on this device yet. Rotate once to
+                      generate and display a fresh key below.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRotateKeyWithRecovery}
+                      disabled={isRotatingRecoveryKey}
+                      className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                    >
+                      {isRotatingRecoveryKey
+                        ? 'rotating...'
+                        : 'rotate --key (recovery session)'}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : recoveryStep === 'email' ? (
               <div>
@@ -778,7 +748,7 @@ export function BillingClient() {
               </div>
             )}
 
-            {recoveryStatus && (
+            {recoveryStatus && recoveryStep !== 'session' && (
               <p className="text-theme-text-secondary mb-2 font-mono text-xs">
                 {recoveryStatus}
               </p>
