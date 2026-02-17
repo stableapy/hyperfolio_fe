@@ -1,8 +1,8 @@
 export const SUPPORTED_PLAN_IDS = [
+  'solo',
   'starter',
   'growth',
   'scale',
-  'business',
 ] as const;
 
 export type PlanId = (typeof SUPPORTED_PLAN_IDS)[number];

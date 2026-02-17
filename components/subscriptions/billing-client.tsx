@@ -6,6 +6,7 @@ import { Check } from 'lucide-react';
 import {
   checkTokenList,
   createCheckoutSession,
+  createPortalSession,
   getSubscriptionMe,
   getApiKeyFromSession,
   requestRecoveryCode,
@@ -130,6 +131,37 @@ function getNextPlanId(plan: BillingPlanId | null): BillingPlanId | null {
   return BILLING_PLAN_IDS[index + 1];
 }
 
+type StatusStyle = {
+  label: string;
+  className: string;
+};
+
+function getSubscriptionStatusStyle(status: string | undefined): StatusStyle {
+  if (!status) {
+    return { label: 'Unknown', className: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
+  }
+
+  const normalized = status.toLowerCase();
+  switch (normalized) {
+    case 'active':
+    case 'trialing':
+      return { label: 'Active', className: 'bg-green-500/15 text-green-400 border-green-500/30' };
+    case 'canceled':
+      return { label: 'Canceled', className: 'bg-red-500/15 text-red-400 border-red-500/30' };
+    case 'past_due':
+      return { label: 'Past Due', className: 'bg-orange-500/15 text-orange-400 border-orange-500/30' };
+    case 'incomplete':
+    case 'incomplete_expired':
+      return { label: 'Incomplete', className: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' };
+    case 'unpaid':
+      return { label: 'Unpaid', className: 'bg-red-500/15 text-red-400 border-red-500/30' };
+    case 'paused':
+      return { label: 'Paused', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30' };
+    default:
+      return { label: status, className: 'bg-gray-500/15 text-gray-400 border-gray-500/30' };
+  }
+}
+
 export function BillingClient() {
   const searchParams = useSearchParams();
   const [billingMode, setBillingMode] = useState<'subscribe' | 'recover'>(
@@ -161,6 +193,7 @@ export function BillingClient() {
     null
   );
   const [isRotatingRecoveryKey, setIsRotatingRecoveryKey] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const lastHandledSessionId = useRef<string | null>(null);
 
   const sessionId = searchParams.get('session_id');
@@ -440,6 +473,27 @@ export function BillingClient() {
     }
   };
 
+  const handleOpenStripePortal = async () => {
+    setRecoveryError('');
+    setIsOpeningPortal(true);
+    try {
+      const portal = await createPortalSession({
+        returnUrl: typeof window !== 'undefined'
+          ? `${window.location.origin}/billing`
+          : undefined,
+      });
+      if (portal.url) {
+        window.location.assign(portal.url);
+      } else {
+        setRecoveryError('Failed to get portal URL from server.');
+      }
+    } catch (error) {
+      setRecoveryError(formatApiError(error));
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  };
+
   const handleBackToRecoveryEmailStep = () => {
     setBillingMode('recover');
     setRecoveryStep('email');
@@ -658,6 +712,29 @@ export function BillingClient() {
                       );
                     })}
                   </div>
+                </div>
+
+                {/* Subscription Status & Management */}
+                <div className="bg-theme-bg border-theme-border/70 mt-4 rounded-sm border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-theme-text-muted font-mono text-xs">Status:</span>
+                      <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase ${getSubscriptionStatusStyle(recoveryMe?.subscriptionStatus).className}`}>
+                        {getSubscriptionStatusStyle(recoveryMe?.subscriptionStatus).label}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleOpenStripePortal()}
+                      disabled={isOpeningPortal}
+                      className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                    >
+                      {isOpeningPortal ? 'opening...' : 'manage --subscription'}
+                    </button>
+                  </div>
+                  <p className="text-theme-text-muted mt-2 font-mono text-[10px]">
+                    Manage payment methods, view invoices, or cancel subscription via Stripe portal.
+                  </p>
                 </div>
 
                 {!storedCredentials && (
