@@ -197,16 +197,16 @@ export function PortfolioHero({
       />
 
       {/* Content Layer */}
-      <div className="relative z-10 container mx-auto flex flex-1 flex-col px-4 sm:px-6 md:px-10 lg:px-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-3 sm:px-6 md:px-10 lg:px-16">
         {/* Header with wallet selector */}
         <header className="pt-3 pb-2 sm:pt-6 sm:pb-6 md:pt-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div>
+            <div className="min-w-0 flex-shrink-0">
               <div className="mb-0.5 flex items-center gap-2 sm:mb-2 sm:gap-3">
-                <span className="text-theme-accent font-mono text-lg font-bold sm:text-2xl">
+                <span className="text-theme-accent font-mono text-lg font-bold sm:text-2xl flex-shrink-0">
                   &gt;
                 </span>
-                <h1 className="font-mono text-xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                <h1 className="font-mono text-xl font-bold tracking-tight sm:text-3xl md:text-4xl min-w-0">
                   <span className="text-theme-accent dark:text-glow-green">
                     HYPER
                   </span>
@@ -219,26 +219,26 @@ export function PortfolioHero({
             </div>
 
             {/* Controls: Sync, Theme Toggle, Privacy & Wallet Selector */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <ThemeToggle />
               <button
                 type="button"
                 onClick={() => togglePrivacyMode()}
-                className="bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150"
+                className="bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150 min-h-[44px] min-w-[44px]"
                 aria-label={
                   privacyMode
                     ? 'Show portfolio values'
                     : 'Hide portfolio values'
                 }
               >
-                <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-1.5 py-1.5 sm:px-2 sm:py-2">
+                <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-2 py-2.5 sm:px-2 sm:py-2 flex items-center justify-center min-w-[44px] sm:min-w-0">
                   {privacyMode ? (
-                    <EyeOff className="text-theme-accent h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <EyeOff className="text-theme-accent h-4 w-4 sm:h-4 sm:w-4" />
                   ) : (
-                    <Eye className="text-theme-accent h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <Eye className="text-theme-accent h-4 w-4 sm:h-4 sm:w-4" />
                   )}
                 </div>
-                <span className="text-theme-text-muted hidden px-1.5 font-mono text-[9px] sm:inline sm:px-2 sm:text-[10px]">
+                <span className="text-theme-text-muted hidden sm:block px-1.5 font-mono text-[9px] sm:px-2 sm:text-[10px]">
                   {privacyMode ? '--show' : '--hide'}
                 </span>
               </button>
@@ -255,7 +255,7 @@ export function PortfolioHero({
               <button
                 type="button"
                 onClick={handleRefresh}
-                className="bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150 disabled:opacity-50"
+                className="bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150 disabled:opacity-50 min-h-[44px] min-w-[44px]"
                 aria-label="Refresh data"
                 disabled={
                   isRefreshing ||
@@ -263,12 +263,12 @@ export function PortfolioHero({
                   loading.isPositionsLoading
                 }
               >
-                <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-1.5 py-1.5 sm:px-2 sm:py-2">
+                <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-2 py-2.5 sm:px-2 sm:py-2 flex items-center justify-center min-w-[44px] sm:min-w-0">
                   <RefreshCw
-                    className={`text-theme-accent h-3.5 w-3.5 sm:h-4 sm:w-4 ${isRefreshing || loading.isWalletDataLoading || loading.isPositionsLoading ? 'animate-spin' : ''}`}
+                    className={`text-theme-accent h-4 w-4 sm:h-4 sm:w-4 ${isRefreshing || loading.isWalletDataLoading || loading.isPositionsLoading ? 'animate-spin' : ''}`}
                   />
                 </div>
-                <span className="text-theme-text-muted hidden px-1.5 font-mono text-[9px] sm:inline sm:px-2 sm:text-[10px]">
+                <span className="text-theme-text-muted hidden sm:block px-1.5 font-mono text-[9px] sm:px-2 sm:text-[10px]">
                   --sync
                 </span>
               </button>
@@ -277,19 +277,21 @@ export function PortfolioHero({
         </header>
 
         {/* Main Content - Portfolio Value & Stats - Centered vertically */}
-        <div className="flex flex-1 flex-col justify-center pb-16 sm:pb-36 md:pb-52 lg:pb-64">
+        <div className="flex flex-1 flex-col justify-center pb-12 sm:pb-24 md:pb-32 lg:pb-48">
           {/* Content with granular loading states - show UI immediately, skeleton only data */}
-          <div className="max-w-4xl space-y-3 sm:space-y-6 md:space-y-8">
+          <div className="max-w-full w-full space-y-3 sm:space-y-6 md:space-y-8">
             {/* Portfolio Value - Shows actual value with animation as data loads */}
-            <div className="min-h-[3rem] font-mono leading-none tracking-tight sm:min-h-[5rem] md:min-h-[6rem] lg:min-h-[8rem]">
-              <span className="text-theme-text-primary text-4xl font-bold transition-all duration-300 sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl">
-                {privacyMode ? '••••••' : `$${formattedValue.intPart}`}
-              </span>
-              {!privacyMode && (
-                <span className="text-theme-text-secondary text-2xl font-bold transition-all duration-300 sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl">
-                  {formattedValue.decPart}
+            <div className="min-h-[3.5rem] font-mono leading-none tracking-tight overflow-hidden sm:min-h-[5rem] md:min-h-[6rem] lg:min-h-[8rem]">
+              <div className="flex flex-wrap items-baseline gap-0">
+                <span className="text-theme-text-primary text-3xl font-bold transition-all duration-300 sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl">
+                  {privacyMode ? '••••••' : `$${formattedValue.intPart}`}
                 </span>
-              )}
+                {!privacyMode && (
+                  <span className="text-theme-text-secondary text-xl font-bold transition-all duration-300 sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl">
+                    {formattedValue.decPart}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Terminal-style loading/streaming indicator - fixed height to prevent layout shift */}
@@ -337,19 +339,19 @@ export function PortfolioHero({
 
       {/* Scroll indicator - Positioned absolutely to avoid chart overlap */}
       <div
-        className={`absolute bottom-3 left-1/2 z-50 -translate-x-1/2 transition-opacity duration-500 sm:bottom-6 md:bottom-8 ${hasScrolled ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+        className={`absolute bottom-2 left-1/2 z-50 -translate-x-1/2 transition-opacity duration-500 sm:bottom-6 md:bottom-8 ${hasScrolled ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
       >
         <button
           type="button"
           onClick={onScrollToContent}
-          className="text-theme-text-secondary hover:text-theme-accent relative -m-8 flex animate-bounce flex-col items-center gap-1.5 p-8 transition-colors"
+          className="text-theme-text-secondary hover:text-theme-accent relative -m-8 flex min-h-[44px] min-w-[44px] animate-bounce flex-col items-center gap-1.5 p-8 transition-colors"
           aria-label="Scroll to content"
         >
           <span className="font-mono text-[10px] tracking-wider uppercase sm:hidden">
             Scroll
           </span>
           <svg
-            className="h-4 w-4 sm:h-5 sm:w-5"
+            className="h-5 w-5 sm:h-5 sm:w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -369,14 +371,14 @@ export function PortfolioHero({
       <button
         type="button"
         onClick={() => setIsChartModalOpen(true)}
-        className={`bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 group absolute right-4 bottom-[28%] z-30 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150 sm:right-6 sm:bottom-[32%] md:right-10 md:bottom-[36%] lg:right-16 lg:bottom-[38%] ${
+        className={`bg-theme-card-bg/90 border-theme-border/70 hover:border-theme-accent/50 group absolute bottom-[20%] right-3 z-30 flex items-center overflow-hidden rounded-sm border backdrop-blur-sm transition-all duration-150 sm:bottom-[25%] sm:right-6 md:bottom-[30%] md:right-10 lg:bottom-[35%] lg:right-16 ${
           showChart && !privacyMode && chartData.length > 0
             ? 'opacity-100'
             : 'pointer-events-none opacity-0'
         }`}
         aria-label="Expand chart"
       >
-        <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-1.5 py-1 sm:px-2 sm:py-1.5">
+        <div className="bg-theme-accent/10 border-theme-accent/20 border-r px-1.5 py-1 sm:px-2 sm:py-1.5 flex items-center justify-center">
           <span className="text-theme-accent font-mono text-[10px] font-bold sm:text-xs">
             &gt;
           </span>
