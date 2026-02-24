@@ -11,7 +11,7 @@ import {
 interface SectionNavProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
-  sections?: SectionNavItem[];
+  sections?: readonly SectionNavItem[];
 }
 
 export const SECTION_NAV_ITEMS = [

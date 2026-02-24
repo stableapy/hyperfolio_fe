@@ -95,7 +95,7 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
             const posValue = parseFloat(pos.totalValueUSD || '0');
             const posApy = extractApy(pos.details);
             const posYield = extractEstimatedYield(pos.details);
-            const posHealthRatio = extractHealthRatio(pos as Record<string, unknown>);
+            const posHealthRatio = extractHealthRatio(pos.details);
 
             // Only include supplied positions in yield calculations (borrows are expenses, not income)
             if (pos.positionType !== 'borrowed') {

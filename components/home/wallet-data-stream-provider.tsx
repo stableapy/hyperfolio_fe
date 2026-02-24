@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useMemo } from "react"
 import { useWalletStore } from "@/lib/store/wallet-store"
-import { useWalletDataStream, type WalletDataType } from "@/hooks/use-wallet-data-stream"
+import { useWalletDataStream } from "@/hooks/use-wallet-data-stream"
+import type { WalletDataType } from "@/lib/types/api"
 
 /**
  * Provider component that initiates wallet data streaming at the page level.
