@@ -71,7 +71,7 @@ export function TransactionsSection({
           LOADING_TRANSACTIONS_FAILED
         </div>
         <div className="text-theme-text-muted mb-4 font-mono text-xs">
-          # {error}
+          # {error instanceof Error ? error.message : String(error)}
         </div>
         <button
           type="button"

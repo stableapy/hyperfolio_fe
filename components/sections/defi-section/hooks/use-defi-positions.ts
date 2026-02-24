@@ -77,9 +77,11 @@ export function useDefiPositions({
               : undefined;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const details = pos.details as any;
+            // Check for healthRatio in details (StreamedPosition doesn't have healthRatio at top level)
+            const healthRatioValue = details?.healthRatio ?? details?.health_ratio;
             const positionDetails =
-              pos.healthRatio !== undefined
-                ? { ...details, healthRatio: pos.healthRatio }
+              healthRatioValue !== undefined
+                ? { ...details, healthRatio: healthRatioValue }
                 : details;
 
             return {

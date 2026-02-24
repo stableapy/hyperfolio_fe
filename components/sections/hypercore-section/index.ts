@@ -29,7 +29,7 @@ export type {
   HypercoreData,
   TabId,
   TabConfig,
-  HypercoerSectionProps,
+  HypercoreSectionProps,
   SummaryCardsProps,
   TabNavigationProps,
   SpotTabProps,

@@ -120,7 +120,7 @@ export type TabId = 'spot' | 'perp' | 'staking' | 'vaults';
 export interface TabConfig {
   id: TabId;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
 }
 
