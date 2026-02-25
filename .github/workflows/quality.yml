@@ -76,6 +76,7 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    continue-on-error: true  # Allow workflow to pass if Code Scanning is not enabled
     permissions:
       actions: read
       contents: read
