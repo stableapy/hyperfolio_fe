@@ -473,10 +473,12 @@ export function useYieldData(
           ? protocolNames.map((name) => ({
               value: name,
               label: name,
+              count: undefined as number | undefined,
             }))
           : Array.from(fallbackProtocols).map((name) => ({
               value: name,
               label: name,
+              count: undefined as number | undefined,
             }));
     const addressTokensSource =
       tokenAddressFilters.length > 0
@@ -492,6 +494,7 @@ export function useYieldData(
         ? tokenSymbols.map((symbol) => ({
             value: symbol,
             label: symbol,
+            count: undefined as number | undefined,
           }))
         : Array.from(fallbackTokens).map((symbol) => ({
             value: symbol,

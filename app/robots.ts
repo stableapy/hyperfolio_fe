@@ -39,8 +39,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-    // @ts-expect-error - Next.js doesn't have official typing for host yet
-    host: baseUrl,
   }
 }
 

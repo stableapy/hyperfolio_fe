@@ -9,6 +9,9 @@ import type {
   AggregateData,
 } from '@/lib/types/api'
 
+// Re-export WalletDataType for consumers
+export type { WalletDataType } from '@/lib/types/api'
+
 export interface UseWalletDataStreamOptions {
   addresses: string[]
   skipCache?: boolean
