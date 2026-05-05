@@ -213,6 +213,21 @@ export default function ApiDocsPage() {
                   <ExternalLink className="text-theme-accent h-4 w-4 opacity-60 transition-opacity group-hover:opacity-100" />
                 </div>
               </a>
+              <Link
+                href="/billing"
+                className="group bg-theme-card-bg border-theme-border/70 hover:border-theme-accent/50 inline-flex items-center overflow-hidden rounded-sm border transition-all duration-200 hover:scale-[1.02]"
+              >
+                <div className="bg-theme-accent/10 border-theme-accent/20 group-hover:bg-theme-accent/15 border-r px-4 py-3 transition-colors">
+                  <span className="text-theme-accent font-mono text-base font-bold">
+                    &gt;
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-5 py-3">
+                  <span className="text-theme-accent font-mono text-sm font-bold sm:text-base">
+                    --manage-api-key
+                  </span>
+                </div>
+              </Link>
             </div>
 
             <p className="text-theme-text-muted mt-6 font-mono text-xs sm:text-sm">

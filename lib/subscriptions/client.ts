@@ -183,6 +183,13 @@ export async function getSubscriptionMe(): Promise<SubscriptionMeResponse> {
   });
 }
 
+export async function getApiKeyWithRecovery(): Promise<ApiKeyPayload> {
+  return requestJson<ApiKeyPayload>('/subscriptions/recover/api-key', {
+    method: 'GET',
+    credentials: 'include',
+  });
+}
+
 export async function createPortalSession(
   payload: PortalSessionPayload = {}
 ): Promise<PortalSessionResponse> {

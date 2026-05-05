@@ -26,8 +26,8 @@ export interface GetApiKeyFromSessionRequest {
 export interface ApiKeyPayload {
   apiKey: string;
   plan: PlanId;
-  dailyLimit: number;
-  rateLimitPerSecond: number;
+  dailyLimit: number | null;
+  rateLimitPerSecond: number | null;
 }
 
 export interface RotateApiKeyResponse {
@@ -60,8 +60,8 @@ export interface SubscriptionMeResponse {
   plan: PlanId;
   subscriptionStatus: string;
   graceUntil: string | null;
-  dailyLimit: number;
-  rateLimitPerSecond: number;
+  dailyLimit: number | null;
+  rateLimitPerSecond: number | null;
   hasApiKey: boolean;
   maskedApiKey: string | null;
   accessActive: boolean;

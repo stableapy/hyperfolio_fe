@@ -22,8 +22,14 @@ export function loadStoredApiCredentials(): StoredApiCredentials | null {
     if (
       typeof parsed.apiKey !== 'string' ||
       typeof parsed.plan !== 'string' ||
-      typeof parsed.dailyLimit !== 'number' ||
-      typeof parsed.rateLimitPerSecond !== 'number' ||
+      !(
+        typeof parsed.dailyLimit === 'number' ||
+        parsed.dailyLimit === null
+      ) ||
+      !(
+        typeof parsed.rateLimitPerSecond === 'number' ||
+        parsed.rateLimitPerSecond === null
+      ) ||
       typeof parsed.storedAt !== 'string'
     ) {
       return null;

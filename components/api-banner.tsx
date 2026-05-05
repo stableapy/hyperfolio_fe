@@ -35,24 +35,38 @@ export function ApiBanner() {
           {/* Separator */}
           <span className="text-theme-border font-mono text-[10px]">|</span>
 
-          {/* CTA Link - Terminal button style */}
-          <Link
-            href="/api-docs"
-            className="group bg-theme-card-bg border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border transition-all duration-150"
-          >
-            {/* Icon section */}
-            <div className="bg-theme-accent/10 border-theme-accent/20 group-hover:bg-theme-accent/15 border-r px-1.5 py-1 transition-colors">
-              <span className="text-theme-accent font-mono text-[9px] font-bold">
-                &gt;
-              </span>
-            </div>
-            {/* Label section */}
-            <div className="flex items-center gap-1 px-2 py-1">
-              <span className="text-theme-accent font-mono text-[10px] font-bold">
-                View Docs
-              </span>
-            </div>
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/api-docs"
+              className="group bg-theme-card-bg border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border transition-all duration-150"
+            >
+              <div className="bg-theme-accent/10 border-theme-accent/20 group-hover:bg-theme-accent/15 border-r px-1.5 py-1 transition-colors">
+                <span className="text-theme-accent font-mono text-[9px] font-bold">
+                  &gt;
+                </span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1">
+                <span className="text-theme-accent font-mono text-[10px] font-bold">
+                  View Docs
+                </span>
+              </div>
+            </Link>
+            <Link
+              href="/billing"
+              className="group bg-theme-card-bg border-theme-border/70 hover:border-theme-accent/50 flex items-center overflow-hidden rounded-sm border transition-all duration-150"
+            >
+              <div className="bg-theme-accent/10 border-theme-accent/20 group-hover:bg-theme-accent/15 border-r px-1.5 py-1 transition-colors">
+                <span className="text-theme-accent font-mono text-[9px] font-bold">
+                  &gt;
+                </span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1">
+                <span className="text-theme-accent font-mono text-[10px] font-bold">
+                  API Key
+                </span>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

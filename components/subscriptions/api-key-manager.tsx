@@ -33,6 +33,10 @@ function formatApiError(error: unknown): string {
   return 'Unknown error';
 }
 
+function formatLimit(value: number | null): string {
+  return typeof value === 'number' ? value.toLocaleString() : 'unlimited';
+}
+
 export function ApiKeyManager({
   initialCredentials,
   onCredentialsChange,
@@ -220,8 +224,8 @@ export function ApiKeyManager({
       </div>
 
       <div className="text-theme-text-muted mb-2 font-mono text-xs">
-        daily limit: {credentials.dailyLimit} requests | rate:{' '}
-        {credentials.rateLimitPerSecond}
+        daily limit: {formatLimit(credentials.dailyLimit)} requests | rate:{' '}
+        {formatLimit(credentials.rateLimitPerSecond)}
         /s
       </div>
       <div className="text-theme-text-muted mb-4 font-mono text-xs">

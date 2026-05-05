@@ -7,6 +7,7 @@ import {
   checkTokenList,
   createCheckoutSession,
   createPortalSession,
+  getApiKeyWithRecovery,
   getSubscriptionMe,
   getApiKeyFromSession,
   requestRecoveryCode,
@@ -193,6 +194,7 @@ export function BillingClient() {
     null
   );
   const [isRotatingRecoveryKey, setIsRotatingRecoveryKey] = useState(false);
+  const [isLoadingRecoveryKey, setIsLoadingRecoveryKey] = useState(false);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const lastHandledSessionId = useRef<string | null>(null);
 
@@ -473,6 +475,36 @@ export function BillingClient() {
     }
   };
 
+  const handleLoadKeyWithRecovery = async () => {
+    if (!recoveryMe) {
+      setRecoveryError('No active recovery session.');
+      return;
+    }
+
+    setRecoveryError('');
+    setRecoveryStatus('');
+    setTokenListStatus(null);
+    setIsLoadingRecoveryKey(true);
+    try {
+      const payload = await getApiKeyWithRecovery();
+      const saved = saveStoredApiCredentials({
+        apiKey: payload.apiKey,
+        plan: payload.plan,
+        dailyLimit: payload.dailyLimit,
+        rateLimitPerSecond: payload.rateLimitPerSecond,
+      });
+      setStoredCredentials(saved);
+
+      const status = await checkTokenList(payload.apiKey);
+      setTokenListStatus(status);
+      setRecoveryStatus('API key loaded and saved locally.');
+    } catch (error) {
+      setRecoveryError(formatApiError(error));
+    } finally {
+      setIsLoadingRecoveryKey(false);
+    }
+  };
+
   const handleOpenStripePortal = async () => {
     setRecoveryError('');
     setIsOpeningPortal(true);
@@ -740,19 +772,32 @@ export function BillingClient() {
                 {!storedCredentials && (
                   <div className="bg-theme-bg border-theme-border/70 mt-4 rounded-sm border p-4">
                     <p className="text-theme-text-secondary mb-3 font-mono text-xs">
-                      API key not loaded on this device yet. Rotate once to
-                      generate and display a fresh key below.
+                      API key not loaded on this device yet. Show the existing
+                      key from your recovery session, or rotate if you need to
+                      invalidate the previous key.
                     </p>
-                    <button
-                      type="button"
-                      onClick={handleRotateKeyWithRecovery}
-                      disabled={isRotatingRecoveryKey}
-                      className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
-                    >
-                      {isRotatingRecoveryKey
-                        ? 'rotating...'
-                        : 'rotate --key (recovery session)'}
-                    </button>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={handleLoadKeyWithRecovery}
+                        disabled={isLoadingRecoveryKey}
+                        className="bg-theme-accent/10 border-theme-accent/40 text-theme-accent rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                      >
+                        {isLoadingRecoveryKey
+                          ? 'loading...'
+                          : 'show --api-key'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRotateKeyWithRecovery}
+                        disabled={isRotatingRecoveryKey}
+                        className="bg-theme-bg border-theme-border/70 text-theme-text-secondary rounded-sm border px-3 py-2 font-mono text-xs font-semibold disabled:opacity-50"
+                      >
+                        {isRotatingRecoveryKey
+                          ? 'rotating...'
+                          : 'rotate --key'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -833,7 +878,7 @@ export function BillingClient() {
               </div>
             )}
 
-            {recoveryStatus && recoveryStep !== 'session' && (
+            {recoveryStatus && (
               <p className="text-theme-text-secondary mb-2 font-mono text-xs">
                 {recoveryStatus}
               </p>
