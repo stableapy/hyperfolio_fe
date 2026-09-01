@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DollarSign, TrendingUp, Lock, Vault } from 'lucide-react';
+import { CircleDot, DollarSign, TrendingUp, Lock, Vault } from 'lucide-react';
 import { TerminalCard } from '@/components/ui/terminal-card';
 import { useWalletStore } from '@/lib/store/wallet-store';
 import { useHypercoreData } from './hooks';
@@ -10,6 +10,7 @@ import { TabNavigation } from './tab-navigation';
 import { ContentSkeleton } from './content-skeleton';
 import { SpotTab } from './spot-tab';
 import { PerpTab } from './perp-tab';
+import { OutcomesTab } from './outcomes-tab';
 import { StakingTab } from './staking-tab';
 import { VaultsTab } from './vaults-tab';
 import type { HypercoreSectionProps, TabId, TabConfig } from './types';
@@ -19,6 +20,12 @@ import type { HypercoreSectionProps, TabId, TabConfig } from './types';
 const TABS: TabConfig[] = [
   { id: 'spot', label: 'Spot', icon: DollarSign, color: 'var(--theme-accent)' },
   { id: 'perp', label: 'Perp', icon: TrendingUp, color: 'var(--theme-cyan)' },
+  {
+    id: 'outcomes',
+    label: 'Outcomes',
+    icon: CircleDot,
+    color: 'var(--theme-cyan)',
+  },
   {
     id: 'staking',
     label: 'Staking',
@@ -52,6 +59,7 @@ function getTerminalCommand(activeTab: TabId): string {
   const commands: Record<TabId, string> = {
     spot: 'hypercore --spot',
     perp: 'hypercore --perp',
+    outcomes: 'hypercore --outcomes',
     staking: 'hypercore --staking',
     vaults: 'hypercore --vaults',
   };
@@ -113,6 +121,19 @@ export function HypercoreSection({ isLoading = false }: HypercoreSectionProps) {
               marginBalance={
                 hypercoreData.perpPositions?.margin?.usdcBalance || '0'
               }
+              accountMode={
+                hypercoreData.perpPositions?.margin?.accountMode || 'unknown'
+              }
+              dexBalances={
+                hypercoreData.perpPositions?.margin?.dexBalances || []
+              }
+              privacyMode={privacyMode}
+            />
+          )}
+
+          {activeTab === 'outcomes' && hasData && (
+            <OutcomesTab
+              balances={hypercoreData.spotBalances}
               privacyMode={privacyMode}
             />
           )}

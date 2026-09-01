@@ -7,6 +7,7 @@ import type {
   SpotBalance,
   PerpPosition,
   PerpPositionDetail,
+  DexBalance,
   StakingInfo,
   VaultInfo,
   PortfolioSummary,
@@ -20,7 +21,13 @@ function createEmptyAggregatedData(): HypercoreData {
     spotBalances: [],
     perpPositions: {
       positions: [],
-      margin: { usdcBalance: '0.0', lastUpdate: Date.now() },
+      margin: {
+        accountMode: 'unknown',
+        usdcBalance: '0.0',
+        accountValueUsd: '0.0',
+        dexBalances: [],
+        lastUpdate: Date.now(),
+      },
     },
     stakingInfo: {
       totalHype: '0.0',
@@ -90,10 +97,18 @@ function validateSpotBalances(data: unknown): SpotBalance[] {
     } else if (isString(item.image_url)) {
       imageUrl = item.image_url;
     }
+    const outcome = isObject(item.outcome) ? item.outcome : null;
+    const spotPair = isObject(item.spotPair) ? item.spotPair : null;
+    const evmContract = isObject(item.evmContract) ? item.evmContract : null;
+    const tokenDetails = isObject(item.tokenDetails) ? item.tokenDetails : null;
 
     return {
       coin: isString(item.coin) ? item.coin : '',
-      token: isNumber(item.token) ? item.token : 0,
+      token: isNumber(item.token)
+        ? item.token
+        : outcome && isNumber(outcome.encoding)
+          ? 100_000_000 + outcome.encoding
+          : 0,
       total: isString(item.total) ? item.total : '0',
       hold: isString(item.hold) ? item.hold : '0',
       entryNtl: isString(item.entryNtl) ? item.entryNtl : '0',
@@ -103,6 +118,145 @@ function validateSpotBalances(data: unknown): SpotBalance[] {
       symbol: isString(item.symbol) ? item.symbol : '',
       name: isString(item.name) ? item.name : '',
       decimals: isString(item.decimals) ? item.decimals : '0',
+      hip: item.hip === 4 ? 4 : 1,
+      assetKind: item.assetKind === 'outcome' ? 'outcome' : 'spot',
+      tokenId: isString(item.tokenId) ? item.tokenId : null,
+      szDecimals: isNumber(item.szDecimals) ? item.szDecimals : null,
+      weiDecimals: isNumber(item.weiDecimals) ? item.weiDecimals : null,
+      isCanonical:
+        typeof item.isCanonical === 'boolean' ? item.isCanonical : null,
+      evmContract:
+        evmContract && isString(evmContract.address)
+          ? {
+              address: evmContract.address,
+              evm_extra_wei_decimals: isNumber(
+                evmContract.evm_extra_wei_decimals
+              )
+                ? evmContract.evm_extra_wei_decimals
+                : undefined,
+            }
+          : null,
+      fullName: isString(item.fullName) ? item.fullName : null,
+      deployerTradingFeeShare: isString(item.deployerTradingFeeShare)
+        ? item.deployerTradingFeeShare
+        : null,
+      tokenDetails: tokenDetails
+        ? {
+            seededUsdc: isString(tokenDetails.seededUsdc)
+              ? tokenDetails.seededUsdc
+              : '0',
+            deployer: isString(tokenDetails.deployer)
+              ? tokenDetails.deployer
+              : null,
+            deployTime: isString(tokenDetails.deployTime)
+              ? tokenDetails.deployTime
+              : null,
+            maxSupply: isString(tokenDetails.maxSupply)
+              ? tokenDetails.maxSupply
+              : null,
+            totalSupply: isString(tokenDetails.totalSupply)
+              ? tokenDetails.totalSupply
+              : null,
+            circulatingSupply: isString(tokenDetails.circulatingSupply)
+              ? tokenDetails.circulatingSupply
+              : null,
+          }
+        : null,
+      spotPair:
+        spotPair &&
+        isString(spotPair.name) &&
+        isNumber(spotPair.index) &&
+        isNumber(spotPair.assetId)
+          ? {
+              name: spotPair.name,
+              index: spotPair.index,
+              assetId: spotPair.assetId,
+              quoteToken: isString(spotPair.quoteToken)
+                ? spotPair.quoteToken
+                : null,
+              isCanonical:
+                typeof spotPair.isCanonical === 'boolean'
+                  ? spotPair.isCanonical
+                  : null,
+            }
+          : null,
+      outcome:
+        outcome &&
+        isNumber(outcome.encoding) &&
+        isNumber(outcome.outcomeId) &&
+        isNumber(outcome.side)
+          ? {
+              encoding: outcome.encoding,
+              outcomeId: outcome.outcomeId,
+              side: outcome.side,
+              sideName: isString(outcome.sideName) ? outcome.sideName : '',
+              marketName: isString(outcome.marketName)
+                ? outcome.marketName
+                : '',
+              outcomeName: isString(outcome.outcomeName)
+                ? outcome.outcomeName
+                : '',
+              description: isString(outcome.description)
+                ? outcome.description
+                : '',
+              templateId: isString(outcome.templateId)
+                ? outcome.templateId
+                : null,
+              category: isString(outcome.category) ? outcome.category : null,
+              expiry: isString(outcome.expiry) ? outcome.expiry : null,
+              rawOutcomeName: isString(outcome.rawOutcomeName)
+                ? outcome.rawOutcomeName
+                : null,
+              rawDescription: isString(outcome.rawDescription)
+                ? outcome.rawDescription
+                : null,
+              quoteToken: isString(outcome.quoteToken)
+                ? outcome.quoteToken
+                : 'USDC',
+              venue: isString(outcome.venue) ? outcome.venue : null,
+              questionId: isNumber(outcome.questionId)
+                ? outcome.questionId
+                : null,
+              questionRole:
+                outcome.questionRole === 'named' ||
+                outcome.questionRole === 'fallback'
+                  ? outcome.questionRole
+                  : null,
+              namedOutcomes: isArray(outcome.namedOutcomes)
+                ? outcome.namedOutcomes.filter(isNumber)
+                : [],
+              settledNamedOutcomes: isArray(outcome.settledNamedOutcomes)
+                ? outcome.settledNamedOutcomes.filter(isNumber)
+                : [],
+              isSettled:
+                typeof outcome.isSettled === 'boolean'
+                  ? outcome.isSettled
+                  : null,
+              feeScale: isString(outcome.feeScale) ? outcome.feeScale : null,
+              deployerFeeScale: isString(outcome.deployerFeeScale)
+                ? outcome.deployerFeeScale
+                : null,
+              venueDeployer:
+                isObject(outcome.venueDeployer) &&
+                isString(outcome.venueDeployer.address) &&
+                isString(outcome.venueDeployer.venue)
+                  ? {
+                      address: outcome.venueDeployer.address,
+                      venue: outcome.venueDeployer.venue,
+                      subDeployers: isArray(outcome.venueDeployer.subDeployers)
+                        ? (outcome.venueDeployer.subDeployers.filter(
+                            (item): item is [string, string[]] =>
+                              isArray(item) &&
+                              item.length === 2 &&
+                              isString(item[0]) &&
+                              isArray(item[1]) &&
+                              item[1].every(isString)
+                          ) as Array<[string, string[]]>)
+                        : [],
+                    }
+                  : null,
+            }
+          : null,
     };
   });
 }
@@ -114,7 +268,13 @@ function validatePerpPositions(data: unknown): PerpPosition {
   if (!isObject(data)) {
     return {
       positions: [],
-      margin: { usdcBalance: '0.0', lastUpdate: Date.now() },
+      margin: {
+        accountMode: 'unknown',
+        usdcBalance: '0.0',
+        accountValueUsd: '0.0',
+        dexBalances: [],
+        lastUpdate: Date.now(),
+      },
     };
   }
 
@@ -190,11 +350,15 @@ function validatePerpPositions(data: unknown): PerpPosition {
               decimals: isString(positionObj.decimals)
                 ? positionObj.decimals
                 : '0',
-              isHip3: typeof positionObj.isHip3 === 'boolean'
-                ? positionObj.isHip3
-                : undefined,
+              isHip3:
+                typeof positionObj.isHip3 === 'boolean'
+                  ? positionObj.isHip3
+                  : undefined,
               dexName: isString(positionObj.dexName)
                 ? positionObj.dexName
+                : undefined,
+              collateralToken: isString(positionObj.collateralToken)
+                ? positionObj.collateralToken
                 : undefined,
             }
           : {
@@ -215,15 +379,46 @@ function validatePerpPositions(data: unknown): PerpPosition {
               decimals: '0',
               isHip3: undefined,
               dexName: undefined,
+              collateralToken: undefined,
             },
       };
     });
 
   const margin = isObject(data.margin) ? data.margin : {};
+  const dexBalances = isArray(margin.dexBalances)
+    ? margin.dexBalances.filter(isObject).map(
+        (balance): DexBalance => ({
+          dex: isString(balance.dex) ? balance.dex : '',
+          dexName: isString(balance.dexName) ? balance.dexName : '',
+          collateralToken: isNumber(balance.collateralToken)
+            ? balance.collateralToken
+            : 0,
+          collateralSymbol: isString(balance.collateralSymbol)
+            ? balance.collateralSymbol
+            : 'USDC',
+          accountValue: isString(balance.accountValue)
+            ? balance.accountValue
+            : '0',
+          accountValueUsd: isString(balance.accountValueUsd)
+            ? balance.accountValueUsd
+            : '0',
+          withdrawable: isString(balance.withdrawable)
+            ? balance.withdrawable
+            : '0',
+        })
+      )
+    : [];
   return {
     positions: validatedPositions,
     margin: {
+      accountMode: isString(margin.accountMode)
+        ? margin.accountMode
+        : 'unknown',
       usdcBalance: isString(margin.usdcBalance) ? margin.usdcBalance : '0.0',
+      accountValueUsd: isString(margin.accountValueUsd)
+        ? margin.accountValueUsd
+        : '0.0',
+      dexBalances,
       lastUpdate: isNumber(margin.lastUpdate) ? margin.lastUpdate : Date.now(),
     },
   };
@@ -391,7 +586,9 @@ function aggregateSpotBalances(
   newBalances: SpotBalance[]
 ): void {
   newBalances.forEach((balance) => {
-    const existing = aggregated.find((b) => b.coin === balance.coin);
+    const existing = aggregated.find(
+      (item) => item.token === balance.token && item.tokenId === balance.tokenId
+    );
     if (existing) {
       existing.total = (
         parseFloat(existing.total) + parseFloat(balance.total)
@@ -474,6 +671,37 @@ function aggregatePerpPositions(
     parseFloat(aggregated.margin.usdcBalance) +
     parseFloat(newPerp.margin.usdcBalance)
   ).toString();
+  aggregated.margin.accountValueUsd = (
+    parseFloat(aggregated.margin.accountValueUsd) +
+    parseFloat(newPerp.margin.accountValueUsd)
+  ).toString();
+  aggregated.margin.accountMode =
+    aggregated.margin.accountMode === 'unknown'
+      ? newPerp.margin.accountMode
+      : aggregated.margin.accountMode === newPerp.margin.accountMode
+        ? aggregated.margin.accountMode
+        : 'mixed';
+  newPerp.margin.dexBalances.forEach((balance) => {
+    const existing = aggregated.margin.dexBalances.find(
+      (item) =>
+        item.dex === balance.dex &&
+        item.collateralToken === balance.collateralToken
+    );
+    if (existing) {
+      existing.accountValue = (
+        parseFloat(existing.accountValue) + parseFloat(balance.accountValue)
+      ).toString();
+      existing.accountValueUsd = (
+        parseFloat(existing.accountValueUsd) +
+        parseFloat(balance.accountValueUsd)
+      ).toString();
+      existing.withdrawable = (
+        parseFloat(existing.withdrawable) + parseFloat(balance.withdrawable)
+      ).toString();
+    } else {
+      aggregated.margin.dexBalances.push({ ...balance });
+    }
+  });
   // Update lastUpdate to the most recent
   aggregated.margin.lastUpdate = Math.max(
     aggregated.margin.lastUpdate,

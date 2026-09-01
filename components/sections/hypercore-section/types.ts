@@ -12,6 +12,58 @@ export interface SpotBalance {
   symbol: string;
   name: string;
   decimals: string;
+  hip?: 1 | 4;
+  assetKind?: 'spot' | 'outcome';
+  tokenId?: string | null;
+  szDecimals?: number | null;
+  weiDecimals?: number | null;
+  isCanonical?: boolean | null;
+  evmContract?: { address: string; evm_extra_wei_decimals?: number } | null;
+  fullName?: string | null;
+  deployerTradingFeeShare?: string | null;
+  tokenDetails?: {
+    seededUsdc: string;
+    deployer: string | null;
+    deployTime: string | null;
+    maxSupply: string | null;
+    totalSupply: string | null;
+    circulatingSupply: string | null;
+  } | null;
+  spotPair?: {
+    name: string;
+    index: number;
+    assetId: number;
+    quoteToken: string | null;
+    isCanonical: boolean | null;
+  } | null;
+  outcome?: {
+    encoding: number;
+    outcomeId: number;
+    side: number;
+    sideName: string;
+    marketName: string;
+    outcomeName: string;
+    description: string;
+    templateId: string | null;
+    category: string | null;
+    expiry: string | null;
+    rawOutcomeName: string | null;
+    rawDescription: string | null;
+    quoteToken: string;
+    venue: string | null;
+    questionId: number | null;
+    questionRole: 'named' | 'fallback' | null;
+    namedOutcomes: number[];
+    settledNamedOutcomes: number[];
+    isSettled: boolean | null;
+    feeScale: string | null;
+    deployerFeeScale: string | null;
+    venueDeployer: {
+      address: string;
+      venue: string;
+      subDeployers: Array<[string, string[]]>;
+    } | null;
+  } | null;
 }
 
 export interface PerpPositionDetail {
@@ -41,13 +93,27 @@ export interface PerpPositionDetail {
     decimals: string;
     isHip3?: boolean;
     dexName?: string;
+    collateralToken?: string;
   };
+}
+
+export interface DexBalance {
+  dex: string;
+  dexName: string;
+  collateralToken: number;
+  collateralSymbol: string;
+  accountValue: string;
+  accountValueUsd: string;
+  withdrawable: string;
 }
 
 export interface PerpPosition {
   positions: PerpPositionDetail[];
   margin: {
+    accountMode: string;
     usdcBalance: string;
+    accountValueUsd: string;
+    dexBalances: DexBalance[];
     lastUpdate: number;
   };
 }
@@ -115,12 +181,15 @@ export interface HypercoreData {
   portfolioSummary: PortfolioSummary;
 }
 
-export type TabId = 'spot' | 'perp' | 'staking' | 'vaults';
+export type TabId = 'spot' | 'perp' | 'outcomes' | 'staking' | 'vaults';
 
 export interface TabConfig {
   id: TabId;
   label: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
   color: string;
 }
 
@@ -148,6 +217,13 @@ export interface SpotTabProps {
 export interface PerpTabProps {
   positions?: PerpPositionDetail[];
   marginBalance?: string;
+  accountMode?: string;
+  dexBalances?: DexBalance[];
+  privacyMode?: boolean;
+}
+
+export interface OutcomesTabProps {
+  balances: SpotBalance[];
   privacyMode?: boolean;
 }
 

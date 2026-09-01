@@ -43,9 +43,32 @@ function SpotBalanceRow({
               <span className="text-theme-text-muted bg-theme-bg/50 border-theme-border/50 rounded border px-1 py-0.5 font-mono text-[9px] sm:px-1.5 sm:text-[10px]">
                 @{formatPrice(usdPrice)}
               </span>
+              <span className="border-theme-accent/20 bg-theme-accent/10 text-theme-accent border px-1 py-0.5 font-mono text-[9px] font-bold">
+                HIP-1
+              </span>
+              {balance.isCanonical && (
+                <span className="border-theme-cyan/20 bg-theme-cyan/10 text-theme-cyan border px-1 py-0.5 font-mono text-[9px]">
+                  canonical
+                </span>
+              )}
             </div>
             <div className="text-theme-text-muted truncate font-mono text-[10px] opacity-70 sm:text-[11px]">
               {balance.name}
+            </div>
+            <div className="text-theme-text-muted truncate font-mono text-[9px] opacity-60">
+              token #{balance.token}
+              {balance.spotPair
+                ? ` · ${balance.spotPair.name} · asset ${balance.spotPair.assetId}`
+                : ''}
+              {balance.weiDecimals !== null && balance.weiDecimals !== undefined
+                ? ` · wei ${balance.weiDecimals}/sz ${balance.szDecimals ?? '?'}`
+                : ''}
+              {parseFloat(balance.tokenDetails?.seededUsdc || '0') > 0
+                ? ` · seed ${formatCompactValue(parseFloat(balance.tokenDetails!.seededUsdc))} USDC`
+                : ''}
+              {balance.tokenDetails?.deployer
+                ? ` · deployer ${balance.tokenDetails.deployer.slice(0, 8)}…`
+                : ''}
             </div>
           </div>
         </div>
@@ -86,7 +109,10 @@ function SpotBalanceRow({
  * Spot balances tab content with terminal styling
  */
 export function SpotTab({ balances, privacyMode }: SpotTabProps) {
-  const filteredBalances = balances.filter((b) => parseFloat(b.total) > 0);
+  const filteredBalances = balances.filter(
+    (balance) =>
+      balance.assetKind !== 'outcome' && parseFloat(balance.total) > 0
+  );
 
   if (filteredBalances.length === 0) {
     return (
@@ -106,7 +132,7 @@ export function SpotTab({ balances, privacyMode }: SpotTabProps) {
     <div className="divide-theme-border/30 divide-y">
       {filteredBalances.map((balance) => (
         <SpotBalanceRow
-          key={balance.coin}
+          key={`${balance.token}-${balance.tokenId || ''}`}
           balance={balance}
           privacyMode={privacyMode}
         />
