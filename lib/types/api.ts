@@ -234,10 +234,21 @@ export interface VaultPosition {
 }
 
 export interface UserData {
-  spot: SpotPosition[];
-  perp: PerpPosition[];
-  staking: StakingPosition[];
-  vaults: VaultPosition[];
+  data?: {
+    spotBalances?: unknown[];
+    perpPositions?: unknown;
+    stakingInfo?: unknown;
+    vaultInfo?: unknown;
+    portfolioSummary?: unknown;
+  };
+  cache?: {
+    lastUpdate?: string;
+    cacheAge?: string;
+    cacheAgeSeconds?: number;
+    source?: string;
+    isStale?: boolean;
+  };
+  error?: string;
 }
 
 export interface PointsData {

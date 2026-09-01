@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCompactValue, safeParseFloat } from './utils';
-import type { PerpTabProps, PerpPositionDetail } from './types';
+import type { DexBalance, PerpTabProps, PerpPositionDetail } from './types';
 
 /**
  * Format PnL percentage for display
@@ -99,6 +99,7 @@ function PerpPositionRow({
               {pos.isHip3 && pos.dexName && (
                 <span className="bg-theme-cyan/10 text-theme-cyan border-theme-cyan/20 border px-1 py-0.5 font-mono text-[9px] font-bold sm:px-1.5 sm:text-[10px]">
                   {pos.dexName}
+                  {pos.collateralToken ? ` · ${pos.collateralToken}` : ''}
                 </span>
               )}
               <div className="flex items-center gap-0.5">
@@ -120,7 +121,8 @@ function PerpPositionRow({
                   entry:
                 </span>
                 <span className="text-theme-text-secondary font-mono text-[9px] tabular-nums">
-                  ${entryPrice.toLocaleString('en-US', {
+                  $
+                  {entryPrice.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -144,7 +146,8 @@ function PerpPositionRow({
                     liq:
                   </span>
                   <span className="text-theme-orange font-mono text-[9px] font-bold tabular-nums">
-                    ${liquidationPx.toLocaleString('en-US', {
+                    $
+                    {liquidationPx.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -195,7 +198,9 @@ function PerpPositionRow({
             </span>
             <span
               className={`font-mono text-xs font-bold tabular-nums ${
-                liquidationPx > 0 ? 'text-theme-orange' : 'text-theme-text-muted'
+                liquidationPx > 0
+                  ? 'text-theme-orange'
+                  : 'text-theme-text-muted'
               }`}
             >
               {privacyMode
@@ -248,15 +253,53 @@ function PerpPositionRow({
   );
 }
 
+function DexBalances({
+  balances,
+  privacyMode,
+}: {
+  balances: DexBalance[];
+  privacyMode: boolean;
+}) {
+  if (balances.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {balances.map((balance) => (
+        <div
+          key={`${balance.dex}-${balance.collateralToken}`}
+          className="bg-theme-card-bg border-theme-border/70 flex items-center gap-2 border px-2 py-1 font-mono text-[10px]"
+        >
+          <span className="text-theme-text-muted">{balance.dexName}</span>
+          <span className="text-theme-cyan font-bold">
+            {privacyMode
+              ? '•••'
+              : formatCompactValue(parseFloat(balance.accountValue))}{' '}
+            {balance.collateralSymbol}
+          </span>
+          {balance.collateralSymbol !== 'USDC' && !privacyMode && (
+            <span className="text-theme-text-muted">
+              (${formatCompactValue(parseFloat(balance.accountValueUsd))})
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Perpetual positions tab content with terminal styling
  */
 export function PerpTab({
   positions = [],
   marginBalance = '0',
+  accountMode = 'unknown',
+  dexBalances = [],
   privacyMode = false,
 }: PerpTabProps) {
   const margin = safeParseFloat(marginBalance);
+  const usesSpotCollateral =
+    accountMode === 'unifiedAccount' || accountMode === 'portfolioMargin';
 
   // Filter to only show positions with non-zero size (memoized to avoid re-filtering on every render)
   const activePositions = useMemo(
@@ -279,50 +322,58 @@ export function PerpTab({
         </div>
 
         {/* Margin Balance - Terminal style badge */}
-        <div className="bg-theme-card-bg border-theme-border/70 inline-flex items-center overflow-hidden rounded-sm border">
-          <div className="bg-theme-cyan/10 border-theme-cyan/20 border-r px-2 py-1.5">
-            <span className="text-theme-cyan font-mono text-[10px] font-bold sm:text-xs">
-              $
-            </span>
+        {usesSpotCollateral ? (
+          <div className="text-theme-cyan font-mono text-xs">
+            Collateral unified in Spot ({accountMode})
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-            <span className="text-theme-text-muted font-mono text-[10px]">
-              available margin
-            </span>
-            {!privacyMode && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="text-theme-cyan font-mono text-xs font-bold tabular-nums focus:ring-theme-accent focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
-                    aria-describedby="tooltip-content"
-                  >
-                    ${margin.toFixed(2)}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="bottom"
-                  className="bg-theme-bg border-theme-border max-w-xs border p-3"
-                  role="tooltip"
-                  id="tooltip-content"
-                >
-                  <div className="space-y-1">
-                    <div className="text-theme-accent font-mono text-xs font-bold">
-                      <span className="text-theme-accent">&gt;</span> hypercore --margin
-                    </div>
-                    <div className="text-theme-text-muted font-mono text-[9px]">
-                      Free cash available for trading
-                    </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {privacyMode && (
-              <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
-                •••
+        ) : (
+          <div className="bg-theme-card-bg border-theme-border/70 inline-flex items-center overflow-hidden rounded-sm border">
+            <div className="bg-theme-cyan/10 border-theme-cyan/20 border-r px-2 py-1.5">
+              <span className="text-theme-cyan font-mono text-[10px] font-bold sm:text-xs">
+                $
               </span>
-            )}
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5">
+              <span className="text-theme-text-muted font-mono text-[10px]">
+                available margin
+              </span>
+              {!privacyMode && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="text-theme-cyan focus:ring-theme-accent font-mono text-xs font-bold tabular-nums focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
+                      aria-describedby="tooltip-content"
+                    >
+                      ${margin.toFixed(2)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="bg-theme-bg border-theme-border max-w-xs border p-3"
+                    role="tooltip"
+                    id="tooltip-content"
+                  >
+                    <div className="space-y-1">
+                      <div className="text-theme-accent font-mono text-xs font-bold">
+                        <span className="text-theme-accent">&gt;</span>{' '}
+                        hypercore --margin
+                      </div>
+                      <div className="text-theme-text-muted font-mono text-[9px]">
+                        Free cash available for trading
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {privacyMode && (
+                <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
+                  •••
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        <DexBalances balances={dexBalances} privacyMode={privacyMode} />
       </div>
     );
   }
@@ -331,50 +382,58 @@ export function PerpTab({
     <div className="divide-theme-border/30 divide-y">
       {/* Margin Balance Header - Terminal style badge */}
       <div className="bg-theme-bg/30 px-3 py-2 sm:px-4 sm:py-2.5">
-        <div className="bg-theme-card-bg border-theme-border/70 inline-flex items-center overflow-hidden rounded-sm border">
-          <div className="bg-theme-cyan/10 border-theme-cyan/20 border-r px-2 py-1.5">
-            <span className="text-theme-cyan font-mono text-[10px] font-bold sm:text-xs">
-              $
-            </span>
+        {usesSpotCollateral ? (
+          <div className="text-theme-cyan font-mono text-xs">
+            Collateral unified in Spot ({accountMode})
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-            <span className="text-theme-text-muted font-mono text-[10px]">
-              available margin
-            </span>
-            {!privacyMode && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="text-theme-cyan font-mono text-xs font-bold tabular-nums focus:ring-theme-accent focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
-                    aria-describedby="tooltip-content"
-                  >
-                    ${margin.toFixed(2)}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="bottom"
-                  className="bg-theme-bg border-theme-border max-w-xs border p-3"
-                  role="tooltip"
-                  id="tooltip-content"
-                >
-                  <div className="space-y-1">
-                    <div className="text-theme-accent font-mono text-xs font-bold">
-                      <span className="text-theme-accent">&gt;</span> hypercore --margin
-                    </div>
-                    <div className="text-theme-text-muted font-mono text-[9px]">
-                      Free cash available for trading
-                    </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {privacyMode && (
-              <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
-                •••
+        ) : (
+          <div className="bg-theme-card-bg border-theme-border/70 inline-flex items-center overflow-hidden rounded-sm border">
+            <div className="bg-theme-cyan/10 border-theme-cyan/20 border-r px-2 py-1.5">
+              <span className="text-theme-cyan font-mono text-[10px] font-bold sm:text-xs">
+                $
               </span>
-            )}
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5">
+              <span className="text-theme-text-muted font-mono text-[10px]">
+                available margin
+              </span>
+              {!privacyMode && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="text-theme-cyan focus:ring-theme-accent font-mono text-xs font-bold tabular-nums focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
+                      aria-describedby="tooltip-content"
+                    >
+                      ${margin.toFixed(2)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="bg-theme-bg border-theme-border max-w-xs border p-3"
+                    role="tooltip"
+                    id="tooltip-content"
+                  >
+                    <div className="space-y-1">
+                      <div className="text-theme-accent font-mono text-xs font-bold">
+                        <span className="text-theme-accent">&gt;</span>{' '}
+                        hypercore --margin
+                      </div>
+                      <div className="text-theme-text-muted font-mono text-[9px]">
+                        Free cash available for trading
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {privacyMode && (
+                <span className="text-theme-cyan font-mono text-xs font-bold tabular-nums sm:text-sm">
+                  •••
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        <DexBalances balances={dexBalances} privacyMode={privacyMode} />
       </div>
 
       {/* Position Rows */}

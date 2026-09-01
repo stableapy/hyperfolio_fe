@@ -17,6 +17,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange }: TabNavigationPro
           <button
             type="button"
             key={tab.id}
+            aria-label={tab.label}
             onClick={() => onTabChange(tab.id)}
             className={`flex-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-sm transition-all duration-150 flex items-center justify-center gap-1.5 sm:gap-2 border ${
               isActive
