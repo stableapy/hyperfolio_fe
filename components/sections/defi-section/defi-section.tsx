@@ -10,12 +10,12 @@ import { ProtocolSkeleton } from './protocol-skeleton';
 import { DefiEmptyState } from './defi-empty-state';
 import { StreamingProgress } from './streaming-progress';
 
-// Hooks
-import { useDefiStats } from './hooks';
-
 // Types
-import type { DefiSectionProps, ProtocolGroup } from './types';
-import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers';
+import type {
+  DefiSectionProps,
+  DeFiPositionDisplay,
+  ProtocolGroup,
+} from './types';
 
 /**
  * Main DeFi Section component displaying portfolio positions grouped by protocol
@@ -60,97 +60,20 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
             )
           : protocol.positions;
 
-        // Recalculate total value from filtered positions (net: supplied - borrowed)
-        const totalValue = filteredPositions.reduce(
-          (sum, pos) => {
-            const value = parseFloat(pos.totalValueUSD || '0');
-            // Subtract borrowed positions, add all others (vault, supplied, etc.)
-            return pos.positionType === 'borrowed' ? sum - value : sum + value;
-          },
-          0
+        const walletKey = selectedWalletAddress
+          ? Object.keys(protocol.protocolStatsByWallet || {}).find(
+              (address) =>
+                address.toLowerCase() === selectedWalletAddress.toLowerCase()
+            )
+          : undefined;
+        const stats = walletKey
+          ? protocol.protocolStatsByWallet?.[walletKey]
+          : protocol.protocolStats;
+        const totalValue = parseFloat(
+          (walletKey && protocol.totalValueUSDByWallet?.[walletKey]) ||
+            protocol.totalValueUSD ||
+            '0'
         );
-
-        // Recalculate stats from filtered positions
-        let stats:
-          | {
-              weightedApyPercent?: number;
-              healthRatio?: number;
-              estimatedYield?: {
-                daily: string;
-                weekly: string;
-                monthly: string;
-              };
-            }
-          | undefined;
-        if (filteredPositions.length > 0) {
-          // Calculate weighted APY
-          let totalWeightedApy = 0;
-          let totalValueForApy = 0;
-          let dailyYield = 0;
-          let weeklyYield = 0;
-          let monthlyYield = 0;
-          let healthRatio: number | undefined;
-
-          filteredPositions.forEach((pos) => {
-            const posValue = parseFloat(pos.totalValueUSD || '0');
-            const posApy = extractApy(pos.details);
-            const posYield = extractEstimatedYield(pos.details);
-            const posHealthRatio = extractHealthRatio(pos.details);
-
-            // Only include supplied positions in yield calculations (borrows are expenses, not income)
-            if (pos.positionType !== 'borrowed') {
-              if (posApy > 0 && posValue > 0) {
-                totalWeightedApy += posApy * posValue;
-                totalValueForApy += posValue;
-              }
-
-              if (posYield) {
-                dailyYield += parseFloat(posYield.daily) || 0;
-                weeklyYield += parseFloat(posYield.weekly) || 0;
-                monthlyYield += parseFloat(posYield.monthly) || 0;
-              }
-            }
-
-            if (posHealthRatio !== undefined) {
-              // Use the lowest health ratio as the protocol-level indicator
-              healthRatio =
-                healthRatio === undefined
-                  ? posHealthRatio
-                  : Math.min(healthRatio, posHealthRatio);
-            }
-          });
-
-          const weightedApyPercent =
-            totalValueForApy > 0
-              ? totalWeightedApy / totalValueForApy
-              : undefined;
-
-          const protocolHealthRatio =
-            healthRatio ??
-            extractHealthRatio(
-              (protocol.protocolStats as Record<string, unknown> | undefined) ||
-                (protocol as unknown as Record<string, unknown>)
-            );
-
-          // Only include stats if we have meaningful data
-          if (
-            (weightedApyPercent !== undefined && weightedApyPercent > 0) ||
-            protocolHealthRatio !== undefined
-          ) {
-            stats = {
-              weightedApyPercent,
-              healthRatio: protocolHealthRatio,
-              estimatedYield:
-                dailyYield > 0 || weeklyYield > 0 || monthlyYield > 0
-                  ? {
-                      daily: dailyYield.toFixed(2),
-                      weekly: weeklyYield.toFixed(2),
-                      monthly: monthlyYield.toFixed(2),
-                    }
-                  : undefined,
-            };
-          }
-        }
 
         return {
           id: protocol.id,
@@ -167,9 +90,12 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
               id: pos.id,
               protocol: protocol.name,
               type: mappedType,
-              positionSubType: mappedType === 'lending'
-                ? pos.positionType === 'borrowed' ? 'borrowed' : 'supplied'
-                : null,
+              positionSubType:
+                mappedType === 'lending'
+                  ? pos.positionType === 'borrowed'
+                    ? 'borrowed'
+                    : 'supplied'
+                  : null,
               assets: extractAssets(pos.details),
               deposited: parseFloat(pos.totalValueUSD || '0'),
               current: parseFloat(pos.totalValueUSD || '0'),
@@ -198,20 +124,31 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
 
   const hasData = protocolGroups.length > 0;
 
-  // Calculate stats from positions
-  const stats = useDefiStats({ positions });
+  const totalRewards = useMemo(
+    () => positions.reduce((sum, position) => sum + position.rewards, 0),
+    [positions]
+  );
+
+  const portfolioStats = useMemo(() => {
+    if (!selectedWalletAddress) return streaming.streamPortfolioStats;
+    const entries = Object.entries(
+      streaming.streamPortfolioStats?.byWallet || {}
+    );
+    return entries.find(
+      ([address]) =>
+        address.toLowerCase() === selectedWalletAddress.toLowerCase()
+    )?.[1];
+  }, [selectedWalletAddress, streaming.streamPortfolioStats]);
 
   // Extract net total from streaming portfolio stats
   // When ALL wallets selected: use server-calculated aggregate total (more accurate)
   // When specific wallet selected: calculate from filtered positions
-  const streamingTotalValue = selectedWalletAddress
-    ? stats.totalDeposited  // Positions are already filtered by selectedWalletAddress
-    : (streaming.streamPortfolioStats?.totalValueUSD
-        ? parseFloat(streaming.streamPortfolioStats.totalValueUSD)
-        : 0);
+  const streamingTotalValue = portfolioStats?.totalValueUSD
+    ? parseFloat(portfolioStats.totalValueUSD)
+    : 0;
 
   // Calculate total portfolio value from positions (for percentage display in privacy mode)
-  const totalPortfolioUSD = stats.totalCurrent || 0;
+  const totalPortfolioUSD = streamingTotalValue;
 
   // Toggle protocol expansion
   const toggleProtocol = (protocolId: string) => {
@@ -241,11 +178,15 @@ export function DeFiSection({ isLoading = false }: DefiSectionProps) {
         isLoading={isStreamingActive && !hasData}
         hasData={hasData}
         totalDeposited={streamingTotalValue}
-        totalRewards={stats.totalRewards}
-        weightedApy={stats.weightedApy}
-        portfolioYield={stats.portfolioYield}
-        positionsWithApy={stats.positionsWithApy}
-        totalPositions={stats.totalPositions}
+        totalRewards={totalRewards}
+        weightedApy={portfolioStats?.weightedApyPercent ?? 0}
+        portfolioYield={{
+          daily: parseFloat(portfolioStats?.estimatedYield.daily || '0'),
+          weekly: parseFloat(portfolioStats?.estimatedYield.weekly || '0'),
+          monthly: parseFloat(portfolioStats?.estimatedYield.monthly || '0'),
+        }}
+        positionsWithApy={portfolioStats?.positionsWithApy ?? 0}
+        totalPositions={portfolioStats?.totalPositions ?? 0}
         privacyMode={privacyMode}
       />
 
@@ -365,19 +306,6 @@ function extractEstimatedYield(
       weekly: String(yield_.weekly || '0.00'),
       monthly: String(yield_.monthly || '0.00'),
     };
-  }
-  return undefined;
-}
-
-function extractHealthRatio(details: Record<string, unknown>): number | undefined {
-  const direct = details?.healthRatio ?? details?.health_ratio;
-  const nested = (details?.details as Record<string, unknown> | undefined)?.healthRatio ??
-    (details?.details as Record<string, unknown> | undefined)?.health_ratio;
-  const raw = direct ?? nested;
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
-  if (typeof raw === 'string') {
-    const parsed = parseFloat(raw);
-    return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
 }

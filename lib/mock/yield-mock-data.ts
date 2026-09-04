@@ -401,5 +401,8 @@ export function generateMockYieldData(): YieldResponse {
  * @returns true if USE_MOCK_YIELD_DATA is set to 'true'
  */
 export function isMockModeEnabled(): boolean {
-  return process.env.USE_MOCK_YIELD_DATA === 'true';
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.USE_MOCK_YIELD_DATA === 'true'
+  );
 }

@@ -7,8 +7,7 @@ import {
   type StreamedProtocol,
   type StreamProtocolGroup,
 } from '@/hooks/use-positions-stream';
-import type { ProtocolGroup } from '../types';
-import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers';
+import type { DeFiPositionDisplay, ProtocolGroup } from '../types';
 
 interface UseStreamingPositionsOptions {
   skipCache?: boolean;

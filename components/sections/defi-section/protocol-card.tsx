@@ -9,7 +9,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PositionItem } from './position-item';
-import { TYPE_LABELS, TYPE_COLORS, SUBTYPE_LABELS, SUBTYPE_COLORS, type PositionType, type PositionSubType } from './constants';
+import {
+  TYPE_LABELS,
+  TYPE_COLORS,
+  SUBTYPE_LABELS,
+  SUBTYPE_COLORS,
+  type PositionType,
+  type PositionSubType,
+} from './constants';
 import type { ProtocolCardProps } from './types';
 import { formatPercentage } from '@/lib/utils/formatters';
 
@@ -86,19 +93,20 @@ export function ProtocolCard({
                       align="end"
                       sideOffset={6}
                       collisionPadding={12}
-                      className="bg-theme-bg border-theme-border border p-3 max-w-[240px] break-words"
+                      className="bg-theme-bg border-theme-border max-w-[240px] border p-3 break-words"
                     >
                       <div className="space-y-1 font-mono text-xs">
                         <div className="text-theme-accent mb-2 font-bold">
-                          <span className="text-theme-accent">&gt;</span>{' '}
-                          health --ratio
+                          <span className="text-theme-accent">&gt;</span> health
+                          --ratio
                         </div>
                         <div className="text-theme-text-muted">
                           Collateral safety indicator. If health ratio falls
                           below 1, the position is liquidated.
                         </div>
                         <div className="text-theme-text-primary mt-2 tabular-nums">
-                          value: {formatHealthRatioFull(protocol.stats.healthRatio)}
+                          value:{' '}
+                          {formatHealthRatioFull(protocol.stats.healthRatio)}
                         </div>
                       </div>
                     </TooltipContent>
@@ -107,63 +115,62 @@ export function ProtocolCard({
               )}
 
             {/* Protocol-level APY Badge */}
-            {protocol.stats?.weightedApyPercent &&
-              protocol.stats.weightedApyPercent > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="bg-theme-accent/10 border-theme-accent/20 flex items-center gap-1 rounded border px-1.5 py-0.5 sm:px-2 sm:py-1">
-                        <TrendingUp className="text-theme-accent h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="text-theme-accent font-mono text-[10px] tabular-nums sm:text-xs">
-                          {formatPercentage(protocol.stats.weightedApyPercent)}
-                        </span>
+            {protocol.stats?.weightedApyPercent != null && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="bg-theme-accent/10 border-theme-accent/20 flex items-center gap-1 rounded border px-1.5 py-0.5 sm:px-2 sm:py-1">
+                      <TrendingUp className="text-theme-accent h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                      <span className="text-theme-accent font-mono text-[10px] tabular-nums sm:text-xs">
+                        {formatPercentage(protocol.stats.weightedApyPercent)}
                       </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-theme-bg border-theme-border border p-3">
-                      <div className="space-y-1 font-mono text-xs">
-                        <div className="text-theme-accent mb-2 font-bold">
-                          <span className="text-theme-accent">&gt;</span> yield
-                          --estimate
-                        </div>
-                        {protocol.stats.estimatedYield && (
-                          <>
-                            <div className="flex justify-between gap-4">
-                              <span className="text-theme-text-muted">
-                                daily:
-                              </span>
-                              <span className="text-theme-text-primary tabular-nums">
-                                {privacyMode
-                                  ? '•••'
-                                  : `$${protocol.stats.estimatedYield.daily}`}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                              <span className="text-theme-text-muted">
-                                weekly:
-                              </span>
-                              <span className="text-theme-text-primary tabular-nums">
-                                {privacyMode
-                                  ? '•••'
-                                  : `$${protocol.stats.estimatedYield.weekly}`}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                              <span className="text-theme-text-muted">
-                                monthly:
-                              </span>
-                              <span className="text-theme-text-primary tabular-nums">
-                                {privacyMode
-                                  ? '•••'
-                                  : `$${protocol.stats.estimatedYield.monthly}`}
-                              </span>
-                            </div>
-                          </>
-                        )}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-theme-bg border-theme-border border p-3">
+                    <div className="space-y-1 font-mono text-xs">
+                      <div className="text-theme-accent mb-2 font-bold">
+                        <span className="text-theme-accent">&gt;</span> yield
+                        --estimate
                       </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+                      {protocol.stats.estimatedYield && (
+                        <>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-theme-text-muted">
+                              daily:
+                            </span>
+                            <span className="text-theme-text-primary tabular-nums">
+                              {privacyMode
+                                ? '•••'
+                                : `$${protocol.stats.estimatedYield.daily}`}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-theme-text-muted">
+                              weekly:
+                            </span>
+                            <span className="text-theme-text-primary tabular-nums">
+                              {privacyMode
+                                ? '•••'
+                                : `$${protocol.stats.estimatedYield.weekly}`}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-theme-text-muted">
+                              monthly:
+                            </span>
+                            <span className="text-theme-text-primary tabular-nums">
+                              {privacyMode
+                                ? '•••'
+                                : `$${protocol.stats.estimatedYield.monthly}`}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
             {/* Value - terminal style */}
             <div className="flex min-w-[60px] items-center justify-end gap-1">
@@ -223,117 +230,115 @@ export function ProtocolCard({
               >
             );
 
-            return Object.entries(positionsByType).map(
-              ([type, typeGroups]) => (
-                <div key={type} className="mb-2 last:mb-0">
-                  {/* Type Header - shown once per type, terminal style */}
-                  <div className="mb-1 ml-4 flex items-center gap-1.5 py-1 sm:ml-5">
-                    <span className="text-theme-text-muted font-mono text-[9px]">
-                      #
-                    </span>
-                    <span
-                      className="font-mono text-[9px] tracking-wider uppercase sm:text-[10px]"
-                      style={{ color: TYPE_COLORS[type as PositionType] }}
-                    >
-                      {TYPE_LABELS[type as PositionType]}
-                    </span>
-                  </div>
-
-                  {/* Lending: Render sub-groups for supplied/borrowed */}
-                  {type === 'lending' ? (
-                    <>
-                      {/* Supplied positions */}
-                      {typeGroups.supplied.length > 0 && (
-                        <div className="mb-1 last:mb-0">
-                          <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
-                            <span className="text-theme-text-muted font-mono text-[8px]">
-                              &gt;
-                            </span>
-                            <span
-                              className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
-                              style={{ color: SUBTYPE_COLORS.supplied }}
-                            >
-                              {SUBTYPE_LABELS.supplied}
-                            </span>
-                            {typeGroups.supplied.length > 1 && (
-                              <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
-                                [{typeGroups.supplied.length}]
-                              </span>
-                            )}
-                          </div>
-                          {typeGroups.supplied.map((position) => (
-                            <PositionItem
-                              key={position.id}
-                              position={position}
-                              showWalletIndicator={!selectedWalletId}
-                              privacyMode={privacyMode}
-                              totalPortfolioUSD={totalPortfolioUSD}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Borrowed positions */}
-                      {typeGroups.borrowed.length > 0 && (
-                        <div className="mb-1 last:mb-0">
-                          <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
-                            <span className="text-theme-text-muted font-mono text-[8px]">
-                              &gt;
-                            </span>
-                            <span
-                              className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
-                              style={{ color: SUBTYPE_COLORS.borrowed }}
-                            >
-                              {SUBTYPE_LABELS.borrowed}
-                            </span>
-                            {typeGroups.borrowed.length > 1 && (
-                              <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
-                                [{typeGroups.borrowed.length}]
-                              </span>
-                            )}
-                          </div>
-                          {typeGroups.borrowed.map((position) => (
-                            <PositionItem
-                              key={position.id}
-                              position={position}
-                              showWalletIndicator={!selectedWalletId}
-                              privacyMode={privacyMode}
-                              totalPortfolioUSD={totalPortfolioUSD}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Default positions (no sub-type) */}
-                      {typeGroups.default.length > 0 && (
-                        <div>
-                          {typeGroups.default.map((position) => (
-                            <PositionItem
-                              key={position.id}
-                              position={position}
-                              showWalletIndicator={!selectedWalletId}
-                              privacyMode={privacyMode}
-                              totalPortfolioUSD={totalPortfolioUSD}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    /* Non-lending: Render positions directly */
-                    typeGroups.default.map((position) => (
-                      <PositionItem
-                        key={position.id}
-                        position={position}
-                        showWalletIndicator={!selectedWalletId}
-                        privacyMode={privacyMode}
-                        totalPortfolioUSD={totalPortfolioUSD}
-                      />
-                    ))
-                  )}
+            return Object.entries(positionsByType).map(([type, typeGroups]) => (
+              <div key={type} className="mb-2 last:mb-0">
+                {/* Type Header - shown once per type, terminal style */}
+                <div className="mb-1 ml-4 flex items-center gap-1.5 py-1 sm:ml-5">
+                  <span className="text-theme-text-muted font-mono text-[9px]">
+                    #
+                  </span>
+                  <span
+                    className="font-mono text-[9px] tracking-wider uppercase sm:text-[10px]"
+                    style={{ color: TYPE_COLORS[type as PositionType] }}
+                  >
+                    {TYPE_LABELS[type as PositionType]}
+                  </span>
                 </div>
-              )
-            );
+
+                {/* Lending: Render sub-groups for supplied/borrowed */}
+                {type === 'lending' ? (
+                  <>
+                    {/* Supplied positions */}
+                    {typeGroups.supplied.length > 0 && (
+                      <div className="mb-1 last:mb-0">
+                        <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
+                          <span className="text-theme-text-muted font-mono text-[8px]">
+                            &gt;
+                          </span>
+                          <span
+                            className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
+                            style={{ color: SUBTYPE_COLORS.supplied }}
+                          >
+                            {SUBTYPE_LABELS.supplied}
+                          </span>
+                          {typeGroups.supplied.length > 1 && (
+                            <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
+                              [{typeGroups.supplied.length}]
+                            </span>
+                          )}
+                        </div>
+                        {typeGroups.supplied.map((position) => (
+                          <PositionItem
+                            key={`${position.walletAddress ?? ''}:${position.id}`}
+                            position={position}
+                            showWalletIndicator={!selectedWalletId}
+                            privacyMode={privacyMode}
+                            totalPortfolioUSD={totalPortfolioUSD}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Borrowed positions */}
+                    {typeGroups.borrowed.length > 0 && (
+                      <div className="mb-1 last:mb-0">
+                        <div className="ml-6 flex items-center gap-1.5 py-0.5 sm:ml-7">
+                          <span className="text-theme-text-muted font-mono text-[8px]">
+                            &gt;
+                          </span>
+                          <span
+                            className="font-mono text-[8px] tracking-wider uppercase sm:text-[9px]"
+                            style={{ color: SUBTYPE_COLORS.borrowed }}
+                          >
+                            {SUBTYPE_LABELS.borrowed}
+                          </span>
+                          {typeGroups.borrowed.length > 1 && (
+                            <span className="text-theme-text-muted font-mono text-[8px] sm:text-[9px]">
+                              [{typeGroups.borrowed.length}]
+                            </span>
+                          )}
+                        </div>
+                        {typeGroups.borrowed.map((position) => (
+                          <PositionItem
+                            key={`${position.walletAddress ?? ''}:${position.id}`}
+                            position={position}
+                            showWalletIndicator={!selectedWalletId}
+                            privacyMode={privacyMode}
+                            totalPortfolioUSD={totalPortfolioUSD}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Default positions (no sub-type) */}
+                    {typeGroups.default.length > 0 && (
+                      <div>
+                        {typeGroups.default.map((position) => (
+                          <PositionItem
+                            key={`${position.walletAddress ?? ''}:${position.id}`}
+                            position={position}
+                            showWalletIndicator={!selectedWalletId}
+                            privacyMode={privacyMode}
+                            totalPortfolioUSD={totalPortfolioUSD}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  /* Non-lending: Render positions directly */
+                  typeGroups.default.map((position) => (
+                    <PositionItem
+                      key={`${position.walletAddress ?? ''}:${position.id}`}
+                      position={position}
+                      showWalletIndicator={!selectedWalletId}
+                      privacyMode={privacyMode}
+                      totalPortfolioUSD={totalPortfolioUSD}
+                    />
+                  ))
+                )}
+              </div>
+            ));
           })()}
         </div>
       )}

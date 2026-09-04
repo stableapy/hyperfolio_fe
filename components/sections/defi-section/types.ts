@@ -1,6 +1,45 @@
 // Types for DeFi Section components
 
-import type { DeFiPositionDisplay } from '@/lib/utils/data-transformers';
+interface PositionTokenDetails {
+  image_url?: string;
+  symbol: string;
+  formattedBalance: string;
+}
+
+interface UncollectedFeesDetails {
+  token0?: string;
+  token1?: string;
+  token0UsdValue?: string | number;
+  token1UsdValue?: string | number;
+  usdValue?: string | number;
+}
+
+interface PositionDetails {
+  token?: PositionTokenDetails;
+  token0?: PositionTokenDetails;
+  token1?: PositionTokenDetails;
+  pair?: string;
+  uncollectedFees?: UncollectedFeesDetails;
+}
+
+export interface DeFiPositionDisplay {
+  id: string;
+  protocol: string;
+  type: 'lending' | 'liquidity' | 'staking' | 'farming';
+  positionSubType: 'supplied' | 'borrowed' | null;
+  assets: string[];
+  deposited: number;
+  current: number;
+  apy: number;
+  rewards: number;
+  logo: string;
+  positionDetails?: PositionDetails;
+  protocolUrl?: string;
+  estimatedYield?: { daily: string; weekly: string; monthly: string };
+  walletAddress?: string;
+  walletName?: string;
+  walletColor?: string;
+}
 
 export interface DefiSectionProps {
   isLoading?: boolean;
@@ -32,8 +71,8 @@ export interface ProtocolGroup {
   totalValue: number;
   positions: DeFiPositionDisplay[];
   stats?: {
-    weightedApyPercent?: number;
-    healthRatio?: number;
+    weightedApyPercent?: number | null;
+    healthRatio?: number | null;
     estimatedYield?: {
       daily: string;
       weekly: string;
@@ -56,14 +95,4 @@ export interface PositionItemProps {
   showWalletIndicator: boolean;
   privacyMode: boolean;
   totalPortfolioUSD: number;
-}
-
-export interface DefiStats {
-  totalDeposited: number;
-  totalCurrent: number;
-  totalRewards: number;
-  weightedApy: number;
-  portfolioYield: PortfolioYield;
-  positionsWithApy: number;
-  totalPositions: number;
 }

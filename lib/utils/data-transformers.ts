@@ -6,7 +6,6 @@
  *
  * New code should import directly from the transformer modules:
  * - @/lib/utils/transformers/tokens
- * - @/lib/utils/transformers/defi
  * - @/lib/utils/transformers/nfts
  * - @/lib/utils/transformers/transactions
  */
@@ -14,16 +13,10 @@
 export {
   transformTokens,
   groupTokensBySymbol,
-  transformDeFiPositions,
-  groupPositionsByProtocol,
   transformNFTs,
   transformTransactions,
   // Types
   type TokenDisplay,
-  type DeFiPositionDisplay,
-  type ProtocolGroup,
-  type ProtocolStats,
-  type EstimatedYield,
   type NFTDisplay,
   type TransactionDisplay,
-} from './transformers'
+} from './transformers';

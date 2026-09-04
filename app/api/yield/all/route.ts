@@ -66,8 +66,7 @@ function createErrorResponse(
  * Yield data endpoint
  * Proxies requests to the backend API, keeping the API key secure on the server
  *
- * If USE_MOCK_YIELD_DATA is enabled, returns mock data.
- * If the backend is unavailable and auto-fallback is enabled, returns mock data.
+ * Explicit development mock mode is supported; backend failures stay errors.
  *
  * @returns JSON response with yield opportunities or error details
  */
@@ -105,8 +104,13 @@ export async function GET() {
     }
   }
 
-  const API_KEY = process.env.HYPERFOLIO_API_KEY || process.env.HYPEREVM_API_KEY;
-  const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || process.env.API_BASE_URL || 'https://api.hyperfolio.xyz';
+  const API_KEY =
+    process.env.HYPERFOLIO_API_KEY || process.env.HYPEREVM_API_KEY;
+  const API_URL =
+    process.env.API_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.API_BASE_URL ||
+    'https://api.hyperfolio.xyz';
   const backendUrl = `${API_URL}/yield/all`;
 
   // Check for missing API key
@@ -153,23 +157,6 @@ export async function GET() {
         errorBody.substring(0, 200)
       );
 
-      // Check if auto-fallback to mock data is enabled
-      const autoFallback = process.env.USE_MOCK_YIELD_DATA === 'auto';
-      if (autoFallback) {
-        console.warn(
-          '[yield/all] Authentication failed, falling back to mock data'
-        );
-        const mockData = generateMockYieldData();
-        return NextResponse.json({
-          ...mockData,
-          _meta: {
-            isMock: true,
-            message: 'Using mock data (backend unavailable)',
-            fallbackReason: 'AUTHENTICATION_ERROR',
-          },
-        });
-      }
-
       return createErrorResponse(
         'AUTHENTICATION',
         'Backend API rejected the request',
@@ -178,7 +165,6 @@ export async function GET() {
           'Check HYPERFOLIO_API_KEY in your environment variables',
           'Ensure the backend service is running',
           'Verify the API key has proper permissions',
-          'Set USE_MOCK_YIELD_DATA=auto to use mock data as fallback',
         ],
         {
           status: response.status,
@@ -215,21 +201,6 @@ export async function GET() {
         errorBody.substring(0, 200)
       );
 
-      // Check if auto-fallback to mock data is enabled
-      const autoFallback = process.env.USE_MOCK_YIELD_DATA === 'auto';
-      if (autoFallback) {
-        console.warn('[yield/all] Backend error, falling back to mock data');
-        const mockData = generateMockYieldData();
-        return NextResponse.json({
-          ...mockData,
-          _meta: {
-            isMock: true,
-            message: 'Using mock data (backend unavailable)',
-            fallbackReason: 'BACKEND_ERROR',
-          },
-        });
-      }
-
       return createErrorResponse(
         'BACKEND_UNAVAILABLE',
         'Backend service error',
@@ -238,7 +209,6 @@ export async function GET() {
           'Check backend logs for details',
           'Ensure the backend service is healthy',
           'Contact your backend administrator if issue persists',
-          'Set USE_MOCK_YIELD_DATA=auto to use mock data as fallback',
         ],
         {
           status: response.status,
@@ -304,23 +274,6 @@ export async function GET() {
       if (error.name === 'AbortError') {
         console.error('[yield/all] Request timeout:', error.message);
 
-        // Check if auto-fallback to mock data is enabled
-        const autoFallback = process.env.USE_MOCK_YIELD_DATA === 'auto';
-        if (autoFallback) {
-          console.warn(
-            '[yield/all] Request timeout, falling back to mock data'
-          );
-          const mockData = generateMockYieldData();
-          return NextResponse.json({
-            ...mockData,
-            _meta: {
-              isMock: true,
-              message: 'Using mock data (backend unavailable)',
-              fallbackReason: 'TIMEOUT',
-            },
-          });
-        }
-
         return createErrorResponse(
           'NETWORK_ERROR',
           'Request to backend timed out',
@@ -329,7 +282,6 @@ export async function GET() {
             'Check if the backend service is running',
             'Verify your network connectivity',
             'Ensure the backend is not under heavy load',
-            'Set USE_MOCK_YIELD_DATA=auto to use mock data as fallback',
           ],
           {
             url: backendUrl,
@@ -341,23 +293,6 @@ export async function GET() {
       if (error.message.includes('ECONNREFUSED')) {
         console.error('[yield/all] Connection refused:', error.message);
 
-        // Check if auto-fallback to mock data is enabled
-        const autoFallback = process.env.USE_MOCK_YIELD_DATA === 'auto';
-        if (autoFallback) {
-          console.warn(
-            '[yield/all] Connection refused, falling back to mock data'
-          );
-          const mockData = generateMockYieldData();
-          return NextResponse.json({
-            ...mockData,
-            _meta: {
-              isMock: true,
-              message: 'Using mock data (backend unavailable)',
-              fallbackReason: 'CONNECTION_REFUSED',
-            },
-          });
-        }
-
         return createErrorResponse(
           'BACKEND_UNAVAILABLE',
           'Cannot connect to backend service',
@@ -366,7 +301,6 @@ export async function GET() {
             'Check HYPERFOLIO_API_URL in your environment variables',
             'Ensure the backend service is started',
             'Verify the backend is accessible from this host',
-            'Set USE_MOCK_YIELD_DATA=auto to use mock data as fallback',
           ],
           {
             url: backendUrl,
