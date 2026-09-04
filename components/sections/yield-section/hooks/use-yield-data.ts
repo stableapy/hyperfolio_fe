@@ -6,7 +6,6 @@ import type {
 } from '@/lib/types/api';
 import type {
   UseYieldDataReturn,
-  ConsolidatedLendingMarket,
   YieldDisplayItem,
   YieldFilters,
 } from '../types';
@@ -29,183 +28,24 @@ interface YieldError {
   isMockData?: boolean;
 }
 
-function getUnderlyingTokenSymbol(pool: YieldOpportunity['pool']): string | undefined {
+function getUnderlyingTokenSymbol(
+  pool: YieldOpportunity['pool']
+): string | undefined {
   const underlying = pool.underlyingToken;
   if (!underlying || typeof underlying === 'string') return undefined;
   return underlying.symbol;
 }
 
-function getUnderlyingTokenAddress(pool: YieldOpportunity['pool']): string | undefined {
+function getUnderlyingTokenAddress(
+  pool: YieldOpportunity['pool']
+): string | undefined {
   const underlying = pool.underlyingToken;
   if (!underlying) return undefined;
   return typeof underlying === 'string' ? underlying : underlying.address;
 }
 
-/**
- * Generates a unique key for a lending market (protocol + underlying token)
- */
-function getLendingMarketKey(opp: YieldOpportunity): string {
-  const protocolId = opp.protocol.id;
-  const underlyingSymbol =
-    opp.metadata.underlyingSymbol ||
-    opp.pool.symbol ||
-    getUnderlyingTokenSymbol(opp.pool) ||
-    opp.pool.address ||
-    opp.pool.name ||
-    'unknown';
-  return `${protocolId}:${underlyingSymbol.toLowerCase()}`;
-}
-
-/**
- * Gets the higher risk level between two
- */
-function getHigherRisk(
-  a: 'low' | 'medium' | 'high',
-  b: 'low' | 'medium' | 'high'
-): 'low' | 'medium' | 'high' {
-  const riskOrder = { low: 0, medium: 1, high: 2 };
-  return riskOrder[a] >= riskOrder[b] ? a : b;
-}
-
-/**
- * Consolidates lending opportunities by protocol + token
- * Merges supply and borrow into single market entries
- */
-function consolidateLendingOpportunities(
-  opportunities: YieldOpportunity[]
-): YieldDisplayItem[] {
-  const lendingOpps = opportunities.filter((opp) => opp.category === 'lending');
-  const otherOpps = opportunities.filter((opp) => opp.category !== 'lending');
-  const lendingNonMarketOpps = lendingOpps.filter(
-    (opp) => opp.type !== 'supply' && opp.type !== 'borrow'
-  );
-  const lendingMarketOpps = lendingOpps.filter(
-    (opp) => opp.type === 'supply' || opp.type === 'borrow'
-  );
-
-  // Group lending by market key
-  const marketMap = new Map<
-    string,
-    { supply?: YieldOpportunity; borrow?: YieldOpportunity }
-  >();
-
-  for (const opp of lendingMarketOpps) {
-    const key = getLendingMarketKey(opp);
-    const existing = marketMap.get(key) || {};
-
-    if (opp.type === 'supply') {
-      existing.supply = opp;
-    } else if (opp.type === 'borrow') {
-      existing.borrow = opp;
-    }
-
-    marketMap.set(key, existing);
-  }
-
-  // Create consolidated markets
-  const consolidatedMarkets: ConsolidatedLendingMarket[] = [];
-
-  for (const [key, { supply, borrow }] of marketMap.entries()) {
-    // Use supply as primary, or borrow if no supply
-    const primary = supply || borrow;
-    if (!primary) continue;
-
-    const consolidated: ConsolidatedLendingMarket = {
-      id: `market:${key}`,
-      protocol: primary.protocol,
-      category: 'lending',
-      type: 'market',
-      pool: primary.pool,
-      supplyApy: supply?.apy,
-      borrowApy: borrow?.apy,
-      risk: {
-        riskLevel:
-          supply && borrow
-            ? getHigherRisk(supply.risk.riskLevel, borrow.risk.riskLevel)
-            : primary.risk.riskLevel,
-        liquidationRisk:
-          supply?.risk.liquidationRisk || borrow?.risk.liquidationRisk,
-        impermanentLossRisk:
-          supply?.risk.impermanentLossRisk || borrow?.risk.impermanentLossRisk,
-      },
-      metadata: primary.metadata,
-      lastUpdated: primary.lastUpdated,
-      dataSource: primary.dataSource,
-      supplyOpportunity: supply,
-      borrowOpportunity: borrow,
-    };
-
-    consolidatedMarkets.push(consolidated);
-  }
-
-  // Combine consolidated lending markets with other opportunities
-  return [...consolidatedMarkets, ...lendingNonMarketOpps, ...otherOpps];
-}
-
-/**
- * Gets the primary APY for sorting (uses supply APY for lending markets)
- */
-function getDisplayItemApy(item: YieldDisplayItem): number {
-  if (item.type === 'market') {
-    // For lending markets, sort by supply APY (earning yield)
-    return item.supplyApy?.totalApy ?? item.supplyApy?.baseApy ?? 0;
-  }
-  return item.apy.totalApy ?? item.apy.baseApy ?? 0;
-}
-
 function isTokenAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value);
-}
-
-function extractTokenSymbolsFromItem(item: YieldDisplayItem): string[] {
-  const symbols = new Set<string>();
-  const pool = item.pool;
-
-  if (item.metadata?.underlyingSymbol) {
-    symbols.add(item.metadata.underlyingSymbol);
-  }
-  if (pool.symbol) {
-    symbols.add(pool.symbol);
-  }
-  const underlyingSymbol = getUnderlyingTokenSymbol(pool);
-  if (underlyingSymbol) {
-    symbols.add(underlyingSymbol);
-  }
-  if (pool.token0?.symbol) {
-    symbols.add(pool.token0.symbol);
-  }
-  if (pool.token1?.symbol) {
-    symbols.add(pool.token1.symbol);
-  }
-  if (pool.collateralToken?.symbol) {
-    symbols.add(pool.collateralToken.symbol);
-  }
-
-  return Array.from(symbols);
-}
-
-function extractTokenAddressesFromItem(item: YieldDisplayItem): string[] {
-  const addresses = new Set<string>();
-  const pool = item.pool;
-
-  if (item.metadata?.underlyingToken) {
-    addresses.add(item.metadata.underlyingToken);
-  }
-  const underlyingAddress = getUnderlyingTokenAddress(pool);
-  if (underlyingAddress) {
-    addresses.add(underlyingAddress);
-  }
-  if (pool.token0?.address) {
-    addresses.add(pool.token0.address);
-  }
-  if (pool.token1?.address) {
-    addresses.add(pool.token1.address);
-  }
-  if (pool.collateralToken?.address) {
-    addresses.add(pool.collateralToken.address);
-  }
-
-  return Array.from(addresses);
 }
 
 /**
@@ -230,7 +70,8 @@ export function useYieldData(
     const maxApy = Number.parseFloat(filters.maxApy);
     const minTvl = Number.parseFloat(filters.minTvl);
     const maxTvl = Number.parseFloat(filters.maxTvl);
-    const selectedTokenAddresses = filters.selectedTokens.filter(isTokenAddress);
+    const selectedTokenAddresses =
+      filters.selectedTokens.filter(isTokenAddress);
 
     // Add search query if present
     if (filters.searchQuery.trim()) {
@@ -256,10 +97,12 @@ export function useYieldData(
     params.sort_by = 'apy';
     params.sort_order = filters.sortOrder;
 
-    if (Number.isFinite(minApy)) params.min_value = minApy;
-    if (Number.isFinite(maxApy)) params.max_value = maxApy;
+    if (Number.isFinite(minApy)) params.min_apy = minApy;
+    if (Number.isFinite(maxApy)) params.max_apy = maxApy;
     if (Number.isFinite(minTvl)) params.min_tvl = minTvl;
     if (Number.isFinite(maxTvl)) params.max_tvl = maxTvl;
+    if (filters.stablecoinOnly) params.stablecoin_only = true;
+    if (filters.hypeOnly) params.hype_only = true;
 
     return params;
   }, [
@@ -271,6 +114,8 @@ export function useYieldData(
     filters.maxApy,
     filters.minTvl,
     filters.maxTvl,
+    filters.stablecoinOnly,
+    filters.hypeOnly,
     filters.sortOrder,
     pagination.page,
     pagination.pageSize,
@@ -279,90 +124,10 @@ export function useYieldData(
   // Fetch paginated yield data from backend
   const { data, isLoading, error, errorDetails } = useFetchYieldData(apiParams);
 
-  // Consolidate lending opportunities for display and apply range filters/sort
-  const displayItems = useMemo<YieldDisplayItem[]>(() => {
-    if (!data?.data?.length) return [];
-
-    // Filter to only items with valid APY
-    const withValidApy = data.data.filter((opp) => {
-      return (
-        (opp.apy?.totalApy !== null && opp.apy?.totalApy !== undefined) ||
-        (opp.apy?.baseApy !== null && opp.apy?.baseApy !== undefined)
-      );
-    });
-
-    // Consolidate lending markets
-    const consolidated = consolidateLendingOpportunities(withValidApy);
-
-    const minApy = Number.parseFloat(filters.minApy);
-    const maxApy = Number.parseFloat(filters.maxApy);
-    const minTvl = Number.parseFloat(filters.minTvl);
-    const maxTvl = Number.parseFloat(filters.maxTvl);
-
-    const hasMinApy = Number.isFinite(minApy);
-    const hasMaxApy = Number.isFinite(maxApy);
-    const hasMinTvl = Number.isFinite(minTvl);
-    const hasMaxTvl = Number.isFinite(maxTvl);
-
-    const selectedTokenAddresses = filters.selectedTokens
-      .filter(isTokenAddress)
-      .map((address) => address.toLowerCase());
-    const selectedTokenSymbols = filters.selectedTokens
-      .filter((token) => !isTokenAddress(token))
-      .map((symbol) => symbol.toUpperCase());
-
-    const filtered = consolidated.filter((item) => {
-      if (filters.selectedTokens.length > 0) {
-        const itemAddresses = extractTokenAddressesFromItem(item).map(
-          (address) => address.toLowerCase()
-        );
-        const itemSymbols = extractTokenSymbolsFromItem(item).map((symbol) =>
-          symbol.toUpperCase()
-        );
-        const matchesAddress =
-          selectedTokenAddresses.length > 0 &&
-          selectedTokenAddresses.some((address) =>
-            itemAddresses.includes(address)
-          );
-        const matchesSymbol =
-          selectedTokenSymbols.length > 0 &&
-          selectedTokenSymbols.some((symbol) => itemSymbols.includes(symbol));
-
-        if (!matchesAddress && !matchesSymbol) return false;
-      }
-
-      const apy = getDisplayItemApy(item);
-      const rawTvl = item.pool.tvlUsd ?? item.pool.liquidityUsd;
-      const tvl =
-        typeof rawTvl === 'number'
-          ? rawTvl
-          : rawTvl !== undefined
-            ? Number.parseFloat(String(rawTvl))
-            : Number.NaN;
-      const hasTvl = Number.isFinite(tvl);
-
-      if (hasMinApy && apy < minApy) return false;
-      if (hasMaxApy && apy > maxApy) return false;
-      if (hasMinTvl && hasTvl && tvl < minTvl) return false;
-      if (hasMaxTvl && hasTvl && tvl > maxTvl) return false;
-
-      return true;
-    });
-
-    return filtered.sort((a, b) => {
-      const aApy = getDisplayItemApy(a);
-      const bApy = getDisplayItemApy(b);
-      return filters.sortOrder === 'asc' ? aApy - bApy : bApy - aApy;
-    });
-  }, [
-    data,
-    filters.minApy,
-    filters.maxApy,
-    filters.minTvl,
-    filters.maxTvl,
-    filters.sortOrder,
-    filters.selectedTokens,
-  ]);
+  const displayItems = useMemo<YieldDisplayItem[]>(
+    () => data?.data ?? [],
+    [data]
+  );
 
   // Build filter options from backend metadata
   const { protocols, tokens } = useMemo(() => {
@@ -374,15 +139,21 @@ export function useYieldData(
       | undefined
       | {
           protocols?: string[];
-          tokens?: string[];
           filters?: {
-            protocols?: Array<{ value: string; label?: string; count?: number }>;
-            tokenAddresses?: Array<{ value: string; label?: string; count?: number }>;
+            protocols?: Array<{
+              value: string;
+              label?: string;
+              count?: number;
+            }>;
+            tokenAddresses?: Array<{
+              value: string;
+              label?: string;
+              count?: number;
+            }>;
           };
         };
 
     const protocolNames = Array.isArray(meta?.protocols) ? meta.protocols : [];
-    const tokenSymbols = Array.isArray(meta?.tokens) ? meta.tokens : [];
     const protocolFilters = Array.isArray(meta?.filters?.protocols)
       ? meta?.filters?.protocols
       : [];
@@ -391,10 +162,8 @@ export function useYieldData(
       : [];
 
     const fallbackProtocols = new Set<string>();
-    const fallbackTokens = new Set<string>();
     const protocolNameById = new Map<string, string>();
     const protocolIdByName = new Map<string, string>();
-    const tokenCounts = new Map<string, number>();
     const tokenOptionsByAddress = new Map<
       string,
       { value: string; label: string; count?: number }
@@ -412,7 +181,10 @@ export function useYieldData(
         if (protocolId) {
           protocolNameById.set(protocolId, protocolName);
         }
-        protocolIdByName.set(protocolName.toLowerCase(), protocolId || protocolName);
+        protocolIdByName.set(
+          protocolName.toLowerCase(),
+          protocolId || protocolName
+        );
       }
 
       const pool = opp.pool;
@@ -450,16 +222,8 @@ export function useYieldData(
             label,
             count: (existing?.count || 0) + 1,
           });
-          continue;
-        }
-
-        if (typeof candidate.symbol === 'string' && candidate.symbol.trim()) {
-          const normalized = candidate.symbol.trim();
-          fallbackTokens.add(normalized);
-          tokenCounts.set(normalized, (tokenCounts.get(normalized) || 0) + 1);
         }
       }
-
     }
 
     const protocolsSource =
@@ -489,19 +253,6 @@ export function useYieldData(
           }))
         : Array.from(tokenOptionsByAddress.values());
 
-    const symbolTokensSource =
-      tokenSymbols.length > 0
-        ? tokenSymbols.map((symbol) => ({
-            value: symbol,
-            label: symbol,
-            count: undefined as number | undefined,
-          }))
-        : Array.from(fallbackTokens).map((symbol) => ({
-            value: symbol,
-            label: symbol,
-            count: tokenCounts.get(symbol) || 0,
-          }));
-
     const protocols = protocolsSource.map((protocol) => {
       const normalized = protocol.value.toLowerCase();
       const mappedId = protocolIdByName.get(normalized);
@@ -515,17 +266,7 @@ export function useYieldData(
       };
     });
 
-    const addressLabels = new Set(
-      addressTokensSource.map((token) => token.label.toUpperCase())
-    );
-    const mergedTokensSource = [
-      ...addressTokensSource,
-      ...symbolTokensSource.filter(
-        (token) => !addressLabels.has(token.label.toUpperCase())
-      ),
-    ];
-
-    const tokens = mergedTokensSource.map((token) => ({
+    const tokens = addressTokensSource.map((token) => ({
       value: token.value,
       label: token.label,
       count: token.count,
@@ -534,29 +275,19 @@ export function useYieldData(
     return { protocols, tokens };
   }, [data]);
 
-  // Calculate statistics from current page data
   const stats = useMemo(() => {
-    const apyValues = displayItems
-      .map((item) => getDisplayItemApy(item))
-      .filter((apy) => apy > 0);
-
-    const highestApy = apyValues.length > 0 ? Math.max(...apyValues) : 0;
-    const averageApy =
-      apyValues.length > 0
-        ? apyValues.reduce((sum, apy) => sum + apy, 0) / apyValues.length
-        : 0;
-
     const paginationMeta = data?.pagination;
+    const totals = data?.metadata?.totals;
     const totalItems = Number(
       paginationMeta?.total_items ?? paginationMeta?.total ?? 0
     );
 
     return {
       totalCount: totalItems,
-      highestApy,
-      averageApy,
+      highestApy: Number(totals?.highest_apy) || 0,
+      averageApy: Number(totals?.total_apy) || 0,
     };
-  }, [displayItems, data]);
+  }, [data]);
 
   const hasData = displayItems.length > 0;
 
@@ -567,7 +298,7 @@ export function useYieldData(
     hasData,
     stats,
     errorDetails: errorDetails || undefined,
-    isMockData: (data as any)?._meta?.isMock === true,
+    isMockData: data?._meta?.isMock === true,
     filterOptions: { protocols, tokens },
     pagination: {
       page:
@@ -701,14 +432,16 @@ function useFetchYieldData(params: YieldPaginationParams) {
       params.token_addresses.forEach((t) =>
         searchParams.append('token_addresses', t)
       );
-    if (params.min_value !== undefined)
-      searchParams.append('min_value', params.min_value.toString());
-    if (params.max_value !== undefined)
-      searchParams.append('max_value', params.max_value.toString());
+    if (params.min_apy !== undefined)
+      searchParams.append('min_apy', params.min_apy.toString());
+    if (params.max_apy !== undefined)
+      searchParams.append('max_apy', params.max_apy.toString());
     if (params.min_tvl !== undefined)
       searchParams.append('min_tvl', params.min_tvl.toString());
     if (params.max_tvl !== undefined)
       searchParams.append('max_tvl', params.max_tvl.toString());
+    if (params.stablecoin_only) searchParams.append('stablecoin_only', 'true');
+    if (params.hype_only) searchParams.append('hype_only', 'true');
     if (params.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params.sort_order) searchParams.append('sort_order', params.sort_order);
 

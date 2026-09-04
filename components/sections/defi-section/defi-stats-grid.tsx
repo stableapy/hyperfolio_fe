@@ -104,8 +104,7 @@ export function DefiStatsGrid({
             >
               <div className="space-y-1">
                 <div className="text-theme-cyan font-mono text-xs font-bold">
-                  <span className="text-theme-cyan">&gt;</span> defi
-                  --rewards
+                  <span className="text-theme-cyan">&gt;</span> defi --rewards
                 </div>
                 <div className="text-theme-text-muted font-mono text-[9px]">
                   Total rewards earned from DeFi positions
@@ -125,7 +124,7 @@ export function DefiStatsGrid({
         {/* Average APY with Tooltip */}
         {showSkeleton ? (
           <StatPillSkeleton width="w-24 sm:w-32" />
-        ) : weightedApy > 0 ? (
+        ) : positionsWithApy > 0 ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <StatPill

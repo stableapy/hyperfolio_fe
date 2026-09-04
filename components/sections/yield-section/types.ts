@@ -8,7 +8,12 @@ import type {
 } from '@/lib/types/api';
 
 // Re-export API types for convenience
-export type { YieldOpportunity, YieldResponse, YieldPoolInfo, PoolTokenDetails };
+export type {
+  YieldOpportunity,
+  YieldResponse,
+  YieldPoolInfo,
+  PoolTokenDetails,
+};
 
 /**
  * Consolidated lending market combining supply and borrow opportunities
@@ -45,10 +50,6 @@ export interface ConsolidatedLendingMarket {
   lastUpdated: string;
   /** Data source */
   dataSource: 'on-chain' | 'api';
-  /** Original supply opportunity (for reference) */
-  supplyOpportunity?: YieldOpportunity;
-  /** Original borrow opportunity (for reference) */
-  borrowOpportunity?: YieldOpportunity;
 }
 
 /**

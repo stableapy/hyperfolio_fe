@@ -380,9 +380,19 @@ export interface YieldOpportunity {
     chainId: number;
   };
   category: 'lending' | 'amm' | 'yield' | 'staking' | 'derivatives';
-  type: 'supply' | 'borrow' | 'lp' | 'stake' | 'pt' | 'yt' | 'vault';
+  type: 'supply' | 'borrow' | 'lp' | 'stake' | 'pt' | 'yt' | 'vault' | 'market';
   pool: YieldPoolInfo;
   apy: {
+    baseApy?: number;
+    totalApy?: number;
+    rewardApy?: number;
+  };
+  supplyApy?: {
+    baseApy?: number;
+    totalApy?: number;
+    rewardApy?: number;
+  };
+  borrowApy?: {
     baseApy?: number;
     totalApy?: number;
     rewardApy?: number;
@@ -472,6 +482,7 @@ export interface YieldResponseMeta {
   totals?: {
     total_value_usd?: number;
     total_apy?: number;
+    highest_apy?: number;
     opportunity_count?: number;
   };
 }
@@ -486,6 +497,7 @@ export interface PaginatedYieldResponse {
   pagination: YieldPaginationMeta;
   /** Response metadata with available filter options */
   metadata: YieldResponseMeta;
+  _meta?: { isMock?: boolean };
 }
 
 /**
@@ -505,13 +517,15 @@ export interface YieldPaginationParams {
   /** Filter by token addresses */
   token_addresses?: string[];
   /** Filter by minimum APY value */
-  min_value?: number;
+  min_apy?: number;
   /** Filter by maximum APY value */
-  max_value?: number;
+  max_apy?: number;
   /** Filter by minimum TVL value */
   min_tvl?: number;
   /** Filter by maximum TVL value */
   max_tvl?: number;
+  stablecoin_only?: boolean;
+  hype_only?: boolean;
   /** Sort field (e.g., 'apy', 'tvl') */
   sort_by?: string;
   /** Sort order: 'asc' or 'desc' */

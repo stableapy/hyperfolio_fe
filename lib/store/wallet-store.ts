@@ -180,32 +180,6 @@ export const useWalletStore = create<WalletState>()(
           const walletToRemove = state.wallets.find((w) => w.id === walletId);
           const walletAddress = walletToRemove?.address;
 
-          // Clean up streamed protocols: remove positions belonging to the removed wallet
-          const cleanedProtocols = new Map<string, StreamedProtocol>();
-          state.streaming.streamedProtocols.forEach((protocol, protocolId) => {
-            const filteredPositions = protocol.positions.filter(
-              (pos) => pos.walletAddress !== walletAddress
-            );
-            // Only keep protocols that still have positions after filtering
-            if (filteredPositions.length > 0) {
-              // Recalculate totalValueUSD from remaining positions to avoid stale values
-              const recalculatedTotalValue = filteredPositions.reduce(
-                (sum, pos) => sum + parseFloat(pos.totalValueUSD || '0'),
-                0
-              );
-              cleanedProtocols.set(protocolId, {
-                ...protocol,
-                positions: filteredPositions,
-                totalValueUSD: recalculatedTotalValue.toString(),
-                // Also update protocolStats.totalPositions to reflect actual count
-                protocolStats: {
-                  ...protocol.protocolStats,
-                  totalPositions: filteredPositions.length,
-                },
-              });
-            }
-          });
-
           // Clean up wallet data for the removed wallet address
           const cleanedWalletData = { ...state.walletData };
           if (walletAddress && cleanedWalletData[walletAddress]) {
@@ -221,8 +195,11 @@ export const useWalletStore = create<WalletState>()(
             walletData: cleanedWalletData,
             streaming: {
               ...state.streaming,
-              streamedProtocols: cleanedProtocols,
+              streamedProtocols: new Map(),
+              streamPortfolioStats: null,
+              isStreamComplete: false,
             },
+            walletsChangedTrigger: state.walletsChangedTrigger + 1,
           };
         });
       },
