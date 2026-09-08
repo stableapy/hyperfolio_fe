@@ -21,8 +21,10 @@ export function formatApyPercentage(apy: number | null | undefined): string {
  */
 export function formatApyDisplay(
   baseApy: number | null | undefined,
-  totalApy: number | null | undefined
+  totalApy: number | null | undefined,
+  available = true
 ): { base: string | null; total: string | null; isSame: boolean } {
+  if (!available) return { base: null, total: null, isSame: true };
   const hasBase =
     baseApy !== null && baseApy !== undefined && !Number.isNaN(baseApy);
   const hasTotal =

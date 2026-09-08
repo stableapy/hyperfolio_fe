@@ -117,7 +117,7 @@ export function YieldGridCard({ opportunity }: YieldGridCardProps) {
       return { base: null, total: null, isSame: true };
     } else {
       // Regular opportunity - use standard apy property
-      return formatApyDisplay(opportunity.apy.baseApy, opportunity.apy.totalApy);
+      return formatApyDisplay(opportunity.apy.baseApy, opportunity.apy.totalApy, opportunity.apy.available);
     }
   }, [opportunity]);
 
@@ -189,6 +189,7 @@ export function YieldGridCard({ opportunity }: YieldGridCardProps) {
           >
             {opportunity.category}
           </Badge>
+          <span className="text-theme-text-muted ml-2 font-mono text-xs">{opportunity.type}</span>
         </div>
 
         {/* APY Display */}

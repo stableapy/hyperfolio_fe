@@ -383,6 +383,7 @@ export interface YieldOpportunity {
   type: 'supply' | 'borrow' | 'lp' | 'stake' | 'pt' | 'yt' | 'vault';
   pool: YieldPoolInfo;
   apy: {
+    available?: boolean;
     baseApy?: number;
     totalApy?: number;
     rewardApy?: number;
@@ -480,6 +481,7 @@ export interface YieldResponseMeta {
  * Paginated yield response from the new /api/yield/ endpoint
  */
 export interface PaginatedYieldResponse {
+  _meta?: { isMock?: boolean };
   /** Array of yield opportunities for the current page */
   data: YieldOpportunity[];
   /** Pagination metadata */
@@ -504,6 +506,9 @@ export interface YieldPaginationParams {
   protocols?: string[];
   /** Filter by token addresses */
   token_addresses?: string[];
+  token_symbols?: string[];
+  min_apy?: number;
+  max_apy?: number;
   /** Filter by minimum APY value */
   min_value?: number;
   /** Filter by maximum APY value */

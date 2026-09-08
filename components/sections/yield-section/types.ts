@@ -158,8 +158,8 @@ export interface YieldStatsProps {
   /** Pre-calculated statistics from useYieldData hook */
   stats: {
     totalCount: number;
-    highestApy: number;
-    averageApy: number;
+    highestApy: number | null;
+    averageApy: number | null;
   };
   /** Whether data is currently being fetched */
   isLoading: boolean;
@@ -207,8 +207,8 @@ export interface UseYieldDataReturn {
   /** Statistics: total count, highest APY, average APY */
   stats: {
     totalCount: number;
-    highestApy: number;
-    averageApy: number;
+    highestApy: number | null;
+    averageApy: number | null;
   };
   /** Detailed error information for debugging */
   errorDetails?: YieldError;
