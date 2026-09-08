@@ -51,7 +51,7 @@ export function YieldStats({
                 <span className="text-theme-accent">&gt;</span> yield --total
               </div>
               <div className="text-theme-text-muted font-mono text-[9px]">
-                Total number of yield opportunities across all protocols
+                Total number of opportunities matching the current filters
               </div>
             </div>
           </TooltipContent>
@@ -83,10 +83,10 @@ export function YieldStats({
                 <span className="text-theme-cyan">&gt;</span> yield --highest
               </div>
               <div className="text-theme-text-muted font-mono text-[9px]">
-                Highest APY available across all yield opportunities
+                Highest measured APY on this page; N/A when none is available
               </div>
               <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
-                {privacyMode ? '•••' : `${stats.highestApy.toFixed(4)}%`}
+                {privacyMode ? '•••' : stats.highestApy === null ? 'N/A' : `${stats.highestApy.toFixed(4)}%`}
               </div>
             </div>
           </TooltipContent>
@@ -118,10 +118,10 @@ export function YieldStats({
                 <span className="text-theme-purple">&gt;</span> yield --average
               </div>
               <div className="text-theme-text-muted font-mono text-[9px]">
-                Average APY across all yield opportunities
+                Average measured APY on this page; unavailable values excluded
               </div>
               <div className="text-theme-text-primary border-theme-border/50 border-t pt-1 font-mono text-[10px] tabular-nums">
-                {privacyMode ? '•••' : `${stats.averageApy.toFixed(4)}%`}
+                {privacyMode ? '•••' : stats.averageApy === null ? 'N/A' : `${stats.averageApy.toFixed(4)}%`}
               </div>
             </div>
           </TooltipContent>

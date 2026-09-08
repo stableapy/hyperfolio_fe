@@ -308,7 +308,7 @@ function RegularOpportunityCard({
   const tokenDisplay = getTokenDisplay(opportunity);
   const baseApy = opportunity.apy.baseApy;
   const totalApy = opportunity.apy.totalApy;
-  const apyDisplay = formatApyDisplay(baseApy, totalApy);
+  const apyDisplay = formatApyDisplay(baseApy, totalApy, opportunity.apy.available);
   const logoPath = getProtocolLogoPath(opportunity.protocol.name);
   const tvl = formatTvl(
     opportunity.pool.tvlUsd || opportunity.pool.liquidityUsd
@@ -488,24 +488,12 @@ function RegularOpportunityCard({
   );
 }
 
-/**
- * YieldCard Component
- * Displays individual yield opportunity details
- * For lending markets, shows consolidated supply/borrow view
- * For other categories, shows standard opportunity view
- */
 export const YieldCard = React.memo(
   ({ opportunity }: YieldCardProps) => {
-    // Check if this is a consolidated lending market
     if (isConsolidatedMarket(opportunity)) {
       return <LendingMarketCard market={opportunity} />;
     }
 
-    // Regular opportunity (AMM, yield, staking, or standalone lending)
     return <RegularOpportunityCard opportunity={opportunity} />;
-  },
-  (prevProps, nextProps) => {
-    // Compare by opportunity ID to prevent unnecessary re-renders
-    return prevProps.opportunity.id === nextProps.opportunity.id;
   }
 );
