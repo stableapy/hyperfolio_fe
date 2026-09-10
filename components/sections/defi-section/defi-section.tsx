@@ -344,6 +344,12 @@ function extractApy(details: Record<string, unknown>): number {
 }
 
 function extractRewards(details: Record<string, unknown>): number {
+  const reward = details?.reward as Record<string, unknown> | undefined;
+  if (reward?.claimableUsd !== undefined && reward.claimableUsd !== null) {
+    const value = Number(reward.claimableUsd);
+    return Number.isFinite(value) ? value : 0;
+  }
+
   const fees = details?.uncollectedFees as Record<string, unknown> | undefined;
   if (fees?.usdValue) {
     const value =

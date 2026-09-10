@@ -10,6 +10,23 @@ import {
 import type { PositionItemProps } from './types';
 import { formatPercentage } from '@/lib/utils/formatters';
 
+interface RewardDetails {
+  symbol: string;
+  claimable: string | null;
+  paidToDate: string | null;
+}
+
+function formatRewardAmount(value: string | null): string {
+  if (value === null) return 'unavailable';
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? amount.toLocaleString('en-US', {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
+      })
+    : 'unavailable';
+}
+
 /**
  * Individual position row component with token details, value, and APY
  * Terminal-style layout with prompt indicators
@@ -21,6 +38,7 @@ export function PositionItem({
   totalPortfolioUSD,
 }: PositionItemProps) {
   const isLiquidityPool = position.type === 'liquidity';
+  const reward = position.positionDetails?.reward as RewardDetails | undefined;
 
   return (
     <div className="hover:border-theme-accent/50 hover:bg-theme-accent/5 ml-3 rounded-sm border-l-2 border-transparent px-2 py-1.5 transition-all duration-150 sm:ml-4 sm:px-2.5 sm:py-2">
@@ -241,6 +259,22 @@ export function PositionItem({
           )}
         </div>
       </div>
+      {reward?.symbol && (
+        <div className="text-theme-text-muted mt-1 ml-5 flex flex-wrap items-center gap-x-1.5 font-mono text-[9px] sm:ml-7 sm:text-[10px]">
+          <span>earns:</span>
+          <span className="text-theme-cyan">{reward.symbol}</span>
+          <span>claimable:</span>
+          <span className="text-theme-text-primary tabular-nums">
+            {privacyMode ? '•••' : formatRewardAmount(reward.claimable)}{' '}
+            {reward.symbol}
+          </span>
+          <span>paid to date:</span>
+          <span className="text-theme-text-primary tabular-nums">
+            {privacyMode ? '•••' : formatRewardAmount(reward.paidToDate)}{' '}
+            {reward.symbol}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
