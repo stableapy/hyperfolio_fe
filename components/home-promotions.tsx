@@ -14,8 +14,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-const PROMO_KEY = 'hyperfolio_kestrell_promo_seen_v1';
-const TOAST_KEY = 'hyperfolio_updates_toast_seen_v3';
+const PROMO_KEY = 'hyperfolio_kestrell_promo_day_v1';
+const TOAST_KEY = 'hyperfolio_kestrell_toast_day_v1';
 const BOT_URL = 'https://t.me/kestrell_hip4_bot';
 
 export function HomePromotions() {
@@ -33,52 +33,47 @@ export function HomePromotions() {
       try {
         if (document.querySelector('[role="dialog"]')) return;
 
-        if (!localStorage.getItem(PROMO_KEY)) {
-          localStorage.setItem(PROMO_KEY, '1');
+        const today = new Date().toDateString();
+        if (localStorage.getItem(PROMO_KEY) !== today) {
+          localStorage.setItem(PROMO_KEY, today);
           setIsOpen(true);
           return;
         }
 
-        if (localStorage.getItem(TOAST_KEY)) return;
-        localStorage.setItem(TOAST_KEY, '1');
+        if (localStorage.getItem(TOAST_KEY) === today) return;
+        localStorage.setItem(TOAST_KEY, today);
       } catch {
         // Skip promotions when the browser cannot remember their frequency.
         return;
       }
 
       toast({
-        title: 'What is new on Hyperfolio',
+        className: 'rounded-xl border-[#c7decf] bg-[#e4f3e7] text-[#102118]',
         description: (
-          <div className="space-y-3">
-            <p className="text-sm">
-              Meet Kestrell, our Telegram copy trading bot for Hyperliquid
-              prediction markets.{' '}
+          <div className="flex items-start gap-3 text-[#52695a]">
+            <Image
+              src="/kestrell-mark.png"
+              alt=""
+              width={40}
+              height={40}
+              className="shrink-0"
+            />
+            <div className="space-y-2">
+              <p className="text-base font-semibold text-[#102118]">Kestrell</p>
+              <p className="text-sm leading-relaxed">
+                Copy traders on Hyperliquid prediction markets, right from
+                Telegram.
+              </p>
               <a
                 href={BOT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary font-medium underline"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[#102118] underline underline-offset-4"
               >
-                Open Kestrell ↗
+                Open Kestrell on Telegram
+                <ArrowUpRight aria-hidden="true" className="size-4" />
               </a>
-            </p>
-            <p className="text-sm">
-              Use Hyperfolio directly on Telegram via{' '}
-              <a
-                href="https://t.me/hyperfoliothebot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline"
-              >
-                @hyperfoliothebot
-              </a>
-            </p>
-            <p className="text-sm">
-              Explore endpoints and pricing in{' '}
-              <a href="/api-docs" className="text-primary underline">
-                API documentation
-              </a>
-            </p>
+            </div>
           </div>
         ),
         duration: 12000,
