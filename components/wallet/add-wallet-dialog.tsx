@@ -73,7 +73,7 @@ export function AddWalletDialog({ isOpen, onClose, onAdd }: AddWalletDialogProps
       />
       
       {/* Dialog - Terminal style */}
-      <div className="relative bg-theme-card-bg border border-theme-border/70 rounded-sm w-full max-w-md shadow-2xl backdrop-blur-md overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Add wallet" className="relative bg-theme-card-bg border border-theme-border/70 rounded-sm w-full max-w-md shadow-2xl backdrop-blur-md overflow-hidden">
         {/* Terminal window header */}
         <div className="flex items-center justify-between px-3 py-2 bg-theme-bg/50 border-b border-theme-border/50">
           <span className="font-mono text-[10px] text-theme-text-muted uppercase tracking-wider">
